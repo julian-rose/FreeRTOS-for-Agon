@@ -2,37 +2,46 @@
 
 <h2>Description</h2>
 FreeRTOS port for the Zilog eZ80-based Agon Light (and compatibles) running MOS.
-This port uses the Zilog ZDSII toolset. Refer to the detailed README.md for the 
-Agon port in ./Source/portable/Community-Supported-Ports/ZDSII/eZ80AgonLight/
-<p>
 The concept is very much FreeRTOS over MOS, reflected in the project name.
+<p>
+This port integrates FreeRTOS version 20221201-LTS (10.5.1) with the 
+Zilog ZDSII eZ80Acclaim! version 5.3.5 (Build 23020901) (Compiler Version 3.4 (19101101)).
+In choosing FreeRTOS version 20221201-LTS we set out for stability in porting 
+to the newer FreeRTOS kernel, rather than go for latest and greatest.
+<p>
+Refer to the README.md for the detailed Agon port in 
+./FreeRTOSv202212.01-LTS/FreeRTOS/Source/portable/Community-Supported-Ports/ZDSII/eZ80AgonLight/
 
 <h3>What is FreeRTOS</h3>
 Put succinctly, FreeRTOS allows an application to be divided into a number of
 concurrent tasks. 
-<p>
 The core of FreeRTOS (and indeed any RTOS) is its kernel. 
 Refer to https://www.freertos.org/RTOS.html.<br>
 And to https://www.freertos.org/features.html for the API.<p>
 
 <h3>Demos</h3>
-The Agon port provides two demos, which you can find in 
-.\FreeRTOSv202212.01-LTS\FreeRTOS\Demo\DemoAgonC and
-.\FreeRTOSv202212.01-LTS\FreeRTOS\Demo\DemoAgonP.
-These are MOS application programs. You can copy the files DemoAgonC.bin and 
-DemoAgonP.bin to your SD card, load, and run them from the MOS prompt.
+The Agon port provides two demos, which are found in 
+./FreeRTOSv202212.01-LTS/FreeRTOS/Demo/DemoAgonC/ and
+./FreeRTOSv202212.01-LTS/FreeRTOS/Demo/DemoAgonP/.
+These are MOS application programs. 
+You can download the files 
+./FreeRTOSv202212.01-LTS/FreeRTOS/Demo/DemoAgonC/Debug/DemoAgonC.bin and 
+./FreeRTOSv202212.01-LTS/FreeRTOS/Demo/DemoAgonP/Debug/DemoAgonP.bin,
+copy them to your SD card, load, and run them from the MOS prompt.
 <p>
-DemoAgonP is a demo using pre-emptive multi-tasking. Two tasks run without
-knowledge of each other, each making MOS calls. The CPU (and MOS) is shared
-between them. Although they have no knowledge of each other, the second task
-will be blocked in making a MOS call until the first completes a MOS call.
-The tasks also make time delay calls, to better illustrate the execution model.
+DemoAgonP uses pre-emptive multi-tasking. Two tasks run without knowledge of 
+each other, each making MOS calls. The CPU (and MOS) is shared between them. 
+Although they have no knowledge of each other, a second task will be blocked 
+in making a MOS call until a first completes a MOS call.
+These example tasks also make time delay calls, to better illustrate the
+pre-emptive execution model.
 <p>
-DemoAgonC is a demo using cooperative multi-tasking. Two tasks run without
-explicit knowledge of each other, but in the knowledge other tasks also need
-CPU time. Since they complete a MOS call before yielding, neither will be 
-blocked by the other doing similar. These tasks do not delay, to illustrate
-the speed of FreeRTOS on Agon / MOS. 
+DemoAgonC uses cooperative multi-tasking. Two tasks run without explicit 
+knowledge of each other, but in the knowledge other tasks also need CPU time. 
+Since they complete a MOS call before yielding, neither will be blocked by the 
+other doing similar. 
+These example tasks do not make time delay calls, to better illustrate the 
+speed of FreeRTOS / MOS on Agon.
 
 <h2>Build</h2>
 To build this project you will need to install the Zilog II eZ80Acclaim! toolkit
