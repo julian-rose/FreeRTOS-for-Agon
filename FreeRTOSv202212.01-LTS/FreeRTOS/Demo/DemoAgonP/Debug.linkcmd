@@ -1,0 +1,83 @@
+; Linker Directive File for DEBUG build, DemoAgonP application
+;  based on Agon-projects-main->C->Hello World
+
+;  Notes:
+;   1. Unchecking project->settings->advanced->generate printfs inline, brings 
+;   in crtD.lib. ZDSII standard libraries use TEXT space (separate from CODE 
+;   space), so we must embed CHANGE TEXT = RAM so that TEXT is not located at 
+;   address $0000 (in ROM); and we need to link FPDUMY.asm (dummy floating 
+;   point) or fplibD.lib as printf calls __utod.
+;
+;   2. Nothing in a FreeRTOS/MOS application should be linked into "ROM". That
+;   is where MOS and the RST vectors reside and run. The following illustrates 
+;   memory space allocation for a FreeRTOS/MOS application, output from the 
+;   linker:
+;
+;     SPACE ALLOCATION:
+;     =================
+;
+;     Space                     Base         Top      Size      Used    Unused
+;     ------------------ ----------- ----------- --------- --------- ---------
+;     RAM                   D:040000    D:047197    80000H     703FH    78FC1H
+;                                               (   524288     28735    495553)
+;
+;     OUTPUT CHECKSUM
+;	...
+
+
+-FORMAT=OMF695,INTEL32
+-map -maxhexlen=64 -quiet -warnoverlap -xref -unresolved=fatal
+-sort ADDRESS=ascending -warn -debug -NOigcase
+
+; For Agon, ROM refers to the eZ80 128KB on-chip FLASH memory
+;  Nothing in a FreeRTOS/MOS application should be linked into "ROM"
+RANGE ROM $000000 : $01FFFF
+; For Agon, RAM refers to the on-board (off-chip) 512KB SRAM
+;  Everything in a FreeRTOS / MOS application should be linked into RAM
+RANGE RAM $040000 : $0BFFFF
+RANGE EXTIO $000000 : $00FFFF
+RANGE INTIO $000000 : $0000FF
+
+; CODE section is where user and FreeRTOS code goes
+CHANGE CODE = RAM
+; TEXT section is where ZDSII library code goes
+CHANGE TEXT = RAM
+; STRSECT is where ZDSII string constant data goes
+CHANGE STRSECT = RAM
+CHANGE DATA = RAM 
+
+ORDER CODE,TEXT,STRSECT,DATA
+
+
+DEFINE __low_bss = base of BSS
+DEFINE __len_bss = length of BSS
+
+; We define an area for HEAP memory in the linker
+;  refer to UM014425-1211 table 21
+;  __heapbot is the base of memory allocated to HEAP (referenced in sbrk.asm);
+;      make sure __heapbot lies above Top of RAM allocated in the compilation-
+;      resulting .map file
+;  __heaptop is the top of memory allocated to HEAP (referenced in sbrk.asm)
+DEFINE __heaptop =( highaddr of RAM + 1 )- $010000
+DEFINE __heapbot =( highaddr of RAM + 1 )- $020000
+
+
+"DemoAgonP"= \
+ ".\init.obj", \
+ ".\mosvec24.obj", \
+ ".\FPDUMY.obj", \
+ ".\main.obj", \
+ ".\croutine.obj", \
+ ".\event_groups.obj", \
+ ".\list.obj", \
+ ".\queue.obj", \
+ ".\stream_buffer.obj", \
+ ".\timers.obj", \
+ ".\port.obj", \
+ ".\tasks.obj", \
+ ".\heap_3.obj", \
+ "C:\Users\jrose\tech_stuff\retro\Zilog\eZ80\ZDSII_eZ80Acclaim!_5.3.5\lib\zilog\zsldevinitdummy.obj", \
+ "C:\Users\jrose\tech_stuff\retro\Zilog\eZ80\ZDSII_eZ80Acclaim!_5.3.5\lib\std\chelpD.lib", \
+ "C:\Users\jrose\tech_stuff\retro\Zilog\eZ80\ZDSII_eZ80Acclaim!_5.3.5\lib\std\crtD.lib", \
+ "C:\Users\jrose\tech_stuff\retro\Zilog\eZ80\ZDSII_eZ80Acclaim!_5.3.5\lib\std\crtSD.lib", \
+ "C:\Users\jrose\tech_stuff\retro\Zilog\eZ80\ZDSII_eZ80Acclaim!_5.3.5\lib\std\nokernelD.lib"

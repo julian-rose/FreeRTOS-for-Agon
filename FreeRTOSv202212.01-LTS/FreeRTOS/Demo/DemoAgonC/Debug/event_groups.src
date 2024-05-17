@@ -1,0 +1,3183 @@
+; Zilog eZ80 ANSI C Compiler Release 3.4
+; -noglobalopt -nolocalcse -optsize -nomodsect -reduceopt
+; -nopadbranch -debug -peephole -const=ROM 
+	FILE	"..\..\..\Source\event_groups.c"
+	.assume ADL=1
+.DEBUG "C"
+	SEGMENT CODE
+.BEGREC "NONAME0",6
+.DEFINE "quot"
+.VALUE 0
+.CLASS 8
+.TYPE 4
+.ENDEF
+.DEFINE "rem"
+.VALUE 3
+.CLASS 8
+.TYPE 4
+.ENDEF
+.ENDREC "NONAME0"
+.BEGREC "NONAME1",8
+.DEFINE "quot"
+.VALUE 0
+.CLASS 8
+.TYPE 5
+.ENDEF
+.DEFINE "rem"
+.VALUE 4
+.CLASS 8
+.TYPE 5
+.ENDEF
+.ENDREC "NONAME1"
+.BEGREC "header",6
+.DEFINE "s"
+.VALUE 0
+.CLASS 11
+.TAG "NONAME2"
+.TYPE 8
+.ENDEF
+.DEFINE "x"
+.VALUE 0
+.CLASS 11
+.TYPE 2
+.ENDEF
+.ENDREC "header"
+.BEGREC "NONAME2",6
+.DEFINE "ptr"
+.VALUE 0
+.CLASS 8
+.TAG "header"
+.TYPE 40
+.ENDEF
+.DEFINE "size"
+.VALUE 3
+.CLASS 8
+.TYPE 14
+.ENDEF
+.ENDREC "NONAME2"
+.BEGREC "HeapRegion",6
+.DEFINE "pucStartAddress"
+.VALUE 0
+.CLASS 8
+.TYPE 44
+.ENDEF
+.DEFINE "xSizeInBytes"
+.VALUE 3
+.CLASS 8
+.TYPE 14
+.ENDEF
+.ENDREC "HeapRegion"
+.BEGREC "xHeapStats",21
+.DEFINE "xAvailableHeapSpaceInBytes"
+.VALUE 0
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "xSizeOfLargestFreeBlockInBytes"
+.VALUE 3
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "xSizeOfSmallestFreeBlockInBytes"
+.VALUE 6
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "xNumberOfFreeBlocks"
+.VALUE 9
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "xMinimumEverFreeBytesRemaining"
+.VALUE 12
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "xNumberOfSuccessfulAllocations"
+.VALUE 15
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "xNumberOfSuccessfulFrees"
+.VALUE 18
+.CLASS 8
+.TYPE 14
+.ENDEF
+.ENDREC "xHeapStats"
+.BEGREC "xSTATIC_LIST_ITEM",16
+.DEFINE "xDummy2"
+.VALUE 0
+.CLASS 8
+.TYPE 15
+.ENDEF
+.DEFINE "pvDummy3"
+.VALUE 4
+.CLASS 8
+.DIM 4
+.TYPE 353
+.ENDEF
+.ENDREC "xSTATIC_LIST_ITEM"
+.BEGREC "xSTATIC_MINI_LIST_ITEM",10
+.DEFINE "xDummy2"
+.VALUE 0
+.CLASS 8
+.TYPE 15
+.ENDEF
+.DEFINE "pvDummy3"
+.VALUE 4
+.CLASS 8
+.DIM 2
+.TYPE 353
+.ENDEF
+.ENDREC "xSTATIC_MINI_LIST_ITEM"
+.BEGREC "xSTATIC_LIST",16
+.DEFINE "uxDummy2"
+.VALUE 0
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "pvDummy3"
+.VALUE 3
+.CLASS 8
+.TYPE 33
+.ENDEF
+.DEFINE "xDummy4"
+.VALUE 6
+.CLASS 8
+.TAG "xSTATIC_MINI_LIST_ITEM"
+.TYPE 8
+.ENDEF
+.ENDREC "xSTATIC_LIST"
+.BEGREC "xSTATIC_TCB",69
+.DEFINE "pxDummy1"
+.VALUE 0
+.CLASS 8
+.TYPE 33
+.ENDEF
+.DEFINE "xDummy3"
+.VALUE 3
+.CLASS 8
+.DIM 2
+.TAG "xSTATIC_LIST_ITEM"
+.TYPE 104
+.ENDEF
+.DEFINE "uxDummy5"
+.VALUE 35
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "pxDummy6"
+.VALUE 38
+.CLASS 8
+.TYPE 33
+.ENDEF
+.DEFINE "ucDummy7"
+.VALUE 41
+.CLASS 8
+.DIM 16
+.TYPE 108
+.ENDEF
+.DEFINE "uxDummy12"
+.VALUE 57
+.CLASS 8
+.DIM 2
+.TYPE 110
+.ENDEF
+.DEFINE "ulDummy18"
+.VALUE 63
+.CLASS 8
+.DIM 1
+.TYPE 111
+.ENDEF
+.DEFINE "ucDummy19"
+.VALUE 67
+.CLASS 8
+.DIM 1
+.TYPE 108
+.ENDEF
+.DEFINE "ucDummy21"
+.VALUE 68
+.CLASS 8
+.TYPE 12
+.ENDEF
+.ENDREC "xSTATIC_TCB"
+.BEGREC "xSTATIC_QUEUE",55
+.DEFINE "pvDummy1"
+.VALUE 0
+.CLASS 8
+.DIM 3
+.TYPE 353
+.ENDEF
+.DEFINE "u"
+.VALUE 9
+.CLASS 8
+.TAG "NONAME3"
+.TYPE 8
+.ENDEF
+.DEFINE "xDummy3"
+.VALUE 12
+.CLASS 8
+.DIM 2
+.TAG "xSTATIC_LIST"
+.TYPE 104
+.ENDEF
+.DEFINE "uxDummy4"
+.VALUE 44
+.CLASS 8
+.DIM 3
+.TYPE 110
+.ENDEF
+.DEFINE "ucDummy5"
+.VALUE 53
+.CLASS 8
+.DIM 2
+.TYPE 108
+.ENDEF
+.ENDREC "xSTATIC_QUEUE"
+.BEGREC "NONAME3",3
+.DEFINE "pvDummy2"
+.VALUE 0
+.CLASS 11
+.TYPE 33
+.ENDEF
+.DEFINE "uxDummy2"
+.VALUE 0
+.CLASS 11
+.TYPE 14
+.ENDEF
+.ENDREC "NONAME3"
+.BEGREC "xSTATIC_EVENT_GROUP",20
+.DEFINE "xDummy1"
+.VALUE 0
+.CLASS 8
+.TYPE 15
+.ENDEF
+.DEFINE "xDummy2"
+.VALUE 4
+.CLASS 8
+.TAG "xSTATIC_LIST"
+.TYPE 8
+.ENDEF
+.ENDREC "xSTATIC_EVENT_GROUP"
+.BEGREC "xSTATIC_TIMER",30
+.DEFINE "pvDummy1"
+.VALUE 0
+.CLASS 8
+.TYPE 33
+.ENDEF
+.DEFINE "xDummy2"
+.VALUE 3
+.CLASS 8
+.TAG "xSTATIC_LIST_ITEM"
+.TYPE 8
+.ENDEF
+.DEFINE "xDummy3"
+.VALUE 19
+.CLASS 8
+.TYPE 15
+.ENDEF
+.DEFINE "pvDummy5"
+.VALUE 23
+.CLASS 8
+.TYPE 33
+.ENDEF
+.DEFINE "pvDummy6"
+.VALUE 26
+.CLASS 8
+.TYPE 545
+.ENDEF
+.DEFINE "ucDummy8"
+.VALUE 29
+.CLASS 8
+.TYPE 12
+.ENDEF
+.ENDREC "xSTATIC_TIMER"
+.BEGREC "xSTATIC_STREAM_BUFFER",22
+.DEFINE "uxDummy1"
+.VALUE 0
+.CLASS 8
+.DIM 4
+.TYPE 110
+.ENDEF
+.DEFINE "pvDummy2"
+.VALUE 12
+.CLASS 8
+.DIM 3
+.TYPE 353
+.ENDEF
+.DEFINE "ucDummy3"
+.VALUE 21
+.CLASS 8
+.TYPE 12
+.ENDEF
+.ENDREC "xSTATIC_STREAM_BUFFER"
+.BEGREC "xLIST_ITEM",16
+.DEFINE "xItemValue"
+.VALUE 0
+.CLASS 8
+.TYPE 15
+.ENDEF
+.DEFINE "pxNext"
+.VALUE 4
+.CLASS 8
+.TAG "xLIST_ITEM"
+.TYPE 40
+.ENDEF
+.DEFINE "pxPrevious"
+.VALUE 7
+.CLASS 8
+.TAG "xLIST_ITEM"
+.TYPE 40
+.ENDEF
+.DEFINE "pvOwner"
+.VALUE 10
+.CLASS 8
+.TYPE 33
+.ENDEF
+.DEFINE "pvContainer"
+.VALUE 13
+.CLASS 8
+.TAG "xLIST"
+.TYPE 40
+.ENDEF
+.ENDREC "xLIST_ITEM"
+.BEGREC "xMINI_LIST_ITEM",10
+.DEFINE "xItemValue"
+.VALUE 0
+.CLASS 8
+.TYPE 15
+.ENDEF
+.DEFINE "pxNext"
+.VALUE 4
+.CLASS 8
+.TAG "xLIST_ITEM"
+.TYPE 40
+.ENDEF
+.DEFINE "pxPrevious"
+.VALUE 7
+.CLASS 8
+.TAG "xLIST_ITEM"
+.TYPE 40
+.ENDEF
+.ENDREC "xMINI_LIST_ITEM"
+.BEGREC "xLIST",16
+.DEFINE "uxNumberOfItems"
+.VALUE 0
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "pxIndex"
+.VALUE 3
+.CLASS 8
+.TAG "xLIST_ITEM"
+.TYPE 40
+.ENDEF
+.DEFINE "xListEnd"
+.VALUE 6
+.CLASS 8
+.TAG "xMINI_LIST_ITEM"
+.TYPE 8
+.ENDEF
+.ENDREC "xLIST"
+.BEGREC "xTIME_OUT",7
+.DEFINE "xOverflowCount"
+.VALUE 0
+.CLASS 8
+.TYPE 4
+.ENDEF
+.DEFINE "xTimeOnEntering"
+.VALUE 3
+.CLASS 8
+.TYPE 15
+.ENDEF
+.ENDREC "xTIME_OUT"
+.BEGREC "xMEMORY_REGION",11
+.DEFINE "pvBaseAddress"
+.VALUE 0
+.CLASS 8
+.TYPE 33
+.ENDEF
+.DEFINE "ulLengthInBytes"
+.VALUE 3
+.CLASS 8
+.TYPE 15
+.ENDEF
+.DEFINE "ulParameters"
+.VALUE 7
+.CLASS 8
+.TYPE 15
+.ENDEF
+.ENDREC "xMEMORY_REGION"
+.BEGREC "xTASK_PARAMETERS",29
+.DEFINE "pvTaskCode"
+.VALUE 0
+.CLASS 8
+.TYPE 545
+.ENDEF
+.DEFINE "pcName"
+.VALUE 3
+.CLASS 8
+.TYPE 194
+.ENDEF
+.DEFINE "usStackDepth"
+.VALUE 6
+.CLASS 8
+.TYPE 4
+.ENDEF
+.DEFINE "pvParameters"
+.VALUE 9
+.CLASS 8
+.TYPE 33
+.ENDEF
+.DEFINE "uxPriority"
+.VALUE 12
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "puxStackBuffer"
+.VALUE 15
+.CLASS 8
+.TYPE 46
+.ENDEF
+.DEFINE "xRegions"
+.VALUE 18
+.CLASS 8
+.DIM 1
+.TAG "xMEMORY_REGION"
+.TYPE 104
+.ENDEF
+.ENDREC "xTASK_PARAMETERS"
+.BEGREC "xTASK_STATUS",28
+.DEFINE "xHandle"
+.VALUE 0
+.CLASS 8
+.TAG "~tag"
+.TYPE 40
+.ENDEF
+.DEFINE "pcTaskName"
+.VALUE 3
+.CLASS 8
+.TYPE 194
+.ENDEF
+.DEFINE "xTaskNumber"
+.VALUE 6
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "eCurrentState"
+.VALUE 9
+.CLASS 8
+.TYPE 4
+.ENDEF
+.DEFINE "uxCurrentPriority"
+.VALUE 12
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "uxBasePriority"
+.VALUE 15
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "ulRunTimeCounter"
+.VALUE 18
+.CLASS 8
+.TYPE 15
+.ENDEF
+.DEFINE "pxStackBase"
+.VALUE 22
+.CLASS 8
+.TYPE 46
+.ENDEF
+.DEFINE "usStackHighWaterMark"
+.VALUE 25
+.CLASS 8
+.TYPE 4
+.ENDEF
+.ENDREC "xTASK_STATUS"
+;    1	/*
+;    2	 * FreeRTOS Kernel V10.5.1
+;    3	 * Copyright (C) 2021 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
+;    4	 *
+;    5	 * SPDX-License-Identifier: MIT
+;    6	 *
+;    7	 * Permission is hereby granted, free of charge, to any person obtaining a copy of
+;    8	 * this software and associated documentation files (the "Software"), to deal in
+;    9	 * the Software without restriction, including without limitation the rights to
+;   10	 * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+;   11	 * the Software, and to permit persons to whom the Software is furnished to do so,
+;   12	 * subject to the following conditions:
+;   13	 *
+;   14	 * The above copyright notice and this permission notice shall be included in all
+;   15	 * copies or substantial portions of the Software.
+;   16	 *
+;   17	 * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+;   18	 * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+;   19	 * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+;   20	 * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+;   21	 * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+;   22	 * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+;   23	 *
+;   24	 * https://www.FreeRTOS.org
+;   25	 * https://github.com/FreeRTOS
+;   26	 *
+;   27	 */
+;   28	
+;   29	/* Standard includes. */
+;   30	#include <stdlib.h>
+;   31	
+;   32	/* Defining MPU_WRAPPERS_INCLUDED_FROM_API_FILE prevents task.h from redefining
+;   33	 * all the API functions to use the MPU wrappers.  That should only be done when
+;   34	 * task.h is included from an application file. */
+;   35	#define MPU_WRAPPERS_INCLUDED_FROM_API_FILE
+;   36	
+;   37	/* FreeRTOS includes. */
+;   38	#include "FreeRTOS.h"
+;   39	#include "task.h"
+;   40	#include "timers.h"
+;   41	#include "event_groups.h"
+;   42	
+;   43	/* Lint e961, e750 and e9021 are suppressed as a MISRA exception justified
+;   44	 * because the MPU ports require MPU_WRAPPERS_INCLUDED_FROM_API_FILE to be defined
+;   45	 * for the header files above, but not in this file, in order to generate the
+;   46	 * correct privileged Vs unprivileged linkage and placement. */
+;   47	#undef MPU_WRAPPERS_INCLUDED_FROM_API_FILE /*lint !e961 !e750 !e9021 See comment above. */
+;   48	
+;   49	/* The following bit fields convey control information in a task's event list
+;   50	 * item value.  It is important they don't clash with the
+;   51	 * taskEVENT_LIST_ITEM_VALUE_IN_USE definition. */
+;   52	#if configUSE_16_BIT_TICKS == 1
+;   53	    #define eventCLEAR_EVENTS_ON_EXIT_BIT    0x0100U
+;   54	    #define eventUNBLOCKED_DUE_TO_BIT_SET    0x0200U
+;   55	    #define eventWAIT_FOR_ALL_BITS           0x0400U
+;   56	    #define eventEVENT_BITS_CONTROL_BYTES    0xff00U
+;   57	#else
+;   58	    #define eventCLEAR_EVENTS_ON_EXIT_BIT    0x01000000UL
+;   59	    #define eventUNBLOCKED_DUE_TO_BIT_SET    0x02000000UL
+;   60	    #define eventWAIT_FOR_ALL_BITS           0x04000000UL
+;   61	    #define eventEVENT_BITS_CONTROL_BYTES    0xff000000UL
+;   62	#endif
+;   63	
+;   64	typedef struct EventGroupDef_t
+;   65	{
+;   66	    EventBits_t uxEventBits;
+;   67	    List_t xTasksWaitingForBits; /*< List of tasks waiting for a bit to be set. */
+;   68	
+;   69	    #if ( configUSE_TRACE_FACILITY == 1 )
+;   70	        UBaseType_t uxEventGroupNumber;
+;   71	    #endif
+;   72	
+;   73	    #if ( ( configSUPPORT_STATIC_ALLOCATION == 1 ) && ( configSUPPORT_DYNAMIC_ALLOCATION == 1 ) )
+;   74	        uint8_t ucStaticallyAllocated; /*< Set to pdTRUE if the event group is statically allocated to ensure no attempt is made to free the memory. */
+;   75	    #endif
+;   76	} EventGroup_t;
+.BEGREC "EventGroupDef_t",20
+.DEFINE "uxEventBits"
+.VALUE 0
+.CLASS 8
+.TYPE 15
+.ENDEF
+.DEFINE "xTasksWaitingForBits"
+.VALUE 4
+.CLASS 8
+.TAG "xLIST"
+.TYPE 8
+.ENDEF
+.ENDREC "EventGroupDef_t"
+;   77	
+;   78	/*-----------------------------------------------------------*/
+;   79	
+;   80	/*
+;   81	 * Test the bits set in uxCurrentEventBits to see if the wait condition is met.
+;   82	 * The wait condition is defined by xWaitForAllBits.  If xWaitForAllBits is
+;   83	 * pdTRUE then the wait condition is met if all the bits set in uxBitsToWaitFor
+;   84	 * are also set in uxCurrentEventBits.  If xWaitForAllBits is pdFALSE then the
+;   85	 * wait condition is met if any of the bits set in uxBitsToWait for are also set
+;   86	 * in uxCurrentEventBits.
+;   87	 */
+;   88	static BaseType_t prvTestWaitCondition( const EventBits_t uxCurrentEventBits,
+;   89	                                        const EventBits_t uxBitsToWaitFor,
+;   90	                                        const BaseType_t xWaitForAllBits ) PRIVILEGED_FUNCTION;
+;   91	
+;   92	/*-----------------------------------------------------------*/
+;   93	
+;   94	#if ( configSUPPORT_STATIC_ALLOCATION == 1 )
+;   95	
+;   96	    EventGroupHandle_t xEventGroupCreateStatic( StaticEventGroup_t * pxEventGroupBuffer )
+;   97	    {
+;   98	        EventGroup_t * pxEventBits;
+;   99	
+;  100	        /* A StaticEventGroup_t object must be provided. */
+;  101	        configASSERT( pxEventGroupBuffer );
+;  102	
+;  103	        #if ( configASSERT_DEFINED == 1 )
+;  104	        {
+;  105	            /* Sanity check that the size of the structure used to declare a
+;  106	             * variable of type StaticEventGroup_t equals the size of the real
+;  107	             * event group structure. */
+;  108	            volatile size_t xSize = sizeof( StaticEventGroup_t );
+;  109	            configASSERT( xSize == sizeof( EventGroup_t ) );
+;  110	        } /*lint !e529 xSize is referenced if configASSERT() is defined. */
+;  111	        #endif /* configASSERT_DEFINED */
+;  112	
+;  113	        /* The user has provided a statically allocated event group - use it. */
+;  114	        pxEventBits = ( EventGroup_t * ) pxEventGroupBuffer; /*lint !e740 !e9087 EventGroup_t and StaticEventGroup_t are deliberately aliased for data hiding purposes and guaranteed to have the same size and alignment requirement - checked by configASSERT(). */
+;  115	
+;  116	        if( pxEventBits != NULL )
+;  117	        {
+;  118	            pxEventBits->uxEventBits = 0;
+;  119	            vListInitialise( &( pxEventBits->xTasksWaitingForBits ) );
+;  120	
+;  121	            #if ( configSUPPORT_DYNAMIC_ALLOCATION == 1 )
+;  122	            {
+;  123	                /* Both static and dynamic allocation can be used, so note that
+;  124	                 * this event group was created statically in case the event group
+;  125	                 * is later deleted. */
+;  126	                pxEventBits->ucStaticallyAllocated = pdTRUE;
+;  127	            }
+;  128	            #endif /* configSUPPORT_DYNAMIC_ALLOCATION */
+;  129	
+;  130	            traceEVENT_GROUP_CREATE( pxEventBits );
+;  131	        }
+;  132	        else
+;  133	        {
+;  134	            /* xEventGroupCreateStatic should only ever be called with
+;  135	             * pxEventGroupBuffer pointing to a pre-allocated (compile time
+;  136	             * allocated) StaticEventGroup_t variable. */
+;  137	            traceEVENT_GROUP_CREATE_FAILED();
+;  138	        }
+;  139	
+;  140	        return pxEventBits;
+;  141	    }
+;  142	
+;  143	#endif /* configSUPPORT_STATIC_ALLOCATION */
+;  144	/*-----------------------------------------------------------*/
+;  145	
+;  146	#if ( configSUPPORT_DYNAMIC_ALLOCATION == 1 )
+;  147	
+;  148	    EventGroupHandle_t xEventGroupCreate( void )
+;  149	    {
+_xEventGroupCreate:
+.DEFINE "_xEventGroupCreate"
+
+.VALUE _xEventGroupCreate
+
+.CLASS 2
+
+.TAG "EventGroupDef_t"
+
+.TYPE 328
+
+.ENDEF
+
+.BEGFUNC "xEventGroupCreate",149,"_xEventGroupCreate"
+
+.LINE 149
+
+.DEFINE "pxEventBits"
+
+.CLASS 65
+
+.VALUE -3
+
+.TAG "EventGroupDef_t"
+
+.TYPE 40
+
+.ENDEF
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+	PUSH	BC
+;  150	        EventGroup_t * pxEventBits;
+;  151	
+;  152	        /* Allocate the event group.  Justification for MISRA deviation as
+;  153	         * follows:  pvPortMalloc() always ensures returned memory blocks are
+;  154	         * aligned per the requirements of the MCU stack.  In this case
+;  155	         * pvPortMalloc() must return a pointer that is guaranteed to meet the
+;  156	         * alignment requirements of the EventGroup_t structure - which (if you
+;  157	         * follow it through) is the alignment requirements of the TickType_t type
+;  158	         * (EventBits_t being of TickType_t itself).  Therefore, whenever the
+;  159	         * stack alignment requirements are greater than or equal to the
+;  160	         * TickType_t alignment requirements the cast is safe.  In other cases,
+;  161	         * where the natural word size of the architecture is less than
+;  162	         * sizeof( TickType_t ), the TickType_t variables will be accessed in two
+;  163	         * or more reads operations, and the alignment requirements is only that
+;  164	         * of each individual read. */
+;  165	        pxEventBits = ( EventGroup_t * ) pvPortMalloc( sizeof( EventGroup_t ) ); /*lint !e9087 !e9079 see comment above. */
+.LINE 165
+
+	LD	BC,20
+	PUSH	BC
+	CALL	_pvPortMalloc
+	POP	BC
+	LD	(IX+%FFFFFFFD),HL
+;  166	
+;  167	        if( pxEventBits != NULL )
+.LINE 167
+
+	LD	HL,(IX+%FFFFFFFD)
+	CALL	__icmpzero
+	JR	Z,L_1
+;  168	        {
+;  169	            pxEventBits->uxEventBits = 0;
+.LINE 169
+
+	LD	BC,0
+	LD	IY,(IX+%FFFFFFFD)
+	LD	(IY+%0),BC
+	LD	(IY+%3),%0
+;  170	            vListInitialise( &( pxEventBits->xTasksWaitingForBits ) );
+.LINE 170
+
+	LD	IY,(IX+%FFFFFFFD)
+	PEA	IY+%4
+	CALL	_vListInitialise
+	POP	BC
+;  171	
+;  172	            #if ( configSUPPORT_STATIC_ALLOCATION == 1 )
+;  173	            {
+;  174	                /* Both static and dynamic allocation can be used, so note this
+;  175	                 * event group was allocated statically in case the event group is
+;  176	                 * later deleted. */
+;  177	                pxEventBits->ucStaticallyAllocated = pdFALSE;
+;  178	            }
+;  179	            #endif /* configSUPPORT_STATIC_ALLOCATION */
+;  180	
+;  181	            traceEVENT_GROUP_CREATE( pxEventBits );
+;  182	        }
+;  183	        else
+L_1:
+.LINE 183
+
+;  184	        {
+;  185	            traceEVENT_GROUP_CREATE_FAILED(); /*lint !e9063 Else branch only exists to allow tracing and does not generate code if trace macros are not defined. */
+;  186	        }
+;  187	
+;  188	        return pxEventBits;
+.LINE 188
+
+	LD	HL,(IX+%FFFFFFFD)
+;  189	    }
+.LINE 189
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _xEventGroupCreate ***************************
+;Name                         Addr/Register   Size   Type
+;_vListInitialise                    IMPORT  -----   function
+;_pvPortMalloc                       IMPORT  -----   function
+;pxEventBits                           IX-3      3   variable
+
+
+; Stack Frame Size: 9 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "xEventGroupCreate",189,"_xEventGroupCreate"
+;  190	
+;  191	#endif /* configSUPPORT_DYNAMIC_ALLOCATION */
+;  192	/*-----------------------------------------------------------*/
+;  193	
+;  194	EventBits_t xEventGroupSync( EventGroupHandle_t xEventGroup,
+;  195	                             const EventBits_t uxBitsToSet,
+;  196	                             const EventBits_t uxBitsToWaitFor,
+;  197	                             TickType_t xTicksToWait )
+;  198	{
+_xEventGroupSync:
+.DEFINE "_xEventGroupSync"
+
+.VALUE _xEventGroupSync
+
+.CLASS 2
+
+.TYPE 79
+
+.ENDEF
+
+.BEGFUNC "xEventGroupSync",198,"_xEventGroupSync"
+
+.LINE 198
+
+.DEFINE "xEventGroup"
+
+.CLASS 65
+
+.VALUE 6
+
+.TAG "EventGroupDef_t"
+
+.TYPE 40
+
+.ENDEF
+
+.DEFINE "uxBitsToSet"
+
+.CLASS 65
+
+.VALUE 9
+
+.TYPE 15
+
+.ENDEF
+
+.DEFINE "uxBitsToWaitFor"
+
+.CLASS 65
+
+.VALUE 15
+
+.TYPE 15
+
+.ENDEF
+
+.DEFINE "xTicksToWait"
+
+.CLASS 65
+
+.VALUE 21
+
+.TYPE 15
+
+.ENDEF
+
+.DEFINE "uxReturn"
+
+.CLASS 65
+
+.VALUE -4
+
+.TYPE 15
+
+.ENDEF
+
+.DEFINE "pxEventBits"
+
+.CLASS 65
+
+.VALUE -7
+
+.TAG "EventGroupDef_t"
+
+.TYPE 40
+
+.ENDEF
+
+.DEFINE "xTimeoutOccurred"
+
+.CLASS 65
+
+.VALUE -10
+
+.TYPE 4
+
+.ENDEF
+
+.DEFINE "xAlreadyYielded"
+
+.CLASS 65
+
+.VALUE -13
+
+.TYPE 4
+
+.ENDEF
+
+.DEFINE "uxOriginalBitValue"
+
+.CLASS 65
+
+.VALUE -17
+
+.TYPE 15
+
+.ENDEF
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+	LEA	HL,IX+%FFFFFFEF
+	LD	SP,HL
+;  199	    EventBits_t uxOriginalBitValue, uxReturn;
+;  200	    EventGroup_t * pxEventBits = xEventGroup;
+.LINE 200
+
+	LD	BC,(IX+%6)
+	LD	(IX+%FFFFFFF9),BC
+;  201	    BaseType_t xAlreadyYielded;
+;  202	    BaseType_t xTimeoutOccurred = pdFALSE;
+.LINE 202
+
+	LD	BC,0
+	LD	(IX+%FFFFFFF6),BC
+;  203	
+;  204	    configASSERT( ( uxBitsToWaitFor & eventEVENT_BITS_CONTROL_BYTES ) == 0 );
+;  205	    configASSERT( uxBitsToWaitFor != 0 );
+;  206	    #if ( ( INCLUDE_xTaskGetSchedulerState == 1 ) || ( configUSE_TIMERS == 1 ) )
+;  207	    {
+;  208	        configASSERT( !( ( xTaskGetSchedulerState() == taskSCHEDULER_SUSPENDED ) && ( xTicksToWait != 0 ) ) );
+;  209	    }
+;  210	    #endif
+;  211	
+;  212	    vTaskSuspendAll();
+.LINE 212
+
+	CALL	_vTaskSuspendAll
+;  213	    {
+;  214	        uxOriginalBitValue = pxEventBits->uxEventBits;
+.LINE 214
+
+	LD	IY,(IX+%FFFFFFF9)
+	LD	BC,(IY+%0)
+	LD	A,(IY+%3)
+	LD	(IX+%FFFFFFEF),BC
+	LD	(IX+%FFFFFFF2),A
+;  215	
+;  216	        ( void ) xEventGroupSetBits( xEventGroup, uxBitsToSet );
+.LINE 216
+
+	LD	C,(IX+%C)
+	LD	B,%0
+	PUSH	BC
+	LD	BC,(IX+%9)
+	PUSH	BC
+	LD	BC,(IX+%6)
+	PUSH	BC
+	CALL	_xEventGroupSetBits
+	POP	BC
+	POP	BC
+	POP	BC
+;  217	
+;  218	        if( ( ( uxOriginalBitValue | uxBitsToSet ) & uxBitsToWaitFor ) == uxBitsToWaitFor )
+.LINE 218
+
+	LD	HL,(IX+%9)
+	LD	E,(IX+%C)
+	LD	BC,(IX+%FFFFFFEF)
+	LD	A,(IX+%FFFFFFF2)
+	CALL	__lor
+	LD	BC,(IX+%F)
+	LD	A,(IX+%12)
+	CALL	__land
+	LD	BC,(IX+%F)
+	LD	A,(IX+%12)
+	CALL	__lcmpu
+	JR	NZ,L_7
+;  219	        {
+;  220	            /* All the rendezvous bits are now set - no need to block. */
+;  221	            uxReturn = ( uxOriginalBitValue | uxBitsToSet );
+.LINE 221
+
+	LD	HL,(IX+%9)
+	LD	E,(IX+%C)
+	LD	BC,(IX+%FFFFFFEF)
+	LD	A,(IX+%FFFFFFF2)
+	CALL	__lor
+	LD	(IX+%FFFFFFFC),HL
+	LD	(IX+%FFFFFFFF),E
+;  222	
+;  223	            /* Rendezvous always clear the bits.  They will have been cleared
+;  224	             * already unless this is the only task in the rendezvous. */
+;  225	            pxEventBits->uxEventBits &= ~uxBitsToWaitFor;
+.LINE 225
+
+	LD	HL,(IX+%F)
+	LD	E,(IX+%12)
+	CALL	__lnot
+	LD	A,E
+	LD	BC,HL
+	LD	IY,(IX+%FFFFFFF9)
+	LD	HL,(IY+%0)
+	LD	E,(IY+%3)
+	CALL	__land
+	LD	(IY+%0),HL
+	LD	(IY+%3),E
+;  226	
+;  227	            xTicksToWait = 0;
+.LINE 227
+
+	LD	BC,0
+	XOR	A,A
+	LD	(IX+%15),BC
+	LD	(IX+%18),A
+;  228	        }
+;  229	        else
+.LINE 229
+
+	JR	L_8
+L_7:
+;  230	        {
+;  231	            if( xTicksToWait != ( TickType_t ) 0 )
+.LINE 231
+
+	LD	HL,(IX+%15)
+	LD	E,(IX+%18)
+	CALL	__lcmpzero
+	JR	Z,L_5
+;  232	            {
+;  233	                traceEVENT_GROUP_SYNC_BLOCK( xEventGroup, uxBitsToSet, uxBitsToWaitFor );
+;  234	
+;  235	                /* Store the bits that the calling task is waiting for in the
+;  236	                 * task's event list item so the kernel knows when a match is
+;  237	                 * found.  Then enter the blocked state. */
+;  238	                vTaskPlaceOnUnorderedEventList( &( pxEventBits->xTasksWaitingForBits ), ( uxBitsToWaitFor | eventCLEAR_EVENTS_ON_EXIT_BIT | eventWAIT_FOR_ALL_BITS ), xTicksToWait );
+.LINE 238
+
+	LD	C,(IX+%18)
+	LD	B,%0
+	PUSH	BC
+	LD	BC,(IX+%15)
+	PUSH	BC
+	LD	HL,(IX+%F)
+	LD	E,(IX+%12)
+	LD	BC,0
+	LD	A,%1
+	CALL	__lor
+	LD	BC,0
+	LD	A,%4
+	CALL	__lor
+	LD	C,E
+	LD	B,%0
+	PUSH	BC
+	PUSH	HL
+	LD	IY,(IX+%FFFFFFF9)
+	PEA	IY+%4
+	CALL	_vTaskPlaceOnUnorderedEventList
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+;  239	
+;  240	                /* This assignment is obsolete as uxReturn will get set after
+;  241	                 * the task unblocks, but some compilers mistakenly generate a
+;  242	                 * warning about uxReturn being returned without being set if the
+;  243	                 * assignment is omitted. */
+;  244	                uxReturn = 0;
+.LINE 244
+
+	LD	BC,0
+	XOR	A,A
+	LD	(IX+%FFFFFFFC),BC
+	LD	(IX+%FFFFFFFF),A
+;  245	            }
+;  246	            else
+.LINE 246
+
+	JR	L_8
+L_5:
+;  247	            {
+;  248	                /* The rendezvous bits were not set, but no block time was
+;  249	                 * specified - just return the current event bit value. */
+;  250	                uxReturn = pxEventBits->uxEventBits;
+.LINE 250
+
+	LD	IY,(IX+%FFFFFFF9)
+	LD	BC,(IY+%0)
+	LD	A,(IY+%3)
+	LD	(IX+%FFFFFFFC),BC
+	LD	(IX+%FFFFFFFF),A
+;  251	                xTimeoutOccurred = pdTRUE;
+.LINE 251
+
+	LD	BC,1
+	LD	(IX+%FFFFFFF6),BC
+;  252	            }
+;  253	        }
+;  254	    }
+L_8:
+.LINE 254
+
+;  255	    xAlreadyYielded = xTaskResumeAll();
+.LINE 255
+
+	CALL	_xTaskResumeAll
+	LD	(IX+%FFFFFFF3),HL
+;  256	
+;  257	    if( xTicksToWait != ( TickType_t ) 0 )
+.LINE 257
+
+	LD	HL,(IX+%15)
+	LD	E,(IX+%18)
+	CALL	__lcmpzero
+	JR	Z,L_19
+;  258	    {
+;  259	        if( xAlreadyYielded == pdFALSE )
+.LINE 259
+
+	LD	HL,(IX+%FFFFFFF3)
+	CALL	__icmpzero
+	JR	NZ,L_10
+;  260	        {
+;  261	            portYIELD_WITHIN_API();
+.LINE 261
+
+	CALL	_vPortYield
+;  262	        }
+;  263	        else
+L_10:
+.LINE 263
+
+;  264	        {
+;  265	            mtCOVERAGE_TEST_MARKER();
+;  266	        }
+;  267	
+;  268	        /* The task blocked to wait for its required bits to be set - at this
+;  269	         * point either the required bits were set or the block time expired.  If
+;  270	         * the required bits were set they will have been stored in the task's
+;  271	         * event list item, and they should now be retrieved then cleared. */
+;  272	        uxReturn = uxTaskResetEventItemValue();
+.LINE 272
+
+	CALL	_uxTaskResetEventItemValue
+	LD	(IX+%FFFFFFFC),HL
+	LD	(IX+%FFFFFFFF),E
+;  273	
+;  274	        if( ( uxReturn & eventUNBLOCKED_DUE_TO_BIT_SET ) == ( EventBits_t ) 0 )
+.LINE 274
+
+	LD	HL,(IX+%FFFFFFFC)
+	LD	E,(IX+%FFFFFFFF)
+	LD	BC,0
+	LD	A,%2
+	CALL	__land
+	CALL	__lcmpzero
+	JR	NZ,L_16
+;  275	        {
+;  276	            /* The task timed out, just return the current event bit value. */
+;  277	            taskENTER_CRITICAL();
+.LINE 277
+
+	 di
+;  278	            {
+;  279	                uxReturn = pxEventBits->uxEventBits;
+.LINE 279
+
+	LD	IY,(IX+%FFFFFFF9)
+	LD	BC,(IY+%0)
+	LD	A,(IY+%3)
+	LD	(IX+%FFFFFFFC),BC
+	LD	(IX+%FFFFFFFF),A
+;  280	
+;  281	                /* Although the task got here because it timed out before the
+;  282	                 * bits it was waiting for were set, it is possible that since it
+;  283	                 * unblocked another task has set the bits.  If this is the case
+;  284	                 * then it needs to clear the bits before exiting. */
+;  285	                if( ( uxReturn & uxBitsToWaitFor ) == uxBitsToWaitFor )
+.LINE 285
+
+	LD	HL,(IX+%FFFFFFFC)
+	LD	E,(IX+%FFFFFFFF)
+	LD	BC,(IX+%F)
+	LD	A,(IX+%12)
+	CALL	__land
+	LD	BC,(IX+%F)
+	LD	A,(IX+%12)
+	CALL	__lcmpu
+	JR	NZ,L_13
+;  286	                {
+;  287	                    pxEventBits->uxEventBits &= ~uxBitsToWaitFor;
+.LINE 287
+
+	LD	HL,(IX+%F)
+	LD	E,(IX+%12)
+	CALL	__lnot
+	LD	A,E
+	LD	BC,HL
+	LD	IY,(IX+%FFFFFFF9)
+	LD	HL,(IY+%0)
+	LD	E,(IY+%3)
+	CALL	__land
+	LD	(IY+%0),HL
+	LD	(IY+%3),E
+;  288	                }
+;  289	                else
+L_13:
+.LINE 289
+
+;  290	                {
+;  291	                    mtCOVERAGE_TEST_MARKER();
+;  292	                }
+;  293	            }
+;  294	            taskEXIT_CRITICAL();
+.LINE 294
+
+	 ei
+;  295	
+;  296	            xTimeoutOccurred = pdTRUE;
+.LINE 296
+
+	LD	BC,1
+	LD	(IX+%FFFFFFF6),BC
+;  297	        }
+;  298	        else
+L_16:
+.LINE 298
+
+;  299	        {
+;  300	            /* The task unblocked because the bits were set. */
+;  301	        }
+;  302	
+;  303	        /* Control bits might be set as the task had blocked should not be
+;  304	         * returned. */
+;  305	        uxReturn &= ~eventEVENT_BITS_CONTROL_BYTES;
+.LINE 305
+
+	LD	BC,(IX+%FFFFFFFC)
+	XOR	A,A
+	LD	(IX+%FFFFFFFC),BC
+	LD	(IX+%FFFFFFFF),A
+;  306	    }
+L_19:
+.LINE 306
+
+;  307	
+;  308	    traceEVENT_GROUP_SYNC_END( xEventGroup, uxBitsToSet, uxBitsToWaitFor, xTimeoutOccurred );
+;  309	
+;  310	    /* Prevent compiler warnings when trace macros are not used. */
+;  311	    ( void ) xTimeoutOccurred;
+;  312	
+;  313	    return uxReturn;
+.LINE 313
+
+	LD	HL,(IX+%FFFFFFFC)
+	LD	E,(IX+%FFFFFFFF)
+;  314	}
+.LINE 314
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _xEventGroupSync ***************************
+;Name                         Addr/Register   Size   Type
+;_uxTaskResetEventItemValue          IMPORT  -----   function
+;_vPortYield                         IMPORT  -----   function
+;_xTaskResumeAll                     IMPORT  -----   function
+;_vTaskPlaceOnUnorderedEventList      IMPORT  -----   function
+;_xEventGroupSetBits                 IMPORT  -----   function
+;_vTaskSuspendAll                    IMPORT  -----   function
+;uxOriginalBitValue                   IX-17      4   variable
+;xAlreadyYielded                      IX-13      3   variable
+;xTimeoutOccurred                     IX-10      3   variable
+;pxEventBits                           IX-7      3   variable
+;uxReturn                              IX-4      4   variable
+;xTicksToWait                         IX+21      4   parameter
+;uxBitsToWaitFor                      IX+15      4   parameter
+;uxBitsToSet                           IX+9      4   parameter
+;xEventGroup                           IX+6      3   parameter
+
+
+; Stack Frame Size: 44 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "xEventGroupSync",314,"_xEventGroupSync"
+;  315	/*-----------------------------------------------------------*/
+;  316	
+;  317	EventBits_t xEventGroupWaitBits( EventGroupHandle_t xEventGroup,
+;  318	                                 const EventBits_t uxBitsToWaitFor,
+;  319	                                 const BaseType_t xClearOnExit,
+;  320	                                 const BaseType_t xWaitForAllBits,
+;  321	                                 TickType_t xTicksToWait )
+;  322	{
+_xEventGroupWaitBits:
+.DEFINE "_xEventGroupWaitBits"
+
+.VALUE _xEventGroupWaitBits
+
+.CLASS 2
+
+.TYPE 79
+
+.ENDEF
+
+.BEGFUNC "xEventGroupWaitBits",322,"_xEventGroupWaitBits"
+
+.LINE 322
+
+.DEFINE "xEventGroup"
+
+.CLASS 65
+
+.VALUE 6
+
+.TAG "EventGroupDef_t"
+
+.TYPE 40
+
+.ENDEF
+
+.DEFINE "uxBitsToWaitFor"
+
+.CLASS 65
+
+.VALUE 9
+
+.TYPE 15
+
+.ENDEF
+
+.DEFINE "xClearOnExit"
+
+.CLASS 65
+
+.VALUE 15
+
+.TYPE 4
+
+.ENDEF
+
+.DEFINE "xWaitForAllBits"
+
+.CLASS 65
+
+.VALUE 18
+
+.TYPE 4
+
+.ENDEF
+
+.DEFINE "xTicksToWait"
+
+.CLASS 65
+
+.VALUE 21
+
+.TYPE 15
+
+.ENDEF
+
+.DEFINE "uxReturn"
+
+.CLASS 65
+
+.VALUE -4
+
+.TYPE 15
+
+.ENDEF
+
+.DEFINE "pxEventBits"
+
+.CLASS 65
+
+.VALUE -7
+
+.TAG "EventGroupDef_t"
+
+.TYPE 40
+
+.ENDEF
+
+.DEFINE "uxControlBits"
+
+.CLASS 65
+
+.VALUE -11
+
+.TYPE 15
+
+.ENDEF
+
+.DEFINE "xTimeoutOccurred"
+
+.CLASS 65
+
+.VALUE -14
+
+.TYPE 4
+
+.ENDEF
+
+.DEFINE "uxCurrentEventBits"
+
+.CLASS 65
+
+.VALUE -18
+
+.TYPE 15
+
+.ENDEF
+
+.DEFINE "xWaitConditionMet"
+
+.CLASS 65
+
+.VALUE -21
+
+.TYPE 4
+
+.ENDEF
+
+.DEFINE "xAlreadyYielded"
+
+.CLASS 65
+
+.VALUE -24
+
+.TYPE 4
+
+.ENDEF
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+	LEA	HL,IX+%FFFFFFE8
+	LD	SP,HL
+;  323	    EventGroup_t * pxEventBits = xEventGroup;
+.LINE 323
+
+	LD	BC,(IX+%6)
+	LD	(IX+%FFFFFFF9),BC
+;  324	    EventBits_t uxReturn, uxControlBits = 0;
+.LINE 324
+
+	LD	BC,0
+	XOR	A,A
+	LD	(IX+%FFFFFFF5),BC
+	LD	(IX+%FFFFFFF8),A
+;  325	    BaseType_t xWaitConditionMet, xAlreadyYielded;
+;  326	    BaseType_t xTimeoutOccurred = pdFALSE;
+.LINE 326
+
+	LD	BC,0
+	LD	(IX+%FFFFFFF2),BC
+;  327	
+;  328	    /* Check the user is not attempting to wait on the bits used by the kernel
+;  329	     * itself, and that at least one bit is being requested. */
+;  330	    configASSERT( xEventGroup );
+;  331	    configASSERT( ( uxBitsToWaitFor & eventEVENT_BITS_CONTROL_BYTES ) == 0 );
+;  332	    configASSERT( uxBitsToWaitFor != 0 );
+;  333	    #if ( ( INCLUDE_xTaskGetSchedulerState == 1 ) || ( configUSE_TIMERS == 1 ) )
+;  334	    {
+;  335	        configASSERT( !( ( xTaskGetSchedulerState() == taskSCHEDULER_SUSPENDED ) && ( xTicksToWait != 0 ) ) );
+;  336	    }
+;  337	    #endif
+;  338	
+;  339	    vTaskSuspendAll();
+.LINE 339
+
+	CALL	_vTaskSuspendAll
+;  340	    {
+;  341	        const EventBits_t uxCurrentEventBits = pxEventBits->uxEventBits;
+.LINE 341
+
+	LD	IY,(IX+%FFFFFFF9)
+	LD	BC,(IY+%0)
+	LD	A,(IY+%3)
+	LD	(IX+%FFFFFFEE),BC
+	LD	(IX+%FFFFFFF1),A
+;  342	
+;  343	        /* Check to see if the wait condition is already met or not. */
+;  344	        xWaitConditionMet = prvTestWaitCondition( uxCurrentEventBits, uxBitsToWaitFor, xWaitForAllBits );
+.LINE 344
+
+	LD	BC,(IX+%12)
+	PUSH	BC
+	LD	C,(IX+%C)
+	LD	B,%0
+	PUSH	BC
+	LD	BC,(IX+%9)
+	PUSH	BC
+	LD	C,(IX+%FFFFFFF1)
+	LD	B,%0
+	PUSH	BC
+	LD	BC,(IX+%FFFFFFEE)
+	PUSH	BC
+	CALL	_prvTestWaitCondition
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+	LD	(IX+%FFFFFFEB),HL
+;  345	
+;  346	        if( xWaitConditionMet != pdFALSE )
+.LINE 346
+
+	LD	HL,(IX+%FFFFFFEB)
+	CALL	__icmpzero
+	JR	Z,L_32
+;  347	        {
+;  348	            /* The wait condition has already been met so there is no need to
+;  349	             * block. */
+;  350	            uxReturn = uxCurrentEventBits;
+.LINE 350
+
+	LD	BC,(IX+%FFFFFFEE)
+	LD	A,(IX+%FFFFFFF1)
+	LD	(IX+%FFFFFFFC),BC
+	LD	(IX+%FFFFFFFF),A
+;  351	            xTicksToWait = ( TickType_t ) 0;
+.LINE 351
+
+	LD	BC,0
+	XOR	A,A
+	LD	(IX+%15),BC
+	LD	(IX+%18),A
+;  352	
+;  353	            /* Clear the wait bits if requested to do so. */
+;  354	            if( xClearOnExit != pdFALSE )
+.LINE 354
+
+	LD	HL,(IX+%F)
+	CALL	__icmpzero
+	JR	Z,L_33
+;  355	            {
+;  356	                pxEventBits->uxEventBits &= ~uxBitsToWaitFor;
+.LINE 356
+
+	LD	HL,(IX+%9)
+	LD	E,(IX+%C)
+	CALL	__lnot
+	LD	A,E
+	LD	BC,HL
+	LD	IY,(IX+%FFFFFFF9)
+	LD	HL,(IY+%0)
+	LD	E,(IY+%3)
+	CALL	__land
+	LD	(IY+%0),HL
+	LD	(IY+%3),E
+;  357	            }
+;  358	            else
+.LINE 358
+
+	JR	L_33
+;  359	            {
+;  360	                mtCOVERAGE_TEST_MARKER();
+;  361	            }
+;  362	        }
+;  363	        else if( xTicksToWait == ( TickType_t ) 0 )
+.LINE 363
+
+L_32:
+	LD	HL,(IX+%15)
+	LD	E,(IX+%18)
+	CALL	__lcmpzero
+	JR	NZ,L_30
+;  364	        {
+;  365	            /* The wait condition has not been met, but no block time was
+;  366	             * specified, so just return the current value. */
+;  367	            uxReturn = uxCurrentEventBits;
+.LINE 367
+
+	LD	BC,(IX+%FFFFFFEE)
+	LD	A,(IX+%FFFFFFF1)
+	LD	(IX+%FFFFFFFC),BC
+	LD	(IX+%FFFFFFFF),A
+;  368	            xTimeoutOccurred = pdTRUE;
+.LINE 368
+
+	LD	BC,1
+	LD	(IX+%FFFFFFF2),BC
+;  369	        }
+;  370	        else
+.LINE 370
+
+	JR	L_33
+L_30:
+;  371	        {
+;  372	            /* The task is going to block to wait for its required bits to be
+;  373	             * set.  uxControlBits are used to remember the specified behaviour of
+;  374	             * this call to xEventGroupWaitBits() - for use when the event bits
+;  375	             * unblock the task. */
+;  376	            if( xClearOnExit != pdFALSE )
+.LINE 376
+
+	LD	HL,(IX+%F)
+	CALL	__icmpzero
+	JR	Z,L_24
+;  377	            {
+;  378	                uxControlBits |= eventCLEAR_EVENTS_ON_EXIT_BIT;
+.LINE 378
+
+	LD	HL,(IX+%FFFFFFF5)
+	LD	E,(IX+%FFFFFFF8)
+	LD	BC,0
+	LD	A,%1
+	CALL	__lor
+	LD	(IX+%FFFFFFF5),HL
+	LD	(IX+%FFFFFFF8),E
+;  379	            }
+;  380	            else
+L_24:
+.LINE 380
+
+;  381	            {
+;  382	                mtCOVERAGE_TEST_MARKER();
+;  383	            }
+;  384	
+;  385	            if( xWaitForAllBits != pdFALSE )
+.LINE 385
+
+	LD	HL,(IX+%12)
+	CALL	__icmpzero
+	JR	Z,L_26
+;  386	            {
+;  387	                uxControlBits |= eventWAIT_FOR_ALL_BITS;
+.LINE 387
+
+	LD	HL,(IX+%FFFFFFF5)
+	LD	E,(IX+%FFFFFFF8)
+	LD	BC,0
+	LD	A,%4
+	CALL	__lor
+	LD	(IX+%FFFFFFF5),HL
+	LD	(IX+%FFFFFFF8),E
+;  388	            }
+;  389	            else
+L_26:
+.LINE 389
+
+;  390	            {
+;  391	                mtCOVERAGE_TEST_MARKER();
+;  392	            }
+;  393	
+;  394	            /* Store the bits that the calling task is waiting for in the
+;  395	             * task's event list item so the kernel knows when a match is
+;  396	             * found.  Then enter the blocked state. */
+;  397	            vTaskPlaceOnUnorderedEventList( &( pxEventBits->xTasksWaitingForBits ), ( uxBitsToWaitFor | uxControlBits ), xTicksToWait );
+.LINE 397
+
+	LD	C,(IX+%18)
+	LD	B,%0
+	PUSH	BC
+	LD	BC,(IX+%15)
+	PUSH	BC
+	LD	HL,(IX+%FFFFFFF5)
+	LD	E,(IX+%FFFFFFF8)
+	LD	BC,(IX+%9)
+	LD	A,(IX+%C)
+	CALL	__lor
+	LD	C,E
+	LD	B,%0
+	PUSH	BC
+	PUSH	HL
+	LD	IY,(IX+%FFFFFFF9)
+	PEA	IY+%4
+	CALL	_vTaskPlaceOnUnorderedEventList
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+;  398	
+;  399	            /* This is obsolete as it will get set after the task unblocks, but
+;  400	             * some compilers mistakenly generate a warning about the variable
+;  401	             * being returned without being set if it is not done. */
+;  402	            uxReturn = 0;
+.LINE 402
+
+	LD	BC,0
+	XOR	A,A
+	LD	(IX+%FFFFFFFC),BC
+	LD	(IX+%FFFFFFFF),A
+;  403	
+;  404	            traceEVENT_GROUP_WAIT_BITS_BLOCK( xEventGroup, uxBitsToWaitFor );
+;  405	        }
+;  406	    }
+L_33:
+.LINE 406
+
+;  407	    xAlreadyYielded = xTaskResumeAll();
+.LINE 407
+
+	CALL	_xTaskResumeAll
+	LD	(IX+%FFFFFFE8),HL
+;  408	
+;  409	    if( xTicksToWait != ( TickType_t ) 0 )
+.LINE 409
+
+	LD	HL,(IX+%15)
+	LD	E,(IX+%18)
+	CALL	__lcmpzero
+	JR	Z,L_46
+;  410	    {
+;  411	        if( xAlreadyYielded == pdFALSE )
+.LINE 411
+
+	LD	HL,(IX+%FFFFFFE8)
+	CALL	__icmpzero
+	JR	NZ,L_35
+;  412	        {
+;  413	            portYIELD_WITHIN_API();
+.LINE 413
+
+	CALL	_vPortYield
+;  414	        }
+;  415	        else
+L_35:
+.LINE 415
+
+;  416	        {
+;  417	            mtCOVERAGE_TEST_MARKER();
+;  418	        }
+;  419	
+;  420	        /* The task blocked to wait for its required bits to be set - at this
+;  421	         * point either the required bits were set or the block time expired.  If
+;  422	         * the required bits were set they will have been stored in the task's
+;  423	         * event list item, and they should now be retrieved then cleared. */
+;  424	        uxReturn = uxTaskResetEventItemValue();
+.LINE 424
+
+	CALL	_uxTaskResetEventItemValue
+	LD	(IX+%FFFFFFFC),HL
+	LD	(IX+%FFFFFFFF),E
+;  425	
+;  426	        if( ( uxReturn & eventUNBLOCKED_DUE_TO_BIT_SET ) == ( EventBits_t ) 0 )
+.LINE 426
+
+	LD	HL,(IX+%FFFFFFFC)
+	LD	E,(IX+%FFFFFFFF)
+	LD	BC,0
+	LD	A,%2
+	CALL	__land
+	CALL	__lcmpzero
+	JR	NZ,L_43
+;  427	        {
+;  428	            taskENTER_CRITICAL();
+.LINE 428
+
+	 di
+;  429	            {
+;  430	                /* The task timed out, just return the current event bit value. */
+;  431	                uxReturn = pxEventBits->uxEventBits;
+.LINE 431
+
+	LD	IY,(IX+%FFFFFFF9)
+	LD	BC,(IY+%0)
+	LD	A,(IY+%3)
+	LD	(IX+%FFFFFFFC),BC
+	LD	(IX+%FFFFFFFF),A
+;  432	
+;  433	                /* It is possible that the event bits were updated between this
+;  434	                 * task leaving the Blocked state and running again. */
+;  435	                if( prvTestWaitCondition( uxReturn, uxBitsToWaitFor, xWaitForAllBits ) != pdFALSE )
+.LINE 435
+
+	LD	BC,(IX+%12)
+	PUSH	BC
+	LD	C,(IX+%C)
+	LD	B,%0
+	PUSH	BC
+	LD	BC,(IX+%9)
+	PUSH	BC
+	LD	C,(IX+%FFFFFFFF)
+	LD	B,%0
+	PUSH	BC
+	LD	BC,(IX+%FFFFFFFC)
+	PUSH	BC
+	CALL	_prvTestWaitCondition
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+	CALL	__icmpzero
+	JR	Z,L_40
+;  436	                {
+;  437	                    if( xClearOnExit != pdFALSE )
+.LINE 437
+
+	LD	HL,(IX+%F)
+	CALL	__icmpzero
+	JR	Z,L_38
+;  438	                    {
+;  439	                        pxEventBits->uxEventBits &= ~uxBitsToWaitFor;
+.LINE 439
+
+	LD	HL,(IX+%9)
+	LD	E,(IX+%C)
+	CALL	__lnot
+	LD	A,E
+	LD	BC,HL
+	LD	IY,(IX+%FFFFFFF9)
+	LD	HL,(IY+%0)
+	LD	E,(IY+%3)
+	CALL	__land
+	LD	(IY+%0),HL
+	LD	(IY+%3),E
+;  440	                    }
+;  441	                    else
+L_38:
+.LINE 441
+
+;  442	                    {
+;  443	                        mtCOVERAGE_TEST_MARKER();
+;  444	                    }
+;  445	                }
+;  446	                else
+L_40:
+.LINE 446
+
+;  447	                {
+;  448	                    mtCOVERAGE_TEST_MARKER();
+;  449	                }
+;  450	
+;  451	                xTimeoutOccurred = pdTRUE;
+.LINE 451
+
+	LD	BC,1
+	LD	(IX+%FFFFFFF2),BC
+;  452	            }
+;  453	            taskEXIT_CRITICAL();
+.LINE 453
+
+	 ei
+;  454	        }
+;  455	        else
+L_43:
+.LINE 455
+
+;  456	        {
+;  457	            /* The task unblocked because the bits were set. */
+;  458	        }
+;  459	
+;  460	        /* The task blocked so control bits may have been set. */
+;  461	        uxReturn &= ~eventEVENT_BITS_CONTROL_BYTES;
+.LINE 461
+
+	LD	BC,(IX+%FFFFFFFC)
+	XOR	A,A
+	LD	(IX+%FFFFFFFC),BC
+	LD	(IX+%FFFFFFFF),A
+;  462	    }
+L_46:
+.LINE 462
+
+;  463	
+;  464	    traceEVENT_GROUP_WAIT_BITS_END( xEventGroup, uxBitsToWaitFor, xTimeoutOccurred );
+;  465	
+;  466	    /* Prevent compiler warnings when trace macros are not used. */
+;  467	    ( void ) xTimeoutOccurred;
+;  468	
+;  469	    return uxReturn;
+.LINE 469
+
+	LD	HL,(IX+%FFFFFFFC)
+	LD	E,(IX+%FFFFFFFF)
+;  470	}
+.LINE 470
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _xEventGroupWaitBits ***************************
+;Name                         Addr/Register   Size   Type
+;_uxTaskResetEventItemValue          IMPORT  -----   function
+;_vPortYield                         IMPORT  -----   function
+;_xTaskResumeAll                     IMPORT  -----   function
+;_vTaskPlaceOnUnorderedEventList      IMPORT  -----   function
+;_prvTestWaitCondition               STATIC  -----   function
+;_vTaskSuspendAll                    IMPORT  -----   function
+;xAlreadyYielded                      IX-24      3   variable
+;xWaitConditionMet                    IX-21      3   variable
+;uxCurrentEventBits                   IX-18      4   variable
+;xTimeoutOccurred                     IX-14      3   variable
+;uxControlBits                        IX-11      4   variable
+;pxEventBits                           IX-7      3   variable
+;uxReturn                              IX-4      4   variable
+;xTicksToWait                         IX+21      4   parameter
+;xWaitForAllBits                      IX+18      3   parameter
+;xClearOnExit                         IX+15      3   parameter
+;uxBitsToWaitFor                       IX+9      4   parameter
+;xEventGroup                           IX+6      3   parameter
+
+
+; Stack Frame Size: 51 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "xEventGroupWaitBits",470,"_xEventGroupWaitBits"
+;  471	/*-----------------------------------------------------------*/
+;  472	
+;  473	EventBits_t xEventGroupClearBits( EventGroupHandle_t xEventGroup,
+;  474	                                  const EventBits_t uxBitsToClear )
+;  475	{
+_xEventGroupClearBits:
+.DEFINE "_xEventGroupClearBits"
+
+.VALUE _xEventGroupClearBits
+
+.CLASS 2
+
+.TYPE 79
+
+.ENDEF
+
+.BEGFUNC "xEventGroupClearBits",475,"_xEventGroupClearBits"
+
+.LINE 475
+
+.DEFINE "xEventGroup"
+
+.CLASS 65
+
+.VALUE 6
+
+.TAG "EventGroupDef_t"
+
+.TYPE 40
+
+.ENDEF
+
+.DEFINE "uxBitsToClear"
+
+.CLASS 65
+
+.VALUE 9
+
+.TYPE 15
+
+.ENDEF
+
+.DEFINE "pxEventBits"
+
+.CLASS 65
+
+.VALUE -3
+
+.TAG "EventGroupDef_t"
+
+.TYPE 40
+
+.ENDEF
+
+.DEFINE "uxReturn"
+
+.CLASS 65
+
+.VALUE -7
+
+.TYPE 15
+
+.ENDEF
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+	PUSH	BC
+	PUSH	BC
+	DEC	SP
+;  476	    EventGroup_t * pxEventBits = xEventGroup;
+.LINE 476
+
+	LD	BC,(IX+%6)
+	LD	(IX+%FFFFFFFD),BC
+;  477	    EventBits_t uxReturn;
+;  478	
+;  479	    /* Check the user is not attempting to clear the bits used by the kernel
+;  480	     * itself. */
+;  481	    configASSERT( xEventGroup );
+;  482	    configASSERT( ( uxBitsToClear & eventEVENT_BITS_CONTROL_BYTES ) == 0 );
+;  483	
+;  484	    taskENTER_CRITICAL();
+.LINE 484
+
+	 di
+;  485	    {
+;  486	        traceEVENT_GROUP_CLEAR_BITS( xEventGroup, uxBitsToClear );
+;  487	
+;  488	        /* The value returned is the event group value prior to the bits being
+;  489	         * cleared. */
+;  490	        uxReturn = pxEventBits->uxEventBits;
+.LINE 490
+
+	LD	IY,(IX+%FFFFFFFD)
+	LD	BC,(IY+%0)
+	LD	A,(IY+%3)
+	LD	(IX+%FFFFFFF9),BC
+	LD	(IX+%FFFFFFFC),A
+;  491	
+;  492	        /* Clear the bits. */
+;  493	        pxEventBits->uxEventBits &= ~uxBitsToClear;
+.LINE 493
+
+	LD	HL,(IX+%9)
+	LD	E,(IX+%C)
+	CALL	__lnot
+	LD	A,E
+	LD	BC,HL
+	LD	IY,(IX+%FFFFFFFD)
+	LD	HL,(IY+%0)
+	LD	E,(IY+%3)
+	CALL	__land
+	LD	(IY+%0),HL
+	LD	(IY+%3),E
+;  494	    }
+;  495	    taskEXIT_CRITICAL();
+.LINE 495
+
+	 ei
+;  496	
+;  497	    return uxReturn;
+.LINE 497
+
+	LD	HL,(IX+%FFFFFFF9)
+	LD	E,(IX+%FFFFFFFC)
+;  498	}
+.LINE 498
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _xEventGroupClearBits ***************************
+;Name                         Addr/Register   Size   Type
+;uxReturn                              IX-7      4   variable
+;pxEventBits                           IX-3      3   variable
+;uxBitsToClear                         IX+9      4   parameter
+;xEventGroup                           IX+6      3   parameter
+
+
+; Stack Frame Size: 22 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "xEventGroupClearBits",498,"_xEventGroupClearBits"
+;  499	/*-----------------------------------------------------------*/
+;  500	
+;  501	#if ( ( configUSE_TRACE_FACILITY == 1 ) && ( INCLUDE_xTimerPendFunctionCall == 1 ) && ( configUSE_TIMERS == 1 ) )
+;  502	
+;  503	    BaseType_t xEventGroupClearBitsFromISR( EventGroupHandle_t xEventGroup,
+;  504	                                            const EventBits_t uxBitsToClear )
+;  505	    {
+;  506	        BaseType_t xReturn;
+;  507	
+;  508	        traceEVENT_GROUP_CLEAR_BITS_FROM_ISR( xEventGroup, uxBitsToClear );
+;  509	        xReturn = xTimerPendFunctionCallFromISR( vEventGroupClearBitsCallback, ( void * ) xEventGroup, ( uint32_t ) uxBitsToClear, NULL ); /*lint !e9087 Can't avoid cast to void* as a generic callback function not specific to this use case. Callback casts back to original type so safe. */
+;  510	
+;  511	        return xReturn;
+;  512	    }
+;  513	
+;  514	#endif /* if ( ( configUSE_TRACE_FACILITY == 1 ) && ( INCLUDE_xTimerPendFunctionCall == 1 ) && ( configUSE_TIMERS == 1 ) ) */
+;  515	/*-----------------------------------------------------------*/
+;  516	
+;  517	EventBits_t xEventGroupGetBitsFromISR( EventGroupHandle_t xEventGroup )
+;  518	{
+_xEventGroupGetBitsFromISR:
+.DEFINE "_xEventGroupGetBitsFromISR"
+
+.VALUE _xEventGroupGetBitsFromISR
+
+.CLASS 2
+
+.TYPE 79
+
+.ENDEF
+
+.BEGFUNC "xEventGroupGetBitsFromISR",518,"_xEventGroupGetBitsFromISR"
+
+.LINE 518
+
+.DEFINE "xEventGroup"
+
+.CLASS 65
+
+.VALUE 6
+
+.TAG "EventGroupDef_t"
+
+.TYPE 40
+
+.ENDEF
+
+.DEFINE "pxEventBits"
+
+.CLASS 65
+
+.VALUE -3
+
+.TAG "EventGroupDef_t"
+
+.TYPE 200
+
+.ENDEF
+
+.DEFINE "uxSavedInterruptStatus"
+
+.CLASS 65
+
+.VALUE -6
+
+.TYPE 14
+
+.ENDEF
+
+.DEFINE "uxReturn"
+
+.CLASS 65
+
+.VALUE -10
+
+.TYPE 15
+
+.ENDEF
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+	PUSH	BC
+	PUSH	BC
+	PUSH	BC
+	DEC	SP
+;  519	    UBaseType_t uxSavedInterruptStatus;
+;  520	    EventGroup_t const * const pxEventBits = xEventGroup;
+.LINE 520
+
+	LD	BC,(IX+%6)
+	LD	(IX+%FFFFFFFD),BC
+;  521	    EventBits_t uxReturn;
+;  522	
+;  523	    uxSavedInterruptStatus = portSET_INTERRUPT_MASK_FROM_ISR();
+.LINE 523
+
+	LD	BC,0
+	LD	(IX+%FFFFFFFA),BC
+;  524	    {
+;  525	        uxReturn = pxEventBits->uxEventBits;
+.LINE 525
+
+	LD	IY,(IX+%FFFFFFFD)
+	LD	BC,(IY+%0)
+	LD	A,(IY+%3)
+	LD	(IX+%FFFFFFF6),BC
+	LD	(IX+%FFFFFFF9),A
+;  526	    }
+;  527	    portCLEAR_INTERRUPT_MASK_FROM_ISR( uxSavedInterruptStatus );
+;  528	
+;  529	    return uxReturn;
+.LINE 529
+
+	LD	HL,(IX+%FFFFFFF6)
+	LD	E,(IX+%FFFFFFF9)
+;  530	} /*lint !e818 EventGroupHandle_t is a typedef used in other functions to so can't be pointer to const. */
+.LINE 530
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _xEventGroupGetBitsFromISR ***************************
+;Name                         Addr/Register   Size   Type
+;uxReturn                             IX-10      4   variable
+;uxSavedInterruptStatus                IX-6      3   variable
+;pxEventBits                           IX-3      3   variable
+;xEventGroup                           IX+6      3   parameter
+
+
+; Stack Frame Size: 19 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "xEventGroupGetBitsFromISR",530,"_xEventGroupGetBitsFromISR"
+;  531	/*-----------------------------------------------------------*/
+;  532	
+;  533	EventBits_t xEventGroupSetBits( EventGroupHandle_t xEventGroup,
+;  534	                                const EventBits_t uxBitsToSet )
+;  535	{
+_xEventGroupSetBits:
+.DEFINE "_xEventGroupSetBits"
+
+.VALUE _xEventGroupSetBits
+
+.CLASS 2
+
+.TYPE 79
+
+.ENDEF
+
+.BEGFUNC "xEventGroupSetBits",535,"_xEventGroupSetBits"
+
+.LINE 535
+
+.DEFINE "xEventGroup"
+
+.CLASS 65
+
+.VALUE 6
+
+.TAG "EventGroupDef_t"
+
+.TYPE 40
+
+.ENDEF
+
+.DEFINE "uxBitsToSet"
+
+.CLASS 65
+
+.VALUE 9
+
+.TYPE 15
+
+.ENDEF
+
+.DEFINE "pxEventBits"
+
+.CLASS 65
+
+.VALUE -3
+
+.TAG "EventGroupDef_t"
+
+.TYPE 40
+
+.ENDEF
+
+.DEFINE "uxBitsWaitedFor"
+
+.CLASS 65
+
+.VALUE -7
+
+.TYPE 15
+
+.ENDEF
+
+.DEFINE "pxListItem"
+
+.CLASS 65
+
+.VALUE -10
+
+.TAG "xLIST_ITEM"
+
+.TYPE 40
+
+.ENDEF
+
+.DEFINE "xMatchFound"
+
+.CLASS 65
+
+.VALUE -13
+
+.TYPE 4
+
+.ENDEF
+
+.DEFINE "uxBitsToClear"
+
+.CLASS 65
+
+.VALUE -17
+
+.TYPE 15
+
+.ENDEF
+
+.DEFINE "pxList"
+
+.CLASS 65
+
+.VALUE -20
+
+.TAG "xLIST"
+
+.TYPE 200
+
+.ENDEF
+
+.DEFINE "uxControlBits"
+
+.CLASS 65
+
+.VALUE -24
+
+.TYPE 15
+
+.ENDEF
+
+.DEFINE "pxListEnd"
+
+.CLASS 65
+
+.VALUE -27
+
+.TAG "xLIST_ITEM"
+
+.TYPE 200
+
+.ENDEF
+
+.DEFINE "pxNext"
+
+.CLASS 65
+
+.VALUE -30
+
+.TAG "xLIST_ITEM"
+
+.TYPE 40
+
+.ENDEF
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+	LEA	HL,IX+%FFFFFFE2
+	LD	SP,HL
+;  536	    ListItem_t * pxListItem;
+;  537	    ListItem_t * pxNext;
+;  538	    ListItem_t const * pxListEnd;
+;  539	    List_t const * pxList;
+;  540	    EventBits_t uxBitsToClear = 0, uxBitsWaitedFor, uxControlBits;
+.LINE 540
+
+	LD	BC,0
+	XOR	A,A
+	LD	(IX+%FFFFFFEF),BC
+	LD	(IX+%FFFFFFF2),A
+;  541	    EventGroup_t * pxEventBits = xEventGroup;
+.LINE 541
+
+	LD	BC,(IX+%6)
+	LD	(IX+%FFFFFFFD),BC
+;  542	    BaseType_t xMatchFound = pdFALSE;
+.LINE 542
+
+	LD	BC,0
+	LD	(IX+%FFFFFFF3),BC
+;  543	
+;  544	    /* Check the user is not attempting to set the bits used by the kernel
+;  545	     * itself. */
+;  546	    configASSERT( xEventGroup );
+;  547	    configASSERT( ( uxBitsToSet & eventEVENT_BITS_CONTROL_BYTES ) == 0 );
+;  548	
+;  549	    pxList = &( pxEventBits->xTasksWaitingForBits );
+.LINE 549
+
+	LD	IY,(IX+%FFFFFFFD)
+	LEA	BC,IY+%4
+	LD	(IX+%FFFFFFEC),BC
+;  550	    pxListEnd = listGET_END_MARKER( pxList ); /*lint !e826 !e740 !e9087 The mini list structure is used as the list end to save RAM.  This is checked and valid. */
+.LINE 550
+
+	LD	IY,(IX+%FFFFFFEC)
+	LEA	BC,IY+%6
+	LD	(IX+%FFFFFFE5),BC
+;  551	    vTaskSuspendAll();
+.LINE 551
+
+	CALL	_vTaskSuspendAll
+;  552	    {
+;  553	        traceEVENT_GROUP_SET_BITS( xEventGroup, uxBitsToSet );
+;  554	
+;  555	        pxListItem = listGET_HEAD_ENTRY( pxList );
+.LINE 555
+
+	LD	IY,(IX+%FFFFFFEC)
+	LD	BC,(IY+%A)
+	LD	(IX+%FFFFFFF6),BC
+;  556	
+;  557	        /* Set the bits. */
+;  558	        pxEventBits->uxEventBits |= uxBitsToSet;
+.LINE 558
+
+	LD	IY,(IX+%FFFFFFFD)
+	LD	HL,(IY+%0)
+	LD	E,(IY+%3)
+	LD	BC,(IX+%9)
+	LD	A,(IX+%C)
+	CALL	__lor
+	LD	(IY+%0),HL
+	LD	(IY+%3),E
+;  559	
+;  560	        /* See if the new bit value should unblock any tasks. */
+;  561	        while( pxListItem != pxListEnd )
+L_62:
+.LINE 561
+
+	LD	BC,(IX+%FFFFFFE5)
+	LD	HL,(IX+%FFFFFFF6)
+	OR	A,A
+	SBC	HL,BC
+	JR	Z,L_64
+;  562	        {
+;  563	            pxNext = listGET_NEXT( pxListItem );
+.LINE 563
+
+	LD	IY,(IX+%FFFFFFF6)
+	LD	BC,(IY+%4)
+	LD	(IX+%FFFFFFE2),BC
+;  564	            uxBitsWaitedFor = listGET_LIST_ITEM_VALUE( pxListItem );
+.LINE 564
+
+	LD	IY,(IX+%FFFFFFF6)
+	LD	BC,(IY+%0)
+	LD	A,(IY+%3)
+	LD	(IX+%FFFFFFF9),BC
+	LD	(IX+%FFFFFFFC),A
+;  565	            xMatchFound = pdFALSE;
+.LINE 565
+
+	LD	BC,0
+	LD	(IX+%FFFFFFF3),BC
+;  566	
+;  567	            /* Split the bits waited for from the control bits. */
+;  568	            uxControlBits = uxBitsWaitedFor & eventEVENT_BITS_CONTROL_BYTES;
+.LINE 568
+
+	LD	HL,(IX+%FFFFFFF9)
+	LD	E,(IX+%FFFFFFFC)
+	LD	BC,0
+	LD	A,%FF
+	CALL	__land
+	LD	(IX+%FFFFFFE8),HL
+	LD	(IX+%FFFFFFEB),E
+;  569	            uxBitsWaitedFor &= ~eventEVENT_BITS_CONTROL_BYTES;
+.LINE 569
+
+	LD	BC,(IX+%FFFFFFF9)
+	XOR	A,A
+	LD	(IX+%FFFFFFF9),BC
+	LD	(IX+%FFFFFFFC),A
+;  570	
+;  571	            if( ( uxControlBits & eventWAIT_FOR_ALL_BITS ) == ( EventBits_t ) 0 )
+.LINE 571
+
+	LD	HL,(IX+%FFFFFFE8)
+	LD	E,(IX+%FFFFFFEB)
+	LD	BC,0
+	LD	A,%4
+	CALL	__land
+	CALL	__lcmpzero
+	JR	NZ,L_55
+;  572	            {
+;  573	                /* Just looking for single bit being set. */
+;  574	                if( ( uxBitsWaitedFor & pxEventBits->uxEventBits ) != ( EventBits_t ) 0 )
+.LINE 574
+
+	LD	IY,(IX+%FFFFFFFD)
+	LD	HL,(IY+%0)
+	LD	E,(IY+%3)
+	LD	BC,(IX+%FFFFFFF9)
+	LD	A,(IX+%FFFFFFFC)
+	CALL	__land
+	CALL	__lcmpzero
+	JR	Z,L_60
+;  575	                {
+;  576	                    xMatchFound = pdTRUE;
+.LINE 576
+
+	LD	BC,1
+	LD	(IX+%FFFFFFF3),BC
+;  577	                }
+;  578	                else
+.LINE 578
+
+	JR	L_60
+;  579	                {
+;  580	                    mtCOVERAGE_TEST_MARKER();
+;  581	                }
+;  582	            }
+;  583	            else if( ( uxBitsWaitedFor & pxEventBits->uxEventBits ) == uxBitsWaitedFor )
+.LINE 583
+
+L_55:
+	LD	IY,(IX+%FFFFFFFD)
+	LD	HL,(IY+%0)
+	LD	E,(IY+%3)
+	LD	BC,(IX+%FFFFFFF9)
+	LD	A,(IX+%FFFFFFFC)
+	CALL	__land
+	LD	BC,(IX+%FFFFFFF9)
+	LD	A,(IX+%FFFFFFFC)
+	CALL	__lcmpu
+	JR	NZ,L_53
+;  584	            {
+;  585	                /* All bits are set. */
+;  586	                xMatchFound = pdTRUE;
+.LINE 586
+
+	LD	BC,1
+	LD	(IX+%FFFFFFF3),BC
+;  587	            }
+;  588	            else
+L_53:
+.LINE 588
+
+;  589	            {
+;  590	                /* Need all bits to be set, but not all the bits were set. */
+;  591	            }
+L_60:
+.LINE 591
+
+;  592	
+;  593	            if( xMatchFound != pdFALSE )
+.LINE 593
+
+	LD	HL,(IX+%FFFFFFF3)
+	CALL	__icmpzero
+	JR	Z,L_61
+;  594	            {
+;  595	                /* The bits match.  Should the bits be cleared on exit? */
+;  596	                if( ( uxControlBits & eventCLEAR_EVENTS_ON_EXIT_BIT ) != ( EventBits_t ) 0 )
+.LINE 596
+
+	LD	HL,(IX+%FFFFFFE8)
+	LD	E,(IX+%FFFFFFEB)
+	LD	BC,0
+	LD	A,%1
+	CALL	__land
+	CALL	__lcmpzero
+	JR	Z,L_57
+;  597	                {
+;  598	                    uxBitsToClear |= uxBitsWaitedFor;
+.LINE 598
+
+	LD	HL,(IX+%FFFFFFF9)
+	LD	E,(IX+%FFFFFFFC)
+	LD	BC,(IX+%FFFFFFEF)
+	LD	A,(IX+%FFFFFFF2)
+	CALL	__lor
+	LD	(IX+%FFFFFFEF),HL
+	LD	(IX+%FFFFFFF2),E
+;  599	                }
+;  600	                else
+L_57:
+.LINE 600
+
+;  601	                {
+;  602	                    mtCOVERAGE_TEST_MARKER();
+;  603	                }
+;  604	
+;  605	                /* Store the actual event flag value in the task's event list
+;  606	                 * item before removing the task from the event list.  The
+;  607	                 * eventUNBLOCKED_DUE_TO_BIT_SET bit is set so the task knows
+;  608	                 * that is was unblocked due to its required bits matching, rather
+;  609	                 * than because it timed out. */
+;  610	                vTaskRemoveFromUnorderedEventList( pxListItem, pxEventBits->uxEventBits | eventUNBLOCKED_DUE_TO_BIT_SET );
+.LINE 610
+
+	LD	IY,(IX+%FFFFFFFD)
+	LD	HL,(IY+%0)
+	LD	E,(IY+%3)
+	LD	BC,0
+	LD	A,%2
+	CALL	__lor
+	LD	C,E
+	LD	B,%0
+	PUSH	BC
+	PUSH	HL
+	LD	BC,(IX+%FFFFFFF6)
+	PUSH	BC
+	CALL	_vTaskRemoveFromUnorderedEventList
+	POP	BC
+	POP	BC
+	POP	BC
+;  611	            }
+L_61:
+.LINE 611
+
+;  612	
+;  613	            /* Move onto the next list item.  Note pxListItem->pxNext is not
+;  614	             * used here as the list item may have been removed from the event list
+;  615	             * and inserted into the ready/pending reading list. */
+;  616	            pxListItem = pxNext;
+.LINE 616
+
+	LD	BC,(IX+%FFFFFFE2)
+	LD	(IX+%FFFFFFF6),BC
+;  617	        }
+.LINE 617
+
+	JR	L_62
+L_64:
+;  618	
+;  619	        /* Clear any bits that matched when the eventCLEAR_EVENTS_ON_EXIT_BIT
+;  620	         * bit was set in the control word. */
+;  621	        pxEventBits->uxEventBits &= ~uxBitsToClear;
+.LINE 621
+
+	LD	HL,(IX+%FFFFFFEF)
+	LD	E,(IX+%FFFFFFF2)
+	CALL	__lnot
+	LD	A,E
+	LD	BC,HL
+	LD	IY,(IX+%FFFFFFFD)
+	LD	HL,(IY+%0)
+	LD	E,(IY+%3)
+	CALL	__land
+	LD	(IY+%0),HL
+	LD	(IY+%3),E
+;  622	    }
+;  623	    ( void ) xTaskResumeAll();
+.LINE 623
+
+	CALL	_xTaskResumeAll
+;  624	
+;  625	    return pxEventBits->uxEventBits;
+.LINE 625
+
+	LD	IY,(IX+%FFFFFFFD)
+	LD	HL,(IY+%0)
+	LD	E,(IY+%3)
+;  626	}
+.LINE 626
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _xEventGroupSetBits ***************************
+;Name                         Addr/Register   Size   Type
+;_xTaskResumeAll                     IMPORT  -----   function
+;_vTaskRemoveFromUnorderedEventList      IMPORT  -----   function
+;_vTaskSuspendAll                    IMPORT  -----   function
+;pxNext                               IX-30      3   variable
+;pxListEnd                            IX-27      3   variable
+;uxControlBits                        IX-24      4   variable
+;pxList                               IX-20      3   variable
+;uxBitsToClear                        IX-17      4   variable
+;xMatchFound                          IX-13      3   variable
+;pxListItem                           IX-10      3   variable
+;uxBitsWaitedFor                       IX-7      4   variable
+;pxEventBits                           IX-3      3   variable
+;uxBitsToSet                           IX+9      4   parameter
+;xEventGroup                           IX+6      3   parameter
+
+
+; Stack Frame Size: 45 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "xEventGroupSetBits",626,"_xEventGroupSetBits"
+;  627	/*-----------------------------------------------------------*/
+;  628	
+;  629	void vEventGroupDelete( EventGroupHandle_t xEventGroup )
+;  630	{
+_vEventGroupDelete:
+.DEFINE "_vEventGroupDelete"
+
+.VALUE _vEventGroupDelete
+
+.CLASS 2
+
+.TYPE 65
+
+.ENDEF
+
+.BEGFUNC "vEventGroupDelete",630,"_vEventGroupDelete"
+
+.LINE 630
+
+.DEFINE "xEventGroup"
+
+.CLASS 65
+
+.VALUE 6
+
+.TAG "EventGroupDef_t"
+
+.TYPE 40
+
+.ENDEF
+
+.DEFINE "pxEventBits"
+
+.CLASS 65
+
+.VALUE -3
+
+.TAG "EventGroupDef_t"
+
+.TYPE 40
+
+.ENDEF
+
+.DEFINE "pxTasksWaitingForBits"
+
+.CLASS 65
+
+.VALUE -6
+
+.TAG "xLIST"
+
+.TYPE 200
+
+.ENDEF
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+	PUSH	BC
+	PUSH	BC
+;  631	    EventGroup_t * pxEventBits = xEventGroup;
+.LINE 631
+
+	LD	BC,(IX+%6)
+	LD	(IX+%FFFFFFFD),BC
+;  632	    const List_t * pxTasksWaitingForBits;
+;  633	
+;  634	    configASSERT( pxEventBits );
+;  635	
+;  636	    pxTasksWaitingForBits = &( pxEventBits->xTasksWaitingForBits );
+.LINE 636
+
+	LD	IY,(IX+%FFFFFFFD)
+	LEA	BC,IY+%4
+	LD	(IX+%FFFFFFFA),BC
+;  637	
+;  638	    vTaskSuspendAll();
+.LINE 638
+
+	CALL	_vTaskSuspendAll
+;  639	    {
+;  640	        traceEVENT_GROUP_DELETE( xEventGroup );
+;  641	
+;  642	        while( listCURRENT_LIST_LENGTH( pxTasksWaitingForBits ) > ( UBaseType_t ) 0 )
+L_66:
+.LINE 642
+
+	LD	IY,(IX+%FFFFFFFA)
+	LD	BC,(IY+%0)
+	OR	A,A
+	SBC	HL,HL
+	OR	A,A
+	SBC	HL,BC
+	JR	NC,L_68
+;  643	        {
+;  644	            /* Unblock the task, returning 0 as the event list is being deleted
+;  645	             * and cannot therefore have any bits set. */
+;  646	            configASSERT( pxTasksWaitingForBits->xListEnd.pxNext != ( const ListItem_t * ) &( pxTasksWaitingForBits->xListEnd ) );
+;  647	            vTaskRemoveFromUnorderedEventList( pxTasksWaitingForBits->xListEnd.pxNext, eventUNBLOCKED_DUE_TO_BIT_SET );
+.LINE 647
+
+	LD	BC,2
+	PUSH	BC
+	LD	BC,0
+	PUSH	BC
+	LD	IY,(IX+%FFFFFFFA)
+	LD	BC,(IY+%A)
+	PUSH	BC
+	CALL	_vTaskRemoveFromUnorderedEventList
+	POP	BC
+	POP	BC
+	POP	BC
+;  648	        }
+.LINE 648
+
+	JR	L_66
+;  649	    }
+L_68:
+.LINE 649
+
+;  650	    ( void ) xTaskResumeAll();
+.LINE 650
+
+	CALL	_xTaskResumeAll
+;  651	
+;  652	    #if ( ( configSUPPORT_DYNAMIC_ALLOCATION == 1 ) && ( configSUPPORT_STATIC_ALLOCATION == 0 ) )
+;  653	    {
+;  654	        /* The event group can only have been allocated dynamically - free
+;  655	         * it again. */
+;  656	        vPortFree( pxEventBits );
+.LINE 656
+
+	LD	BC,(IX+%FFFFFFFD)
+	PUSH	BC
+	CALL	_vPortFree
+	POP	BC
+;  657	    }
+;  658	    #elif ( ( configSUPPORT_DYNAMIC_ALLOCATION == 1 ) && ( configSUPPORT_STATIC_ALLOCATION == 1 ) )
+;  659	    {
+;  660	        /* The event group could have been allocated statically or
+;  661	         * dynamically, so check before attempting to free the memory. */
+;  662	        if( pxEventBits->ucStaticallyAllocated == ( uint8_t ) pdFALSE )
+;  663	        {
+;  664	            vPortFree( pxEventBits );
+;  665	        }
+;  666	        else
+;  667	        {
+;  668	            mtCOVERAGE_TEST_MARKER();
+;  669	        }
+;  670	    }
+;  671	    #endif /* configSUPPORT_DYNAMIC_ALLOCATION */
+;  672	}
+.LINE 672
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _vEventGroupDelete ***************************
+;Name                         Addr/Register   Size   Type
+;_vPortFree                          IMPORT  -----   function
+;_xTaskResumeAll                     IMPORT  -----   function
+;_vTaskRemoveFromUnorderedEventList      IMPORT  -----   function
+;_vTaskSuspendAll                    IMPORT  -----   function
+;pxTasksWaitingForBits                 IX-6      3   variable
+;pxEventBits                           IX-3      3   variable
+;xEventGroup                           IX+6      3   parameter
+
+
+; Stack Frame Size: 15 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "vEventGroupDelete",672,"_vEventGroupDelete"
+;  673	/*-----------------------------------------------------------*/
+;  674	
+;  675	/* For internal use only - execute a 'set bits' command that was pended from
+;  676	 * an interrupt. */
+;  677	void vEventGroupSetBitsCallback( void * pvEventGroup,
+;  678	                                 const uint32_t ulBitsToSet )
+;  679	{
+_vEventGroupSetBitsCallback:
+.DEFINE "_vEventGroupSetBitsCallback"
+
+.VALUE _vEventGroupSetBitsCallback
+
+.CLASS 2
+
+.TYPE 65
+
+.ENDEF
+
+.BEGFUNC "vEventGroupSetBitsCallback",679,"_vEventGroupSetBitsCallback"
+
+.LINE 679
+
+.DEFINE "pvEventGroup"
+
+.CLASS 65
+
+.VALUE 6
+
+.TYPE 33
+
+.ENDEF
+
+.DEFINE "ulBitsToSet"
+
+.CLASS 65
+
+.VALUE 9
+
+.TYPE 15
+
+.ENDEF
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+;  680	    ( void ) xEventGroupSetBits( pvEventGroup, ( EventBits_t ) ulBitsToSet ); /*lint !e9079 Can't avoid cast to void* as a generic timer callback prototype. Callback casts back to original type so safe. */
+.LINE 680
+
+	LD	C,(IX+%C)
+	LD	B,%0
+	PUSH	BC
+	LD	BC,(IX+%9)
+	PUSH	BC
+	LD	BC,(IX+%6)
+	PUSH	BC
+	CALL	_xEventGroupSetBits
+	POP	BC
+	POP	BC
+	POP	BC
+;  681	}
+.LINE 681
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _vEventGroupSetBitsCallback ***************************
+;Name                         Addr/Register   Size   Type
+;_xEventGroupSetBits                 IMPORT  -----   function
+;ulBitsToSet                           IX+9      4   parameter
+;pvEventGroup                          IX+6      3   parameter
+
+
+; Stack Frame Size: 15 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "vEventGroupSetBitsCallback",681,"_vEventGroupSetBitsCallback"
+;  682	/*-----------------------------------------------------------*/
+;  683	
+;  684	/* For internal use only - execute a 'clear bits' command that was pended from
+;  685	 * an interrupt. */
+;  686	void vEventGroupClearBitsCallback( void * pvEventGroup,
+;  687	                                   const uint32_t ulBitsToClear )
+;  688	{
+_vEventGroupClearBitsCallback:
+.DEFINE "_vEventGroupClearBitsCallback"
+
+.VALUE _vEventGroupClearBitsCallback
+
+.CLASS 2
+
+.TYPE 65
+
+.ENDEF
+
+.BEGFUNC "vEventGroupClearBitsCallback",688,"_vEventGroupClearBitsCallback"
+
+.LINE 688
+
+.DEFINE "pvEventGroup"
+
+.CLASS 65
+
+.VALUE 6
+
+.TYPE 33
+
+.ENDEF
+
+.DEFINE "ulBitsToClear"
+
+.CLASS 65
+
+.VALUE 9
+
+.TYPE 15
+
+.ENDEF
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+;  689	    ( void ) xEventGroupClearBits( pvEventGroup, ( EventBits_t ) ulBitsToClear ); /*lint !e9079 Can't avoid cast to void* as a generic timer callback prototype. Callback casts back to original type so safe. */
+.LINE 689
+
+	LD	C,(IX+%C)
+	LD	B,%0
+	PUSH	BC
+	LD	BC,(IX+%9)
+	PUSH	BC
+	LD	BC,(IX+%6)
+	PUSH	BC
+	CALL	_xEventGroupClearBits
+	POP	BC
+	POP	BC
+	POP	BC
+;  690	}
+.LINE 690
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _vEventGroupClearBitsCallback ***************************
+;Name                         Addr/Register   Size   Type
+;_xEventGroupClearBits               IMPORT  -----   function
+;ulBitsToClear                         IX+9      4   parameter
+;pvEventGroup                          IX+6      3   parameter
+
+
+; Stack Frame Size: 15 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "vEventGroupClearBitsCallback",690,"_vEventGroupClearBitsCallback"
+;  691	/*-----------------------------------------------------------*/
+;  692	
+;  693	static BaseType_t prvTestWaitCondition( const EventBits_t uxCurrentEventBits,
+;  694	                                        const EventBits_t uxBitsToWaitFor,
+;  695	                                        const BaseType_t xWaitForAllBits )
+;  696	{
+_prvTestWaitCondition:
+.DEFINE "_prvTestWaitCondition"
+
+.VALUE _prvTestWaitCondition
+
+.CLASS 3
+
+.TYPE 68
+
+.ENDEF
+
+.BEGFUNC "prvTestWaitCondition",696,"_prvTestWaitCondition"
+
+.LINE 696
+
+.DEFINE "uxCurrentEventBits"
+
+.CLASS 65
+
+.VALUE 6
+
+.TYPE 15
+
+.ENDEF
+
+.DEFINE "uxBitsToWaitFor"
+
+.CLASS 65
+
+.VALUE 12
+
+.TYPE 15
+
+.ENDEF
+
+.DEFINE "xWaitForAllBits"
+
+.CLASS 65
+
+.VALUE 18
+
+.TYPE 4
+
+.ENDEF
+
+.DEFINE "xWaitConditionMet"
+
+.CLASS 65
+
+.VALUE -3
+
+.TYPE 4
+
+.ENDEF
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+	PUSH	BC
+;  697	    BaseType_t xWaitConditionMet = pdFALSE;
+.LINE 697
+
+	LD	BC,0
+	LD	(IX+%FFFFFFFD),BC
+;  698	
+;  699	    if( xWaitForAllBits == pdFALSE )
+.LINE 699
+
+	LD	HL,(IX+%12)
+	CALL	__icmpzero
+	JR	NZ,L_77
+;  700	    {
+;  701	        /* Task only has to wait for one bit within uxBitsToWaitFor to be
+;  702	         * set.  Is one already set? */
+;  703	        if( ( uxCurrentEventBits & uxBitsToWaitFor ) != ( EventBits_t ) 0 )
+.LINE 703
+
+	LD	HL,(IX+%6)
+	LD	E,(IX+%9)
+	LD	BC,(IX+%C)
+	LD	A,(IX+%F)
+	CALL	__land
+	CALL	__lcmpzero
+	JR	Z,L_78
+;  704	        {
+;  705	            xWaitConditionMet = pdTRUE;
+.LINE 705
+
+	LD	BC,1
+	LD	(IX+%FFFFFFFD),BC
+;  706	        }
+;  707	        else
+.LINE 707
+
+	JR	L_78
+;  708	        {
+;  709	            mtCOVERAGE_TEST_MARKER();
+;  710	        }
+;  711	    }
+;  712	    else
+.LINE 712
+
+L_77:
+;  713	    {
+;  714	        /* Task has to wait for all the bits in uxBitsToWaitFor to be set.
+;  715	         * Are they set already? */
+;  716	        if( ( uxCurrentEventBits & uxBitsToWaitFor ) == uxBitsToWaitFor )
+.LINE 716
+
+	LD	HL,(IX+%6)
+	LD	E,(IX+%9)
+	LD	BC,(IX+%C)
+	LD	A,(IX+%F)
+	CALL	__land
+	LD	BC,(IX+%C)
+	LD	A,(IX+%F)
+	CALL	__lcmpu
+	JR	NZ,L_75
+;  717	        {
+;  718	            xWaitConditionMet = pdTRUE;
+.LINE 718
+
+	LD	BC,1
+	LD	(IX+%FFFFFFFD),BC
+;  719	        }
+;  720	        else
+L_75:
+.LINE 720
+
+;  721	        {
+;  722	            mtCOVERAGE_TEST_MARKER();
+;  723	        }
+;  724	    }
+L_78:
+.LINE 724
+
+;  725	
+;  726	    return xWaitConditionMet;
+.LINE 726
+
+	LD	HL,(IX+%FFFFFFFD)
+;  727	}
+.LINE 727
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _prvTestWaitCondition ***************************
+;Name                         Addr/Register   Size   Type
+;xWaitConditionMet                     IX-3      3   variable
+;xWaitForAllBits                      IX+18      3   parameter
+;uxBitsToWaitFor                      IX+12      4   parameter
+;uxCurrentEventBits                    IX+6      4   parameter
+
+
+; Stack Frame Size: 24 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "prvTestWaitCondition",727,"_prvTestWaitCondition"
+	XREF _uxTaskResetEventItemValue:ROM
+	XREF _vTaskRemoveFromUnorderedEventList:ROM
+	XREF _vTaskPlaceOnUnorderedEventList:ROM
+	XREF _xTaskResumeAll:ROM
+	XREF _vTaskSuspendAll:ROM
+	XREF _vListInitialise:ROM
+	XREF _vPortFree:ROM
+	XREF _pvPortMalloc:ROM
+	XREF _vPortYield:ROM
+	XREF __lcmpu:ROM
+	XREF __lnot:ROM
+	XREF __lor:ROM
+	XREF __land:ROM
+	XREF __icmpzero:ROM
+	XREF __lcmpzero:ROM
+	XDEF _vEventGroupClearBitsCallback
+	XDEF _vEventGroupSetBitsCallback
+	XDEF _vEventGroupDelete
+	XDEF _xEventGroupSetBits
+	XDEF _xEventGroupGetBitsFromISR
+	XDEF _xEventGroupClearBits
+	XDEF _xEventGroupWaitBits
+	XDEF _xEventGroupSync
+	XDEF _xEventGroupCreate
+	END

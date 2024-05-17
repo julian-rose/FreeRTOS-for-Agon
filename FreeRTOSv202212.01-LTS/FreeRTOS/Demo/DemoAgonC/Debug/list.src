@@ -1,0 +1,1136 @@
+; Zilog eZ80 ANSI C Compiler Release 3.4
+; -noglobalopt -nolocalcse -optsize -nomodsect -reduceopt
+; -nopadbranch -debug -peephole -const=ROM 
+	FILE	"..\..\..\Source\list.c"
+	.assume ADL=1
+.DEBUG "C"
+	SEGMENT CODE
+.BEGREC "NONAME0",6
+.DEFINE "quot"
+.VALUE 0
+.CLASS 8
+.TYPE 4
+.ENDEF
+.DEFINE "rem"
+.VALUE 3
+.CLASS 8
+.TYPE 4
+.ENDEF
+.ENDREC "NONAME0"
+.BEGREC "NONAME1",8
+.DEFINE "quot"
+.VALUE 0
+.CLASS 8
+.TYPE 5
+.ENDEF
+.DEFINE "rem"
+.VALUE 4
+.CLASS 8
+.TYPE 5
+.ENDEF
+.ENDREC "NONAME1"
+.BEGREC "header",6
+.DEFINE "s"
+.VALUE 0
+.CLASS 11
+.TAG "NONAME2"
+.TYPE 8
+.ENDEF
+.DEFINE "x"
+.VALUE 0
+.CLASS 11
+.TYPE 2
+.ENDEF
+.ENDREC "header"
+.BEGREC "NONAME2",6
+.DEFINE "ptr"
+.VALUE 0
+.CLASS 8
+.TAG "header"
+.TYPE 40
+.ENDEF
+.DEFINE "size"
+.VALUE 3
+.CLASS 8
+.TYPE 14
+.ENDEF
+.ENDREC "NONAME2"
+.BEGREC "HeapRegion",6
+.DEFINE "pucStartAddress"
+.VALUE 0
+.CLASS 8
+.TYPE 44
+.ENDEF
+.DEFINE "xSizeInBytes"
+.VALUE 3
+.CLASS 8
+.TYPE 14
+.ENDEF
+.ENDREC "HeapRegion"
+.BEGREC "xHeapStats",21
+.DEFINE "xAvailableHeapSpaceInBytes"
+.VALUE 0
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "xSizeOfLargestFreeBlockInBytes"
+.VALUE 3
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "xSizeOfSmallestFreeBlockInBytes"
+.VALUE 6
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "xNumberOfFreeBlocks"
+.VALUE 9
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "xMinimumEverFreeBytesRemaining"
+.VALUE 12
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "xNumberOfSuccessfulAllocations"
+.VALUE 15
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "xNumberOfSuccessfulFrees"
+.VALUE 18
+.CLASS 8
+.TYPE 14
+.ENDEF
+.ENDREC "xHeapStats"
+.BEGREC "xSTATIC_LIST_ITEM",16
+.DEFINE "xDummy2"
+.VALUE 0
+.CLASS 8
+.TYPE 15
+.ENDEF
+.DEFINE "pvDummy3"
+.VALUE 4
+.CLASS 8
+.DIM 4
+.TYPE 353
+.ENDEF
+.ENDREC "xSTATIC_LIST_ITEM"
+.BEGREC "xSTATIC_MINI_LIST_ITEM",10
+.DEFINE "xDummy2"
+.VALUE 0
+.CLASS 8
+.TYPE 15
+.ENDEF
+.DEFINE "pvDummy3"
+.VALUE 4
+.CLASS 8
+.DIM 2
+.TYPE 353
+.ENDEF
+.ENDREC "xSTATIC_MINI_LIST_ITEM"
+.BEGREC "xSTATIC_LIST",16
+.DEFINE "uxDummy2"
+.VALUE 0
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "pvDummy3"
+.VALUE 3
+.CLASS 8
+.TYPE 33
+.ENDEF
+.DEFINE "xDummy4"
+.VALUE 6
+.CLASS 8
+.TAG "xSTATIC_MINI_LIST_ITEM"
+.TYPE 8
+.ENDEF
+.ENDREC "xSTATIC_LIST"
+.BEGREC "xSTATIC_TCB",69
+.DEFINE "pxDummy1"
+.VALUE 0
+.CLASS 8
+.TYPE 33
+.ENDEF
+.DEFINE "xDummy3"
+.VALUE 3
+.CLASS 8
+.DIM 2
+.TAG "xSTATIC_LIST_ITEM"
+.TYPE 104
+.ENDEF
+.DEFINE "uxDummy5"
+.VALUE 35
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "pxDummy6"
+.VALUE 38
+.CLASS 8
+.TYPE 33
+.ENDEF
+.DEFINE "ucDummy7"
+.VALUE 41
+.CLASS 8
+.DIM 16
+.TYPE 108
+.ENDEF
+.DEFINE "uxDummy12"
+.VALUE 57
+.CLASS 8
+.DIM 2
+.TYPE 110
+.ENDEF
+.DEFINE "ulDummy18"
+.VALUE 63
+.CLASS 8
+.DIM 1
+.TYPE 111
+.ENDEF
+.DEFINE "ucDummy19"
+.VALUE 67
+.CLASS 8
+.DIM 1
+.TYPE 108
+.ENDEF
+.DEFINE "ucDummy21"
+.VALUE 68
+.CLASS 8
+.TYPE 12
+.ENDEF
+.ENDREC "xSTATIC_TCB"
+.BEGREC "xSTATIC_QUEUE",55
+.DEFINE "pvDummy1"
+.VALUE 0
+.CLASS 8
+.DIM 3
+.TYPE 353
+.ENDEF
+.DEFINE "u"
+.VALUE 9
+.CLASS 8
+.TAG "NONAME3"
+.TYPE 8
+.ENDEF
+.DEFINE "xDummy3"
+.VALUE 12
+.CLASS 8
+.DIM 2
+.TAG "xSTATIC_LIST"
+.TYPE 104
+.ENDEF
+.DEFINE "uxDummy4"
+.VALUE 44
+.CLASS 8
+.DIM 3
+.TYPE 110
+.ENDEF
+.DEFINE "ucDummy5"
+.VALUE 53
+.CLASS 8
+.DIM 2
+.TYPE 108
+.ENDEF
+.ENDREC "xSTATIC_QUEUE"
+.BEGREC "NONAME3",3
+.DEFINE "pvDummy2"
+.VALUE 0
+.CLASS 11
+.TYPE 33
+.ENDEF
+.DEFINE "uxDummy2"
+.VALUE 0
+.CLASS 11
+.TYPE 14
+.ENDEF
+.ENDREC "NONAME3"
+.BEGREC "xSTATIC_EVENT_GROUP",20
+.DEFINE "xDummy1"
+.VALUE 0
+.CLASS 8
+.TYPE 15
+.ENDEF
+.DEFINE "xDummy2"
+.VALUE 4
+.CLASS 8
+.TAG "xSTATIC_LIST"
+.TYPE 8
+.ENDEF
+.ENDREC "xSTATIC_EVENT_GROUP"
+.BEGREC "xSTATIC_TIMER",30
+.DEFINE "pvDummy1"
+.VALUE 0
+.CLASS 8
+.TYPE 33
+.ENDEF
+.DEFINE "xDummy2"
+.VALUE 3
+.CLASS 8
+.TAG "xSTATIC_LIST_ITEM"
+.TYPE 8
+.ENDEF
+.DEFINE "xDummy3"
+.VALUE 19
+.CLASS 8
+.TYPE 15
+.ENDEF
+.DEFINE "pvDummy5"
+.VALUE 23
+.CLASS 8
+.TYPE 33
+.ENDEF
+.DEFINE "pvDummy6"
+.VALUE 26
+.CLASS 8
+.TYPE 545
+.ENDEF
+.DEFINE "ucDummy8"
+.VALUE 29
+.CLASS 8
+.TYPE 12
+.ENDEF
+.ENDREC "xSTATIC_TIMER"
+.BEGREC "xSTATIC_STREAM_BUFFER",22
+.DEFINE "uxDummy1"
+.VALUE 0
+.CLASS 8
+.DIM 4
+.TYPE 110
+.ENDEF
+.DEFINE "pvDummy2"
+.VALUE 12
+.CLASS 8
+.DIM 3
+.TYPE 353
+.ENDEF
+.DEFINE "ucDummy3"
+.VALUE 21
+.CLASS 8
+.TYPE 12
+.ENDEF
+.ENDREC "xSTATIC_STREAM_BUFFER"
+.BEGREC "xLIST_ITEM",16
+.DEFINE "xItemValue"
+.VALUE 0
+.CLASS 8
+.TYPE 15
+.ENDEF
+.DEFINE "pxNext"
+.VALUE 4
+.CLASS 8
+.TAG "xLIST_ITEM"
+.TYPE 40
+.ENDEF
+.DEFINE "pxPrevious"
+.VALUE 7
+.CLASS 8
+.TAG "xLIST_ITEM"
+.TYPE 40
+.ENDEF
+.DEFINE "pvOwner"
+.VALUE 10
+.CLASS 8
+.TYPE 33
+.ENDEF
+.DEFINE "pvContainer"
+.VALUE 13
+.CLASS 8
+.TAG "xLIST"
+.TYPE 40
+.ENDEF
+.ENDREC "xLIST_ITEM"
+.BEGREC "xMINI_LIST_ITEM",10
+.DEFINE "xItemValue"
+.VALUE 0
+.CLASS 8
+.TYPE 15
+.ENDEF
+.DEFINE "pxNext"
+.VALUE 4
+.CLASS 8
+.TAG "xLIST_ITEM"
+.TYPE 40
+.ENDEF
+.DEFINE "pxPrevious"
+.VALUE 7
+.CLASS 8
+.TAG "xLIST_ITEM"
+.TYPE 40
+.ENDEF
+.ENDREC "xMINI_LIST_ITEM"
+.BEGREC "xLIST",16
+.DEFINE "uxNumberOfItems"
+.VALUE 0
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "pxIndex"
+.VALUE 3
+.CLASS 8
+.TAG "xLIST_ITEM"
+.TYPE 40
+.ENDEF
+.DEFINE "xListEnd"
+.VALUE 6
+.CLASS 8
+.TAG "xMINI_LIST_ITEM"
+.TYPE 8
+.ENDEF
+.ENDREC "xLIST"
+;    1	/*
+;    2	 * FreeRTOS Kernel V10.5.1
+;    3	 * Copyright (C) 2021 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
+;    4	 *
+;    5	 * SPDX-License-Identifier: MIT
+;    6	 *
+;    7	 * Permission is hereby granted, free of charge, to any person obtaining a copy of
+;    8	 * this software and associated documentation files (the "Software"), to deal in
+;    9	 * the Software without restriction, including without limitation the rights to
+;   10	 * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+;   11	 * the Software, and to permit persons to whom the Software is furnished to do so,
+;   12	 * subject to the following conditions:
+;   13	 *
+;   14	 * The above copyright notice and this permission notice shall be included in all
+;   15	 * copies or substantial portions of the Software.
+;   16	 *
+;   17	 * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+;   18	 * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+;   19	 * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+;   20	 * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+;   21	 * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+;   22	 * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+;   23	 *
+;   24	 * https://www.FreeRTOS.org
+;   25	 * https://github.com/FreeRTOS
+;   26	 *
+;   27	 */
+;   28	
+;   29	
+;   30	#include <stdlib.h>
+;   31	
+;   32	/* Defining MPU_WRAPPERS_INCLUDED_FROM_API_FILE prevents task.h from redefining
+;   33	 * all the API functions to use the MPU wrappers.  That should only be done when
+;   34	 * task.h is included from an application file. */
+;   35	#define MPU_WRAPPERS_INCLUDED_FROM_API_FILE
+;   36	
+;   37	#include "FreeRTOS.h"
+;   38	#include "list.h"
+;   39	
+;   40	/* Lint e9021, e961 and e750 are suppressed as a MISRA exception justified
+;   41	 * because the MPU ports require MPU_WRAPPERS_INCLUDED_FROM_API_FILE to be
+;   42	 * defined for the header files above, but not in this file, in order to
+;   43	 * generate the correct privileged Vs unprivileged linkage and placement. */
+;   44	#undef MPU_WRAPPERS_INCLUDED_FROM_API_FILE /*lint !e961 !e750 !e9021. */
+;   45	
+;   46	/*-----------------------------------------------------------
+;   47	* PUBLIC LIST API documented in list.h
+;   48	*----------------------------------------------------------*/
+;   49	
+;   50	void vListInitialise( List_t * const pxList )
+;   51	{
+_vListInitialise:
+.DEFINE "_vListInitialise"
+
+.VALUE _vListInitialise
+
+.CLASS 2
+
+.TYPE 65
+
+.ENDEF
+
+.BEGFUNC "vListInitialise",51,"_vListInitialise"
+
+.LINE 51
+
+.DEFINE "pxList"
+
+.CLASS 65
+
+.VALUE 6
+
+.TAG "xLIST"
+
+.TYPE 40
+
+.ENDEF
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+;   52	    /* The list structure contains a list item which is used to mark the
+;   53	     * end of the list.  To initialise the list the list end is inserted
+;   54	     * as the only list entry. */
+;   55	    pxList->pxIndex = ( ListItem_t * ) &( pxList->xListEnd ); /*lint !e826 !e740 !e9087 The mini list structure is used as the list end to save RAM.  This is checked and valid. */
+.LINE 55
+
+	LD	IY,(IX+%6)
+	LEA	BC,IY+%6
+	LD	(IY+%3),BC
+;   56	
+;   57	    listSET_FIRST_LIST_ITEM_INTEGRITY_CHECK_VALUE( &( pxList->xListEnd ) );
+;   58	
+;   59	    /* The list end value is the highest possible value in the list to
+;   60	     * ensure it remains at the end of the list. */
+;   61	    pxList->xListEnd.xItemValue = portMAX_DELAY;
+.LINE 61
+
+	LD	BC,16777215
+	LD	IY,(IX+%6)
+	LD	(IY+%6),BC
+	LD	(IY+%9),%FF
+;   62	
+;   63	    /* The list end next and previous pointers point to itself so we know
+;   64	     * when the list is empty. */
+;   65	    pxList->xListEnd.pxNext = ( ListItem_t * ) &( pxList->xListEnd );     /*lint !e826 !e740 !e9087 The mini list structure is used as the list end to save RAM.  This is checked and valid. */
+.LINE 65
+
+	LD	IY,(IX+%6)
+	LEA	BC,IY+%6
+	LD	(IY+%A),BC
+;   66	    pxList->xListEnd.pxPrevious = ( ListItem_t * ) &( pxList->xListEnd ); /*lint !e826 !e740 !e9087 The mini list structure is used as the list end to save RAM.  This is checked and valid. */
+.LINE 66
+
+	LD	IY,(IX+%6)
+	LEA	BC,IY+%6
+	LD	(IY+%D),BC
+;   67	
+;   68	    /* Initialize the remaining fields of xListEnd when it is a proper ListItem_t */
+;   69	    #if ( configUSE_MINI_LIST_ITEM == 0 )
+;   70	    {
+;   71	        pxList->xListEnd.pvOwner = NULL;
+;   72	        pxList->xListEnd.pxContainer = NULL;
+;   73	        listSET_SECOND_LIST_ITEM_INTEGRITY_CHECK_VALUE( &( pxList->xListEnd ) );
+;   74	    }
+;   75	    #endif
+;   76	
+;   77	    pxList->uxNumberOfItems = ( UBaseType_t ) 0U;
+.LINE 77
+
+	LD	BC,0
+	LD	IY,(IX+%6)
+	LD	(IY+%0),BC
+;   78	
+;   79	    /* Write known values into the list if
+;   80	     * configUSE_LIST_DATA_INTEGRITY_CHECK_BYTES is set to 1. */
+;   81	    listSET_LIST_INTEGRITY_CHECK_1_VALUE( pxList );
+;   82	    listSET_LIST_INTEGRITY_CHECK_2_VALUE( pxList );
+;   83	}
+.LINE 83
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _vListInitialise ***************************
+;Name                         Addr/Register   Size   Type
+;pxList                                IX+6      3   parameter
+
+
+; Stack Frame Size: 9 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "vListInitialise",83,"_vListInitialise"
+;   84	/*-----------------------------------------------------------*/
+;   85	
+;   86	void vListInitialiseItem( ListItem_t * const pxItem )
+;   87	{
+_vListInitialiseItem:
+.DEFINE "_vListInitialiseItem"
+
+.VALUE _vListInitialiseItem
+
+.CLASS 2
+
+.TYPE 65
+
+.ENDEF
+
+.BEGFUNC "vListInitialiseItem",87,"_vListInitialiseItem"
+
+.LINE 87
+
+.DEFINE "pxItem"
+
+.CLASS 65
+
+.VALUE 6
+
+.TAG "xLIST_ITEM"
+
+.TYPE 40
+
+.ENDEF
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+;   88	    /* Make sure the list item is not recorded as being on a list. */
+;   89	    pxItem->pxContainer = NULL;
+.LINE 89
+
+	LD	BC,0
+	LD	IY,(IX+%6)
+	LD	(IY+%D),BC
+;   90	
+;   91	    /* Write known values into the list item if
+;   92	     * configUSE_LIST_DATA_INTEGRITY_CHECK_BYTES is set to 1. */
+;   93	    listSET_FIRST_LIST_ITEM_INTEGRITY_CHECK_VALUE( pxItem );
+;   94	    listSET_SECOND_LIST_ITEM_INTEGRITY_CHECK_VALUE( pxItem );
+;   95	}
+.LINE 95
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _vListInitialiseItem ***************************
+;Name                         Addr/Register   Size   Type
+;pxItem                                IX+6      3   parameter
+
+
+; Stack Frame Size: 9 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "vListInitialiseItem",95,"_vListInitialiseItem"
+;   96	/*-----------------------------------------------------------*/
+;   97	
+;   98	void vListInsertEnd( List_t * const pxList,
+;   99	                     ListItem_t * const pxNewListItem )
+;  100	{
+_vListInsertEnd:
+.DEFINE "_vListInsertEnd"
+
+.VALUE _vListInsertEnd
+
+.CLASS 2
+
+.TYPE 65
+
+.ENDEF
+
+.BEGFUNC "vListInsertEnd",100,"_vListInsertEnd"
+
+.LINE 100
+
+.DEFINE "pxList"
+
+.CLASS 65
+
+.VALUE 6
+
+.TAG "xLIST"
+
+.TYPE 40
+
+.ENDEF
+
+.DEFINE "pxNewListItem"
+
+.CLASS 65
+
+.VALUE 9
+
+.TAG "xLIST_ITEM"
+
+.TYPE 40
+
+.ENDEF
+
+.DEFINE "pxIndex"
+
+.CLASS 65
+
+.VALUE -3
+
+.TAG "xLIST_ITEM"
+
+.TYPE 40
+
+.ENDEF
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+	PUSH	BC
+;  101	    ListItem_t * const pxIndex = pxList->pxIndex;
+.LINE 101
+
+	LD	IY,(IX+%6)
+	LD	BC,(IY+%3)
+	LD	(IX+%FFFFFFFD),BC
+;  102	
+;  103	    /* Only effective when configASSERT() is also defined, these tests may catch
+;  104	     * the list data structures being overwritten in memory.  They will not catch
+;  105	     * data errors caused by incorrect configuration or use of FreeRTOS. */
+;  106	    listTEST_LIST_INTEGRITY( pxList );
+;  107	    listTEST_LIST_ITEM_INTEGRITY( pxNewListItem );
+;  108	
+;  109	    /* Insert a new list item into pxList, but rather than sort the list,
+;  110	     * makes the new list item the last item to be removed by a call to
+;  111	     * listGET_OWNER_OF_NEXT_ENTRY(). */
+;  112	    pxNewListItem->pxNext = pxIndex;
+.LINE 112
+
+	LD	BC,(IX+%FFFFFFFD)
+	LD	IY,(IX+%9)
+	LD	(IY+%4),BC
+;  113	    pxNewListItem->pxPrevious = pxIndex->pxPrevious;
+.LINE 113
+
+	LD	IY,(IX+%FFFFFFFD)
+	LD	BC,(IY+%7)
+	LD	IY,(IX+%9)
+	LD	(IY+%7),BC
+;  114	
+;  115	    /* Only used during decision coverage testing. */
+;  116	    mtCOVERAGE_TEST_DELAY();
+;  117	
+;  118	    pxIndex->pxPrevious->pxNext = pxNewListItem;
+.LINE 118
+
+	LD	IY,(IX+%FFFFFFFD)
+	LD	IY,(IY+%7)
+	LD	BC,(IX+%9)
+	LD	(IY+%4),BC
+;  119	    pxIndex->pxPrevious = pxNewListItem;
+.LINE 119
+
+	LD	BC,(IX+%9)
+	LD	IY,(IX+%FFFFFFFD)
+	LD	(IY+%7),BC
+;  120	
+;  121	    /* Remember which list the item is in. */
+;  122	    pxNewListItem->pxContainer = pxList;
+.LINE 122
+
+	LD	BC,(IX+%6)
+	LD	IY,(IX+%9)
+	LD	(IY+%D),BC
+;  123	
+;  124	    ( pxList->uxNumberOfItems )++;
+.LINE 124
+
+	LD	IY,(IX+%6)
+	LD	BC,(IY+%0)
+	LD	BC,(IY+%0)
+	INC	BC
+	LD	(IY+%0),BC
+;  125	}
+.LINE 125
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _vListInsertEnd ***************************
+;Name                         Addr/Register   Size   Type
+;pxIndex                               IX-3      3   variable
+;pxNewListItem                         IX+9      3   parameter
+;pxList                                IX+6      3   parameter
+
+
+; Stack Frame Size: 15 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "vListInsertEnd",125,"_vListInsertEnd"
+;  126	/*-----------------------------------------------------------*/
+;  127	
+;  128	void vListInsert( List_t * const pxList,
+;  129	                  ListItem_t * const pxNewListItem )
+;  130	{
+_vListInsert:
+.DEFINE "_vListInsert"
+
+.VALUE _vListInsert
+
+.CLASS 2
+
+.TYPE 65
+
+.ENDEF
+
+.BEGFUNC "vListInsert",130,"_vListInsert"
+
+.LINE 130
+
+.DEFINE "pxList"
+
+.CLASS 65
+
+.VALUE 6
+
+.TAG "xLIST"
+
+.TYPE 40
+
+.ENDEF
+
+.DEFINE "pxNewListItem"
+
+.CLASS 65
+
+.VALUE 9
+
+.TAG "xLIST_ITEM"
+
+.TYPE 40
+
+.ENDEF
+
+.DEFINE "pxIterator"
+
+.CLASS 65
+
+.VALUE -3
+
+.TAG "xLIST_ITEM"
+
+.TYPE 40
+
+.ENDEF
+
+.DEFINE "xValueOfInsertion"
+
+.CLASS 65
+
+.VALUE -7
+
+.TYPE 15
+
+.ENDEF
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+	PUSH	BC
+	PUSH	BC
+	DEC	SP
+;  131	    ListItem_t * pxIterator;
+;  132	    const TickType_t xValueOfInsertion = pxNewListItem->xItemValue;
+.LINE 132
+
+	LD	IY,(IX+%9)
+	LD	BC,(IY+%0)
+	LD	A,(IY+%3)
+	LD	(IX+%FFFFFFF9),BC
+	LD	(IX+%FFFFFFFC),A
+;  133	
+;  134	    /* Only effective when configASSERT() is also defined, these tests may catch
+;  135	     * the list data structures being overwritten in memory.  They will not catch
+;  136	     * data errors caused by incorrect configuration or use of FreeRTOS. */
+;  137	    listTEST_LIST_INTEGRITY( pxList );
+;  138	    listTEST_LIST_ITEM_INTEGRITY( pxNewListItem );
+;  139	
+;  140	    /* Insert the new list item into the list, sorted in xItemValue order.
+;  141	     *
+;  142	     * If the list already contains a list item with the same item value then the
+;  143	     * new list item should be placed after it.  This ensures that TCBs which are
+;  144	     * stored in ready lists (all of which have the same xItemValue value) get a
+;  145	     * share of the CPU.  However, if the xItemValue is the same as the back marker
+;  146	     * the iteration loop below will not end.  Therefore the value is checked
+;  147	     * first, and the algorithm slightly modified if necessary. */
+;  148	    if( xValueOfInsertion == portMAX_DELAY )
+.LINE 148
+
+	LD	HL,(IX+%FFFFFFF9)
+	LD	E,(IX+%FFFFFFFC)
+	LD	BC,16777215
+	LD	A,%FF
+	CALL	__lcmpu
+	JR	NZ,L_4
+;  149	    {
+;  150	        pxIterator = pxList->xListEnd.pxPrevious;
+.LINE 150
+
+	LD	IY,(IX+%6)
+	LD	BC,(IY+%D)
+	LD	(IX+%FFFFFFFD),BC
+;  151	    }
+;  152	    else
+.LINE 152
+
+	JR	L_10
+;  153	    {
+;  154	        /* *** NOTE ***********************************************************
+;  155	        *  If you find your application is crashing here then likely causes are
+;  156	        *  listed below.  In addition see https://www.FreeRTOS.org/FAQHelp.html for
+;  157	        *  more tips, and ensure configASSERT() is defined!
+;  158	        *  https://www.FreeRTOS.org/a00110.html#configASSERT
+;  159	        *
+;  160	        *   1) Stack overflow -
+;  161	        *      see https://www.FreeRTOS.org/Stacks-and-stack-overflow-checking.html
+;  162	        *   2) Incorrect interrupt priority assignment, especially on Cortex-M
+;  163	        *      parts where numerically high priority values denote low actual
+;  164	        *      interrupt priorities, which can seem counter intuitive.  See
+;  165	        *      https://www.FreeRTOS.org/RTOS-Cortex-M3-M4.html and the definition
+;  166	        *      of configMAX_SYSCALL_INTERRUPT_PRIORITY on
+;  167	        *      https://www.FreeRTOS.org/a00110.html
+;  168	        *   3) Calling an API function from within a critical section or when
+;  169	        *      the scheduler is suspended, or calling an API function that does
+;  170	        *      not end in "FromISR" from an interrupt.
+;  171	        *   4) Using a queue or semaphore before it has been initialised or
+;  172	        *      before the scheduler has been started (are interrupts firing
+;  173	        *      before vTaskStartScheduler() has been called?).
+;  174	        *   5) If the FreeRTOS port supports interrupt nesting then ensure that
+;  175	        *      the priority of the tick interrupt is at or below
+;  176	        *      configMAX_SYSCALL_INTERRUPT_PRIORITY.
+;  177	        **********************************************************************/
+;  178	
+;  179	        for( pxIterator = ( ListItem_t * ) &( pxList->xListEnd ); pxIterator->pxNext->xItemValue <= xValueOfInsertion; pxIterator = pxIterator->pxNext ) /*lint !e826 !e740 !e9087 The mini list structure is used as the list end to save RAM.  This is checked and valid. *//*lint !e440 The iterator moves to a different value, not xValueOfInsertion. */
+L_5:
+.LINE 179
+
+	LD	IY,(IX+%FFFFFFFD)
+	LD	IY,(IY+%4)
+	LD	HL,(IX+%FFFFFFF9)
+	LD	E,(IX+%FFFFFFFC)
+	LD	BC,(IY+%0)
+	LD	A,(IY+%3)
+	CALL	__lcmpu
+	JR	NC,L_7
+	JR	L_10
+L_4:
+	LD	IY,(IX+%6)
+	LEA	BC,IY+%6
+	LD	(IX+%FFFFFFFD),BC
+	JR	L_5
+L_7:
+	LD	IY,(IX+%FFFFFFFD)
+	LD	BC,(IY+%4)
+	LD	(IX+%FFFFFFFD),BC
+;  180	        {
+;  181	            /* There is nothing to do here, just iterating to the wanted
+;  182	             * insertion position. */
+;  183	        }
+.LINE 183
+
+	JR	L_5
+;  184	    }
+L_10:
+.LINE 184
+
+;  185	
+;  186	    pxNewListItem->pxNext = pxIterator->pxNext;
+.LINE 186
+
+	LD	IY,(IX+%FFFFFFFD)
+	LD	BC,(IY+%4)
+	LD	IY,(IX+%9)
+	LD	(IY+%4),BC
+;  187	    pxNewListItem->pxNext->pxPrevious = pxNewListItem;
+.LINE 187
+
+	LD	IY,(IX+%9)
+	LD	IY,(IY+%4)
+	LD	BC,(IX+%9)
+	LD	(IY+%7),BC
+;  188	    pxNewListItem->pxPrevious = pxIterator;
+.LINE 188
+
+	LD	BC,(IX+%FFFFFFFD)
+	LD	IY,(IX+%9)
+	LD	(IY+%7),BC
+;  189	    pxIterator->pxNext = pxNewListItem;
+.LINE 189
+
+	LD	BC,(IX+%9)
+	LD	IY,(IX+%FFFFFFFD)
+	LD	(IY+%4),BC
+;  190	
+;  191	    /* Remember which list the item is in.  This allows fast removal of the
+;  192	     * item later. */
+;  193	    pxNewListItem->pxContainer = pxList;
+.LINE 193
+
+	LD	BC,(IX+%6)
+	LD	IY,(IX+%9)
+	LD	(IY+%D),BC
+;  194	
+;  195	    ( pxList->uxNumberOfItems )++;
+.LINE 195
+
+	LD	IY,(IX+%6)
+	LD	BC,(IY+%0)
+	LD	BC,(IY+%0)
+	INC	BC
+	LD	(IY+%0),BC
+;  196	}
+.LINE 196
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _vListInsert ***************************
+;Name                         Addr/Register   Size   Type
+;xValueOfInsertion                     IX-7      4   variable
+;pxIterator                            IX-3      3   variable
+;pxNewListItem                         IX+9      3   parameter
+;pxList                                IX+6      3   parameter
+
+
+; Stack Frame Size: 19 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "vListInsert",196,"_vListInsert"
+;  197	/*-----------------------------------------------------------*/
+;  198	
+;  199	UBaseType_t uxListRemove( ListItem_t * const pxItemToRemove )
+;  200	{
+_uxListRemove:
+.DEFINE "_uxListRemove"
+
+.VALUE _uxListRemove
+
+.CLASS 2
+
+.TYPE 78
+
+.ENDEF
+
+.BEGFUNC "uxListRemove",200,"_uxListRemove"
+
+.LINE 200
+
+.DEFINE "pxItemToRemove"
+
+.CLASS 65
+
+.VALUE 6
+
+.TAG "xLIST_ITEM"
+
+.TYPE 40
+
+.ENDEF
+
+.DEFINE "pxList"
+
+.CLASS 65
+
+.VALUE -3
+
+.TAG "xLIST"
+
+.TYPE 40
+
+.ENDEF
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+	PUSH	BC
+;  201	/* The list item knows which list it is in.  Obtain the list from the list
+;  202	 * item. */
+;  203	    List_t * const pxList = pxItemToRemove->pxContainer;
+.LINE 203
+
+	LD	IY,(IX+%6)
+	LD	BC,(IY+%D)
+	LD	(IX+%FFFFFFFD),BC
+;  204	
+;  205	    pxItemToRemove->pxNext->pxPrevious = pxItemToRemove->pxPrevious;
+.LINE 205
+
+	LD	IY,(IX+%6)
+	LD	BC,(IY+%4)
+	LD	DE,(IY+%7)
+	LD	IY,BC
+	LD	(IY+%7),DE
+;  206	    pxItemToRemove->pxPrevious->pxNext = pxItemToRemove->pxNext;
+.LINE 206
+
+	LD	IY,(IX+%6)
+	LD	BC,(IY+%7)
+	LD	DE,(IY+%4)
+	LD	IY,BC
+	LD	(IY+%4),DE
+;  207	
+;  208	    /* Only used during decision coverage testing. */
+;  209	    mtCOVERAGE_TEST_DELAY();
+;  210	
+;  211	    /* Make sure the index is left pointing to a valid item. */
+;  212	    if( pxList->pxIndex == pxItemToRemove )
+.LINE 212
+
+	LD	BC,(IX+%6)
+	LD	IY,(IX+%FFFFFFFD)
+	LD	HL,(IY+%3)
+	OR	A,A
+	SBC	HL,BC
+	JR	NZ,L_14
+;  213	    {
+;  214	        pxList->pxIndex = pxItemToRemove->pxPrevious;
+.LINE 214
+
+	LD	IY,(IX+%6)
+	LD	BC,(IY+%7)
+	LD	IY,(IX+%FFFFFFFD)
+	LD	(IY+%3),BC
+;  215	    }
+;  216	    else
+L_14:
+.LINE 216
+
+;  217	    {
+;  218	        mtCOVERAGE_TEST_MARKER();
+;  219	    }
+;  220	
+;  221	    pxItemToRemove->pxContainer = NULL;
+.LINE 221
+
+	LD	BC,0
+	LD	IY,(IX+%6)
+	LD	(IY+%D),BC
+;  222	    ( pxList->uxNumberOfItems )--;
+.LINE 222
+
+	LD	IY,(IX+%FFFFFFFD)
+	LD	BC,(IY+%0)
+	LD	IY,(IY+%0)
+	LEA	BC,IY+%FFFFFFFF
+	LD	IY,(IX+%FFFFFFFD)
+	LD	(IY+%0),BC
+;  223	
+;  224	    return pxList->uxNumberOfItems;
+.LINE 224
+
+	LD	IY,(IX+%FFFFFFFD)
+	LD	HL,(IY+%0)
+;  225	}
+.LINE 225
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _uxListRemove ***************************
+;Name                         Addr/Register   Size   Type
+;pxList                                IX-3      3   variable
+;pxItemToRemove                        IX+6      3   parameter
+
+
+; Stack Frame Size: 12 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "uxListRemove",225,"_uxListRemove"
+	XREF __lcmpu:ROM
+	XDEF _uxListRemove
+	XDEF _vListInsert
+	XDEF _vListInsertEnd
+	XDEF _vListInitialiseItem
+	XDEF _vListInitialise
+	END

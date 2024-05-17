@@ -1,0 +1,741 @@
+; Zilog eZ80 ANSI C Compiler Release 3.4
+; -noglobalopt -nolocalcse -optsize -nomodsect -reduceopt
+; -nopadbranch -debug -peephole -const=ROM 
+	FILE	"..\..\..\Source\portable\MemMang\heap_3.c"
+	.assume ADL=1
+.DEBUG "C"
+	SEGMENT CODE
+.BEGREC "NONAME0",6
+.DEFINE "quot"
+.VALUE 0
+.CLASS 8
+.TYPE 4
+.ENDEF
+.DEFINE "rem"
+.VALUE 3
+.CLASS 8
+.TYPE 4
+.ENDEF
+.ENDREC "NONAME0"
+.BEGREC "NONAME1",8
+.DEFINE "quot"
+.VALUE 0
+.CLASS 8
+.TYPE 5
+.ENDEF
+.DEFINE "rem"
+.VALUE 4
+.CLASS 8
+.TYPE 5
+.ENDEF
+.ENDREC "NONAME1"
+.BEGREC "header",6
+.DEFINE "s"
+.VALUE 0
+.CLASS 11
+.TAG "NONAME2"
+.TYPE 8
+.ENDEF
+.DEFINE "x"
+.VALUE 0
+.CLASS 11
+.TYPE 2
+.ENDEF
+.ENDREC "header"
+.BEGREC "NONAME2",6
+.DEFINE "ptr"
+.VALUE 0
+.CLASS 8
+.TAG "header"
+.TYPE 40
+.ENDEF
+.DEFINE "size"
+.VALUE 3
+.CLASS 8
+.TYPE 14
+.ENDEF
+.ENDREC "NONAME2"
+.BEGREC "HeapRegion",6
+.DEFINE "pucStartAddress"
+.VALUE 0
+.CLASS 8
+.TYPE 44
+.ENDEF
+.DEFINE "xSizeInBytes"
+.VALUE 3
+.CLASS 8
+.TYPE 14
+.ENDEF
+.ENDREC "HeapRegion"
+.BEGREC "xHeapStats",21
+.DEFINE "xAvailableHeapSpaceInBytes"
+.VALUE 0
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "xSizeOfLargestFreeBlockInBytes"
+.VALUE 3
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "xSizeOfSmallestFreeBlockInBytes"
+.VALUE 6
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "xNumberOfFreeBlocks"
+.VALUE 9
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "xMinimumEverFreeBytesRemaining"
+.VALUE 12
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "xNumberOfSuccessfulAllocations"
+.VALUE 15
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "xNumberOfSuccessfulFrees"
+.VALUE 18
+.CLASS 8
+.TYPE 14
+.ENDEF
+.ENDREC "xHeapStats"
+.BEGREC "xSTATIC_LIST_ITEM",16
+.DEFINE "xDummy2"
+.VALUE 0
+.CLASS 8
+.TYPE 15
+.ENDEF
+.DEFINE "pvDummy3"
+.VALUE 4
+.CLASS 8
+.DIM 4
+.TYPE 353
+.ENDEF
+.ENDREC "xSTATIC_LIST_ITEM"
+.BEGREC "xSTATIC_MINI_LIST_ITEM",10
+.DEFINE "xDummy2"
+.VALUE 0
+.CLASS 8
+.TYPE 15
+.ENDEF
+.DEFINE "pvDummy3"
+.VALUE 4
+.CLASS 8
+.DIM 2
+.TYPE 353
+.ENDEF
+.ENDREC "xSTATIC_MINI_LIST_ITEM"
+.BEGREC "xSTATIC_LIST",16
+.DEFINE "uxDummy2"
+.VALUE 0
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "pvDummy3"
+.VALUE 3
+.CLASS 8
+.TYPE 33
+.ENDEF
+.DEFINE "xDummy4"
+.VALUE 6
+.CLASS 8
+.TAG "xSTATIC_MINI_LIST_ITEM"
+.TYPE 8
+.ENDEF
+.ENDREC "xSTATIC_LIST"
+.BEGREC "xSTATIC_TCB",69
+.DEFINE "pxDummy1"
+.VALUE 0
+.CLASS 8
+.TYPE 33
+.ENDEF
+.DEFINE "xDummy3"
+.VALUE 3
+.CLASS 8
+.DIM 2
+.TAG "xSTATIC_LIST_ITEM"
+.TYPE 104
+.ENDEF
+.DEFINE "uxDummy5"
+.VALUE 35
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "pxDummy6"
+.VALUE 38
+.CLASS 8
+.TYPE 33
+.ENDEF
+.DEFINE "ucDummy7"
+.VALUE 41
+.CLASS 8
+.DIM 16
+.TYPE 108
+.ENDEF
+.DEFINE "uxDummy12"
+.VALUE 57
+.CLASS 8
+.DIM 2
+.TYPE 110
+.ENDEF
+.DEFINE "ulDummy18"
+.VALUE 63
+.CLASS 8
+.DIM 1
+.TYPE 111
+.ENDEF
+.DEFINE "ucDummy19"
+.VALUE 67
+.CLASS 8
+.DIM 1
+.TYPE 108
+.ENDEF
+.DEFINE "ucDummy21"
+.VALUE 68
+.CLASS 8
+.TYPE 12
+.ENDEF
+.ENDREC "xSTATIC_TCB"
+.BEGREC "xSTATIC_QUEUE",55
+.DEFINE "pvDummy1"
+.VALUE 0
+.CLASS 8
+.DIM 3
+.TYPE 353
+.ENDEF
+.DEFINE "u"
+.VALUE 9
+.CLASS 8
+.TAG "NONAME3"
+.TYPE 8
+.ENDEF
+.DEFINE "xDummy3"
+.VALUE 12
+.CLASS 8
+.DIM 2
+.TAG "xSTATIC_LIST"
+.TYPE 104
+.ENDEF
+.DEFINE "uxDummy4"
+.VALUE 44
+.CLASS 8
+.DIM 3
+.TYPE 110
+.ENDEF
+.DEFINE "ucDummy5"
+.VALUE 53
+.CLASS 8
+.DIM 2
+.TYPE 108
+.ENDEF
+.ENDREC "xSTATIC_QUEUE"
+.BEGREC "NONAME3",3
+.DEFINE "pvDummy2"
+.VALUE 0
+.CLASS 11
+.TYPE 33
+.ENDEF
+.DEFINE "uxDummy2"
+.VALUE 0
+.CLASS 11
+.TYPE 14
+.ENDEF
+.ENDREC "NONAME3"
+.BEGREC "xSTATIC_EVENT_GROUP",20
+.DEFINE "xDummy1"
+.VALUE 0
+.CLASS 8
+.TYPE 15
+.ENDEF
+.DEFINE "xDummy2"
+.VALUE 4
+.CLASS 8
+.TAG "xSTATIC_LIST"
+.TYPE 8
+.ENDEF
+.ENDREC "xSTATIC_EVENT_GROUP"
+.BEGREC "xSTATIC_TIMER",30
+.DEFINE "pvDummy1"
+.VALUE 0
+.CLASS 8
+.TYPE 33
+.ENDEF
+.DEFINE "xDummy2"
+.VALUE 3
+.CLASS 8
+.TAG "xSTATIC_LIST_ITEM"
+.TYPE 8
+.ENDEF
+.DEFINE "xDummy3"
+.VALUE 19
+.CLASS 8
+.TYPE 15
+.ENDEF
+.DEFINE "pvDummy5"
+.VALUE 23
+.CLASS 8
+.TYPE 33
+.ENDEF
+.DEFINE "pvDummy6"
+.VALUE 26
+.CLASS 8
+.TYPE 545
+.ENDEF
+.DEFINE "ucDummy8"
+.VALUE 29
+.CLASS 8
+.TYPE 12
+.ENDEF
+.ENDREC "xSTATIC_TIMER"
+.BEGREC "xSTATIC_STREAM_BUFFER",22
+.DEFINE "uxDummy1"
+.VALUE 0
+.CLASS 8
+.DIM 4
+.TYPE 110
+.ENDEF
+.DEFINE "pvDummy2"
+.VALUE 12
+.CLASS 8
+.DIM 3
+.TYPE 353
+.ENDEF
+.DEFINE "ucDummy3"
+.VALUE 21
+.CLASS 8
+.TYPE 12
+.ENDEF
+.ENDREC "xSTATIC_STREAM_BUFFER"
+.BEGREC "xLIST_ITEM",16
+.DEFINE "xItemValue"
+.VALUE 0
+.CLASS 8
+.TYPE 15
+.ENDEF
+.DEFINE "pxNext"
+.VALUE 4
+.CLASS 8
+.TAG "xLIST_ITEM"
+.TYPE 40
+.ENDEF
+.DEFINE "pxPrevious"
+.VALUE 7
+.CLASS 8
+.TAG "xLIST_ITEM"
+.TYPE 40
+.ENDEF
+.DEFINE "pvOwner"
+.VALUE 10
+.CLASS 8
+.TYPE 33
+.ENDEF
+.DEFINE "pvContainer"
+.VALUE 13
+.CLASS 8
+.TAG "xLIST"
+.TYPE 40
+.ENDEF
+.ENDREC "xLIST_ITEM"
+.BEGREC "xMINI_LIST_ITEM",10
+.DEFINE "xItemValue"
+.VALUE 0
+.CLASS 8
+.TYPE 15
+.ENDEF
+.DEFINE "pxNext"
+.VALUE 4
+.CLASS 8
+.TAG "xLIST_ITEM"
+.TYPE 40
+.ENDEF
+.DEFINE "pxPrevious"
+.VALUE 7
+.CLASS 8
+.TAG "xLIST_ITEM"
+.TYPE 40
+.ENDEF
+.ENDREC "xMINI_LIST_ITEM"
+.BEGREC "xLIST",16
+.DEFINE "uxNumberOfItems"
+.VALUE 0
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "pxIndex"
+.VALUE 3
+.CLASS 8
+.TAG "xLIST_ITEM"
+.TYPE 40
+.ENDEF
+.DEFINE "xListEnd"
+.VALUE 6
+.CLASS 8
+.TAG "xMINI_LIST_ITEM"
+.TYPE 8
+.ENDEF
+.ENDREC "xLIST"
+.BEGREC "xTIME_OUT",7
+.DEFINE "xOverflowCount"
+.VALUE 0
+.CLASS 8
+.TYPE 4
+.ENDEF
+.DEFINE "xTimeOnEntering"
+.VALUE 3
+.CLASS 8
+.TYPE 15
+.ENDEF
+.ENDREC "xTIME_OUT"
+.BEGREC "xMEMORY_REGION",11
+.DEFINE "pvBaseAddress"
+.VALUE 0
+.CLASS 8
+.TYPE 33
+.ENDEF
+.DEFINE "ulLengthInBytes"
+.VALUE 3
+.CLASS 8
+.TYPE 15
+.ENDEF
+.DEFINE "ulParameters"
+.VALUE 7
+.CLASS 8
+.TYPE 15
+.ENDEF
+.ENDREC "xMEMORY_REGION"
+.BEGREC "xTASK_PARAMETERS",29
+.DEFINE "pvTaskCode"
+.VALUE 0
+.CLASS 8
+.TYPE 545
+.ENDEF
+.DEFINE "pcName"
+.VALUE 3
+.CLASS 8
+.TYPE 194
+.ENDEF
+.DEFINE "usStackDepth"
+.VALUE 6
+.CLASS 8
+.TYPE 4
+.ENDEF
+.DEFINE "pvParameters"
+.VALUE 9
+.CLASS 8
+.TYPE 33
+.ENDEF
+.DEFINE "uxPriority"
+.VALUE 12
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "puxStackBuffer"
+.VALUE 15
+.CLASS 8
+.TYPE 46
+.ENDEF
+.DEFINE "xRegions"
+.VALUE 18
+.CLASS 8
+.DIM 1
+.TAG "xMEMORY_REGION"
+.TYPE 104
+.ENDEF
+.ENDREC "xTASK_PARAMETERS"
+.BEGREC "xTASK_STATUS",28
+.DEFINE "xHandle"
+.VALUE 0
+.CLASS 8
+.TAG "~tag"
+.TYPE 40
+.ENDEF
+.DEFINE "pcTaskName"
+.VALUE 3
+.CLASS 8
+.TYPE 194
+.ENDEF
+.DEFINE "xTaskNumber"
+.VALUE 6
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "eCurrentState"
+.VALUE 9
+.CLASS 8
+.TYPE 4
+.ENDEF
+.DEFINE "uxCurrentPriority"
+.VALUE 12
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "uxBasePriority"
+.VALUE 15
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "ulRunTimeCounter"
+.VALUE 18
+.CLASS 8
+.TYPE 15
+.ENDEF
+.DEFINE "pxStackBase"
+.VALUE 22
+.CLASS 8
+.TYPE 46
+.ENDEF
+.DEFINE "usStackHighWaterMark"
+.VALUE 25
+.CLASS 8
+.TYPE 4
+.ENDEF
+.ENDREC "xTASK_STATUS"
+;    1	/*
+;    2	 * FreeRTOS Kernel V10.5.1
+;    3	 * Copyright (C) 2021 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
+;    4	 *
+;    5	 * SPDX-License-Identifier: MIT
+;    6	 *
+;    7	 * Permission is hereby granted, free of charge, to any person obtaining a copy of
+;    8	 * this software and associated documentation files (the "Software"), to deal in
+;    9	 * the Software without restriction, including without limitation the rights to
+;   10	 * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+;   11	 * the Software, and to permit persons to whom the Software is furnished to do so,
+;   12	 * subject to the following conditions:
+;   13	 *
+;   14	 * The above copyright notice and this permission notice shall be included in all
+;   15	 * copies or substantial portions of the Software.
+;   16	 *
+;   17	 * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+;   18	 * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+;   19	 * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+;   20	 * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+;   21	 * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+;   22	 * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+;   23	 *
+;   24	 * https://www.FreeRTOS.org
+;   25	 * https://github.com/FreeRTOS
+;   26	 *
+;   27	 */
+;   28	
+;   29	
+;   30	/*
+;   31	 * Implementation of pvPortMalloc() and vPortFree() that relies on the
+;   32	 * compilers own malloc() and free() implementations.
+;   33	 *
+;   34	 * This file can only be used if the linker is configured to to generate
+;   35	 * a heap memory area.
+;   36	 *
+;   37	 * See heap_1.c, heap_2.c and heap_4.c for alternative implementations, and the
+;   38	 * memory management pages of https://www.FreeRTOS.org for more information.
+;   39	 */
+;   40	
+;   41	#include <stdlib.h>
+;   42	
+;   43	/* Defining MPU_WRAPPERS_INCLUDED_FROM_API_FILE prevents task.h from redefining
+;   44	 * all the API functions to use the MPU wrappers.  That should only be done when
+;   45	 * task.h is included from an application file. */
+;   46	#define MPU_WRAPPERS_INCLUDED_FROM_API_FILE
+;   47	
+;   48	#include "FreeRTOS.h"
+;   49	#include "task.h"
+;   50	
+;   51	#undef MPU_WRAPPERS_INCLUDED_FROM_API_FILE
+;   52	
+;   53	#if ( configSUPPORT_DYNAMIC_ALLOCATION == 0 )
+;   54	    #error This file must not be used if configSUPPORT_DYNAMIC_ALLOCATION is 0
+;   55	#endif
+;   56	
+;   57	/*-----------------------------------------------------------*/
+;   58	
+;   59	void * pvPortMalloc( size_t xWantedSize )
+;   60	{
+_pvPortMalloc:
+.DEFINE "_pvPortMalloc"
+
+.VALUE _pvPortMalloc
+
+.CLASS 2
+
+.TYPE 321
+
+.ENDEF
+
+.BEGFUNC "pvPortMalloc",60,"_pvPortMalloc"
+
+.LINE 60
+
+.DEFINE "xWantedSize"
+
+.CLASS 65
+
+.VALUE 6
+
+.TYPE 14
+
+.ENDEF
+
+.DEFINE "pvReturn"
+
+.CLASS 65
+
+.VALUE -3
+
+.TYPE 33
+
+.ENDEF
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+	PUSH	BC
+;   61	    void * pvReturn;
+;   62	
+;   63	    vTaskSuspendAll();
+.LINE 63
+
+	CALL	_vTaskSuspendAll
+;   64	    {
+;   65	        pvReturn = malloc( xWantedSize );
+.LINE 65
+
+	LD	BC,(IX+%6)
+	PUSH	BC
+	CALL	_malloc
+	POP	BC
+	LD	(IX+%FFFFFFFD),HL
+;   66	        traceMALLOC( pvReturn, xWantedSize );
+;   67	    }
+;   68	    ( void ) xTaskResumeAll();
+.LINE 68
+
+	CALL	_xTaskResumeAll
+;   69	
+;   70	    #if ( configUSE_MALLOC_FAILED_HOOK == 1 )
+;   71	    {
+;   72	        if( pvReturn == NULL )
+;   73	        {
+;   74	            vApplicationMallocFailedHook();
+;   75	        }
+;   76	    }
+;   77	    #endif
+;   78	
+;   79	    return pvReturn;
+.LINE 79
+
+	LD	HL,(IX+%FFFFFFFD)
+;   80	}
+.LINE 80
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _pvPortMalloc ***************************
+;Name                         Addr/Register   Size   Type
+;_xTaskResumeAll                     IMPORT  -----   function
+;_malloc                             IMPORT  -----   function
+;_vTaskSuspendAll                    IMPORT  -----   function
+;pvReturn                              IX-3      3   variable
+;xWantedSize                           IX+6      3   parameter
+
+
+; Stack Frame Size: 12 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "pvPortMalloc",80,"_pvPortMalloc"
+;   81	/*-----------------------------------------------------------*/
+;   82	
+;   83	void vPortFree( void * pv )
+;   84	{
+_vPortFree:
+.DEFINE "_vPortFree"
+
+.VALUE _vPortFree
+
+.CLASS 2
+
+.TYPE 65
+
+.ENDEF
+
+.BEGFUNC "vPortFree",84,"_vPortFree"
+
+.LINE 84
+
+.DEFINE "pv"
+
+.CLASS 65
+
+.VALUE 6
+
+.TYPE 33
+
+.ENDEF
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+;   85	    if( pv != NULL )
+.LINE 85
+
+	LD	HL,(IX+%6)
+	CALL	__icmpzero
+	JR	Z,L_2
+;   86	    {
+;   87	        vTaskSuspendAll();
+.LINE 87
+
+	CALL	_vTaskSuspendAll
+;   88	        {
+;   89	            free( pv );
+.LINE 89
+
+	LD	BC,(IX+%6)
+	PUSH	BC
+	CALL	_free
+	POP	BC
+;   90	            traceFREE( pv, 0 );
+;   91	        }
+;   92	        ( void ) xTaskResumeAll();
+.LINE 92
+
+	CALL	_xTaskResumeAll
+;   93	    }
+;   94	}
+L_2:
+.LINE 94
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _vPortFree ***************************
+;Name                         Addr/Register   Size   Type
+;_xTaskResumeAll                     IMPORT  -----   function
+;_free                               IMPORT  -----   function
+;_vTaskSuspendAll                    IMPORT  -----   function
+;pv                                    IX+6      3   parameter
+
+
+; Stack Frame Size: 9 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "vPortFree",94,"_vPortFree"
+	XREF _xTaskResumeAll:ROM
+	XREF _vTaskSuspendAll:ROM
+	XREF _malloc:ROM
+	XREF _free:ROM
+	XREF __icmpzero:ROM
+	XDEF _vPortFree
+	XDEF _pvPortMalloc
+	END

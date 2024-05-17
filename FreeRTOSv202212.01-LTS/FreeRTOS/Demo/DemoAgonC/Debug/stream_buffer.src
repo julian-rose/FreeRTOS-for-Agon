@@ -1,0 +1,5813 @@
+; Zilog eZ80 ANSI C Compiler Release 3.4
+; -noglobalopt -nolocalcse -optsize -nomodsect -reduceopt
+; -nopadbranch -debug -peephole -const=ROM 
+	FILE	"..\..\..\Source\stream_buffer.c"
+	.assume ADL=1
+.DEBUG "C"
+	SEGMENT CODE
+.BEGREC "HeapRegion",6
+.DEFINE "pucStartAddress"
+.VALUE 0
+.CLASS 8
+.TYPE 44
+.ENDEF
+.DEFINE "xSizeInBytes"
+.VALUE 3
+.CLASS 8
+.TYPE 14
+.ENDEF
+.ENDREC "HeapRegion"
+.BEGREC "xHeapStats",21
+.DEFINE "xAvailableHeapSpaceInBytes"
+.VALUE 0
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "xSizeOfLargestFreeBlockInBytes"
+.VALUE 3
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "xSizeOfSmallestFreeBlockInBytes"
+.VALUE 6
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "xNumberOfFreeBlocks"
+.VALUE 9
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "xMinimumEverFreeBytesRemaining"
+.VALUE 12
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "xNumberOfSuccessfulAllocations"
+.VALUE 15
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "xNumberOfSuccessfulFrees"
+.VALUE 18
+.CLASS 8
+.TYPE 14
+.ENDEF
+.ENDREC "xHeapStats"
+.BEGREC "xSTATIC_LIST_ITEM",16
+.DEFINE "xDummy2"
+.VALUE 0
+.CLASS 8
+.TYPE 15
+.ENDEF
+.DEFINE "pvDummy3"
+.VALUE 4
+.CLASS 8
+.DIM 4
+.TYPE 353
+.ENDEF
+.ENDREC "xSTATIC_LIST_ITEM"
+.BEGREC "xSTATIC_MINI_LIST_ITEM",10
+.DEFINE "xDummy2"
+.VALUE 0
+.CLASS 8
+.TYPE 15
+.ENDEF
+.DEFINE "pvDummy3"
+.VALUE 4
+.CLASS 8
+.DIM 2
+.TYPE 353
+.ENDEF
+.ENDREC "xSTATIC_MINI_LIST_ITEM"
+.BEGREC "xSTATIC_LIST",16
+.DEFINE "uxDummy2"
+.VALUE 0
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "pvDummy3"
+.VALUE 3
+.CLASS 8
+.TYPE 33
+.ENDEF
+.DEFINE "xDummy4"
+.VALUE 6
+.CLASS 8
+.TAG "xSTATIC_MINI_LIST_ITEM"
+.TYPE 8
+.ENDEF
+.ENDREC "xSTATIC_LIST"
+.BEGREC "xSTATIC_TCB",69
+.DEFINE "pxDummy1"
+.VALUE 0
+.CLASS 8
+.TYPE 33
+.ENDEF
+.DEFINE "xDummy3"
+.VALUE 3
+.CLASS 8
+.DIM 2
+.TAG "xSTATIC_LIST_ITEM"
+.TYPE 104
+.ENDEF
+.DEFINE "uxDummy5"
+.VALUE 35
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "pxDummy6"
+.VALUE 38
+.CLASS 8
+.TYPE 33
+.ENDEF
+.DEFINE "ucDummy7"
+.VALUE 41
+.CLASS 8
+.DIM 16
+.TYPE 108
+.ENDEF
+.DEFINE "uxDummy12"
+.VALUE 57
+.CLASS 8
+.DIM 2
+.TYPE 110
+.ENDEF
+.DEFINE "ulDummy18"
+.VALUE 63
+.CLASS 8
+.DIM 1
+.TYPE 111
+.ENDEF
+.DEFINE "ucDummy19"
+.VALUE 67
+.CLASS 8
+.DIM 1
+.TYPE 108
+.ENDEF
+.DEFINE "ucDummy21"
+.VALUE 68
+.CLASS 8
+.TYPE 12
+.ENDEF
+.ENDREC "xSTATIC_TCB"
+.BEGREC "xSTATIC_QUEUE",55
+.DEFINE "pvDummy1"
+.VALUE 0
+.CLASS 8
+.DIM 3
+.TYPE 353
+.ENDEF
+.DEFINE "u"
+.VALUE 9
+.CLASS 8
+.TAG "NONAME0"
+.TYPE 8
+.ENDEF
+.DEFINE "xDummy3"
+.VALUE 12
+.CLASS 8
+.DIM 2
+.TAG "xSTATIC_LIST"
+.TYPE 104
+.ENDEF
+.DEFINE "uxDummy4"
+.VALUE 44
+.CLASS 8
+.DIM 3
+.TYPE 110
+.ENDEF
+.DEFINE "ucDummy5"
+.VALUE 53
+.CLASS 8
+.DIM 2
+.TYPE 108
+.ENDEF
+.ENDREC "xSTATIC_QUEUE"
+.BEGREC "NONAME0",3
+.DEFINE "pvDummy2"
+.VALUE 0
+.CLASS 11
+.TYPE 33
+.ENDEF
+.DEFINE "uxDummy2"
+.VALUE 0
+.CLASS 11
+.TYPE 14
+.ENDEF
+.ENDREC "NONAME0"
+.BEGREC "xSTATIC_EVENT_GROUP",20
+.DEFINE "xDummy1"
+.VALUE 0
+.CLASS 8
+.TYPE 15
+.ENDEF
+.DEFINE "xDummy2"
+.VALUE 4
+.CLASS 8
+.TAG "xSTATIC_LIST"
+.TYPE 8
+.ENDEF
+.ENDREC "xSTATIC_EVENT_GROUP"
+.BEGREC "xSTATIC_TIMER",30
+.DEFINE "pvDummy1"
+.VALUE 0
+.CLASS 8
+.TYPE 33
+.ENDEF
+.DEFINE "xDummy2"
+.VALUE 3
+.CLASS 8
+.TAG "xSTATIC_LIST_ITEM"
+.TYPE 8
+.ENDEF
+.DEFINE "xDummy3"
+.VALUE 19
+.CLASS 8
+.TYPE 15
+.ENDEF
+.DEFINE "pvDummy5"
+.VALUE 23
+.CLASS 8
+.TYPE 33
+.ENDEF
+.DEFINE "pvDummy6"
+.VALUE 26
+.CLASS 8
+.TYPE 545
+.ENDEF
+.DEFINE "ucDummy8"
+.VALUE 29
+.CLASS 8
+.TYPE 12
+.ENDEF
+.ENDREC "xSTATIC_TIMER"
+.BEGREC "xSTATIC_STREAM_BUFFER",22
+.DEFINE "uxDummy1"
+.VALUE 0
+.CLASS 8
+.DIM 4
+.TYPE 110
+.ENDEF
+.DEFINE "pvDummy2"
+.VALUE 12
+.CLASS 8
+.DIM 3
+.TYPE 353
+.ENDEF
+.DEFINE "ucDummy3"
+.VALUE 21
+.CLASS 8
+.TYPE 12
+.ENDEF
+.ENDREC "xSTATIC_STREAM_BUFFER"
+.BEGREC "xLIST_ITEM",16
+.DEFINE "xItemValue"
+.VALUE 0
+.CLASS 8
+.TYPE 15
+.ENDEF
+.DEFINE "pxNext"
+.VALUE 4
+.CLASS 8
+.TAG "xLIST_ITEM"
+.TYPE 40
+.ENDEF
+.DEFINE "pxPrevious"
+.VALUE 7
+.CLASS 8
+.TAG "xLIST_ITEM"
+.TYPE 40
+.ENDEF
+.DEFINE "pvOwner"
+.VALUE 10
+.CLASS 8
+.TYPE 33
+.ENDEF
+.DEFINE "pvContainer"
+.VALUE 13
+.CLASS 8
+.TAG "xLIST"
+.TYPE 40
+.ENDEF
+.ENDREC "xLIST_ITEM"
+.BEGREC "xMINI_LIST_ITEM",10
+.DEFINE "xItemValue"
+.VALUE 0
+.CLASS 8
+.TYPE 15
+.ENDEF
+.DEFINE "pxNext"
+.VALUE 4
+.CLASS 8
+.TAG "xLIST_ITEM"
+.TYPE 40
+.ENDEF
+.DEFINE "pxPrevious"
+.VALUE 7
+.CLASS 8
+.TAG "xLIST_ITEM"
+.TYPE 40
+.ENDEF
+.ENDREC "xMINI_LIST_ITEM"
+.BEGREC "xLIST",16
+.DEFINE "uxNumberOfItems"
+.VALUE 0
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "pxIndex"
+.VALUE 3
+.CLASS 8
+.TAG "xLIST_ITEM"
+.TYPE 40
+.ENDEF
+.DEFINE "xListEnd"
+.VALUE 6
+.CLASS 8
+.TAG "xMINI_LIST_ITEM"
+.TYPE 8
+.ENDEF
+.ENDREC "xLIST"
+.BEGREC "xTIME_OUT",7
+.DEFINE "xOverflowCount"
+.VALUE 0
+.CLASS 8
+.TYPE 4
+.ENDEF
+.DEFINE "xTimeOnEntering"
+.VALUE 3
+.CLASS 8
+.TYPE 15
+.ENDEF
+.ENDREC "xTIME_OUT"
+.BEGREC "xMEMORY_REGION",11
+.DEFINE "pvBaseAddress"
+.VALUE 0
+.CLASS 8
+.TYPE 33
+.ENDEF
+.DEFINE "ulLengthInBytes"
+.VALUE 3
+.CLASS 8
+.TYPE 15
+.ENDEF
+.DEFINE "ulParameters"
+.VALUE 7
+.CLASS 8
+.TYPE 15
+.ENDEF
+.ENDREC "xMEMORY_REGION"
+.BEGREC "xTASK_PARAMETERS",29
+.DEFINE "pvTaskCode"
+.VALUE 0
+.CLASS 8
+.TYPE 545
+.ENDEF
+.DEFINE "pcName"
+.VALUE 3
+.CLASS 8
+.TYPE 194
+.ENDEF
+.DEFINE "usStackDepth"
+.VALUE 6
+.CLASS 8
+.TYPE 4
+.ENDEF
+.DEFINE "pvParameters"
+.VALUE 9
+.CLASS 8
+.TYPE 33
+.ENDEF
+.DEFINE "uxPriority"
+.VALUE 12
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "puxStackBuffer"
+.VALUE 15
+.CLASS 8
+.TYPE 46
+.ENDEF
+.DEFINE "xRegions"
+.VALUE 18
+.CLASS 8
+.DIM 1
+.TAG "xMEMORY_REGION"
+.TYPE 104
+.ENDEF
+.ENDREC "xTASK_PARAMETERS"
+.BEGREC "xTASK_STATUS",28
+.DEFINE "xHandle"
+.VALUE 0
+.CLASS 8
+.TAG "~tag"
+.TYPE 40
+.ENDEF
+.DEFINE "pcTaskName"
+.VALUE 3
+.CLASS 8
+.TYPE 194
+.ENDEF
+.DEFINE "xTaskNumber"
+.VALUE 6
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "eCurrentState"
+.VALUE 9
+.CLASS 8
+.TYPE 4
+.ENDEF
+.DEFINE "uxCurrentPriority"
+.VALUE 12
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "uxBasePriority"
+.VALUE 15
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "ulRunTimeCounter"
+.VALUE 18
+.CLASS 8
+.TYPE 15
+.ENDEF
+.DEFINE "pxStackBase"
+.VALUE 22
+.CLASS 8
+.TYPE 46
+.ENDEF
+.DEFINE "usStackHighWaterMark"
+.VALUE 25
+.CLASS 8
+.TYPE 4
+.ENDEF
+.ENDREC "xTASK_STATUS"
+;    1	/*
+;    2	 * FreeRTOS Kernel V10.5.1
+;    3	 * Copyright (C) 2021 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
+;    4	 *
+;    5	 * SPDX-License-Identifier: MIT
+;    6	 *
+;    7	 * Permission is hereby granted, free of charge, to any person obtaining a copy of
+;    8	 * this software and associated documentation files (the "Software"), to deal in
+;    9	 * the Software without restriction, including without limitation the rights to
+;   10	 * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+;   11	 * the Software, and to permit persons to whom the Software is furnished to do so,
+;   12	 * subject to the following conditions:
+;   13	 *
+;   14	 * The above copyright notice and this permission notice shall be included in all
+;   15	 * copies or substantial portions of the Software.
+;   16	 *
+;   17	 * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+;   18	 * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+;   19	 * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+;   20	 * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+;   21	 * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+;   22	 * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+;   23	 *
+;   24	 * https://www.FreeRTOS.org
+;   25	 * https://github.com/FreeRTOS
+;   26	 *
+;   27	 */
+;   28	
+;   29	/* Standard includes. */
+;   30	#include <stdint.h>
+;   31	#include <string.h>
+;   32	
+;   33	/* Defining MPU_WRAPPERS_INCLUDED_FROM_API_FILE prevents task.h from redefining
+;   34	 * all the API functions to use the MPU wrappers.  That should only be done when
+;   35	 * task.h is included from an application file. */
+;   36	#define MPU_WRAPPERS_INCLUDED_FROM_API_FILE
+;   37	
+;   38	/* FreeRTOS includes. */
+;   39	#include "FreeRTOS.h"
+;   40	#include "task.h"
+;   41	#include "stream_buffer.h"
+;   42	
+;   43	#if ( configUSE_TASK_NOTIFICATIONS != 1 )
+;   44	    #error configUSE_TASK_NOTIFICATIONS must be set to 1 to build stream_buffer.c
+;   45	#endif
+;   46	
+;   47	#if ( INCLUDE_xTaskGetCurrentTaskHandle != 1 )
+;   48	    #error INCLUDE_xTaskGetCurrentTaskHandle must be set to 1 to build stream_buffer.c
+;   49	#endif
+;   50	
+;   51	/* Lint e961, e9021 and e750 are suppressed as a MISRA exception justified
+;   52	 * because the MPU ports require MPU_WRAPPERS_INCLUDED_FROM_API_FILE to be defined
+;   53	 * for the header files above, but not in this file, in order to generate the
+;   54	 * correct privileged Vs unprivileged linkage and placement. */
+;   55	#undef MPU_WRAPPERS_INCLUDED_FROM_API_FILE /*lint !e961 !e750 !e9021. */
+;   56	
+;   57	/* If the user has not provided application specific Rx notification macros,
+;   58	 * or #defined the notification macros away, then provide default implementations
+;   59	 * that uses task notifications. */
+;   60	/*lint -save -e9026 Function like macros allowed and needed here so they can be overridden. */
+;   61	#ifndef sbRECEIVE_COMPLETED
+;   62	    #define sbRECEIVE_COMPLETED( pxStreamBuffer )                         \
+;   63	    vTaskSuspendAll();                                                    \
+;   64	    {                                                                     \
+;   65	        if( ( pxStreamBuffer )->xTaskWaitingToSend != NULL )              \
+;   66	        {                                                                 \
+;   67	            ( void ) xTaskNotify( ( pxStreamBuffer )->xTaskWaitingToSend, \
+;   68	                                  ( uint32_t ) 0,                         \
+;   69	                                  eNoAction );                            \
+;   70	            ( pxStreamBuffer )->xTaskWaitingToSend = NULL;                \
+;   71	        }                                                                 \
+;   72	    }                                                                     \
+;   73	    ( void ) xTaskResumeAll();
+;   74	#endif /* sbRECEIVE_COMPLETED */
+;   75	
+;   76	/* If user has provided a per-instance receive complete callback, then
+;   77	 * invoke the callback else use the receive complete macro which is provided by default for all instances.
+;   78	 */
+;   79	#if ( configUSE_SB_COMPLETED_CALLBACK == 1 )
+;   80	    #define prvRECEIVE_COMPLETED( pxStreamBuffer )                                               \
+;   81	    {                                                                                            \
+;   82	        if( ( pxStreamBuffer )->pxReceiveCompletedCallback != NULL )                             \
+;   83	        {                                                                                        \
+;   84	            ( pxStreamBuffer )->pxReceiveCompletedCallback( ( pxStreamBuffer ), pdFALSE, NULL ); \
+;   85	        }                                                                                        \
+;   86	        else                                                                                     \
+;   87	        {                                                                                        \
+;   88	            sbRECEIVE_COMPLETED( ( pxStreamBuffer ) );                                           \
+;   89	        }                                                                                        \
+;   90	    }
+;   91	#else /* if ( configUSE_SB_COMPLETED_CALLBACK == 1 ) */
+;   92	    #define prvRECEIVE_COMPLETED( pxStreamBuffer )    sbRECEIVE_COMPLETED( ( pxStreamBuffer ) )
+;   93	#endif /* if ( configUSE_SB_COMPLETED_CALLBACK == 1 ) */
+;   94	
+;   95	#ifndef sbRECEIVE_COMPLETED_FROM_ISR
+;   96	    #define sbRECEIVE_COMPLETED_FROM_ISR( pxStreamBuffer,                            \
+;   97	                                          pxHigherPriorityTaskWoken )                \
+;   98	    {                                                                                \
+;   99	        UBaseType_t uxSavedInterruptStatus;                                          \
+;  100	                                                                                     \
+;  101	        uxSavedInterruptStatus = ( UBaseType_t ) portSET_INTERRUPT_MASK_FROM_ISR();  \
+;  102	        {                                                                            \
+;  103	            if( ( pxStreamBuffer )->xTaskWaitingToSend != NULL )                     \
+;  104	            {                                                                        \
+;  105	                ( void ) xTaskNotifyFromISR( ( pxStreamBuffer )->xTaskWaitingToSend, \
+;  106	                                             ( uint32_t ) 0,                         \
+;  107	                                             eNoAction,                              \
+;  108	                                             ( pxHigherPriorityTaskWoken ) );        \
+;  109	                ( pxStreamBuffer )->xTaskWaitingToSend = NULL;                       \
+;  110	            }                                                                        \
+;  111	        }                                                                            \
+;  112	        portCLEAR_INTERRUPT_MASK_FROM_ISR( uxSavedInterruptStatus );                 \
+;  113	    }
+;  114	#endif /* sbRECEIVE_COMPLETED_FROM_ISR */
+;  115	
+;  116	#if ( configUSE_SB_COMPLETED_CALLBACK == 1 )
+;  117	    #define prvRECEIVE_COMPLETED_FROM_ISR( pxStreamBuffer,                                                               \
+;  118	                                           pxHigherPriorityTaskWoken )                                                   \
+;  119	    {                                                                                                                    \
+;  120	        if( ( pxStreamBuffer )->pxReceiveCompletedCallback != NULL )                                                     \
+;  121	        {                                                                                                                \
+;  122	            ( pxStreamBuffer )->pxReceiveCompletedCallback( ( pxStreamBuffer ), pdTRUE, ( pxHigherPriorityTaskWoken ) ); \
+;  123	        }                                                                                                                \
+;  124	        else                                                                                                             \
+;  125	        {                                                                                                                \
+;  126	            sbRECEIVE_COMPLETED_FROM_ISR( ( pxStreamBuffer ), ( pxHigherPriorityTaskWoken ) );                           \
+;  127	        }                                                                                                                \
+;  128	    }
+;  129	#else /* if ( configUSE_SB_COMPLETED_CALLBACK == 1 ) */
+;  130	    #define prvRECEIVE_COMPLETED_FROM_ISR( pxStreamBuffer, pxHigherPriorityTaskWoken ) \
+;  131	    sbRECEIVE_COMPLETED_FROM_ISR( ( pxStreamBuffer ), ( pxHigherPriorityTaskWoken ) )
+;  132	#endif /* if ( configUSE_SB_COMPLETED_CALLBACK == 1 ) */
+;  133	
+;  134	/* If the user has not provided an application specific Tx notification macro,
+;  135	 * or #defined the notification macro away, then provide a default
+;  136	 * implementation that uses task notifications.
+;  137	 */
+;  138	#ifndef sbSEND_COMPLETED
+;  139	    #define sbSEND_COMPLETED( pxStreamBuffer )                               \
+;  140	    vTaskSuspendAll();                                                       \
+;  141	    {                                                                        \
+;  142	        if( ( pxStreamBuffer )->xTaskWaitingToReceive != NULL )              \
+;  143	        {                                                                    \
+;  144	            ( void ) xTaskNotify( ( pxStreamBuffer )->xTaskWaitingToReceive, \
+;  145	                                  ( uint32_t ) 0,                            \
+;  146	                                  eNoAction );                               \
+;  147	            ( pxStreamBuffer )->xTaskWaitingToReceive = NULL;                \
+;  148	        }                                                                    \
+;  149	    }                                                                        \
+;  150	    ( void ) xTaskResumeAll();
+;  151	#endif /* sbSEND_COMPLETED */
+;  152	
+;  153	/* If user has provided a per-instance send completed callback, then
+;  154	 * invoke the callback else use the send complete macro which is provided by default for all instances.
+;  155	 */
+;  156	#if ( configUSE_SB_COMPLETED_CALLBACK == 1 )
+;  157	    #define prvSEND_COMPLETED( pxStreamBuffer )                                           \
+;  158	    {                                                                                     \
+;  159	        if( ( pxStreamBuffer )->pxSendCompletedCallback != NULL )                         \
+;  160	        {                                                                                 \
+;  161	            pxStreamBuffer->pxSendCompletedCallback( ( pxStreamBuffer ), pdFALSE, NULL ); \
+;  162	        }                                                                                 \
+;  163	        else                                                                              \
+;  164	        {                                                                                 \
+;  165	            sbSEND_COMPLETED( ( pxStreamBuffer ) );                                       \
+;  166	        }                                                                                 \
+;  167	    }
+;  168	#else /* if ( configUSE_SB_COMPLETED_CALLBACK == 1 ) */
+;  169	    #define prvSEND_COMPLETED( pxStreamBuffer )    sbSEND_COMPLETED( ( pxStreamBuffer ) )
+;  170	#endif /* if ( configUSE_SB_COMPLETED_CALLBACK == 1 ) */
+;  171	
+;  172	
+;  173	#ifndef sbSEND_COMPLETE_FROM_ISR
+;  174	    #define sbSEND_COMPLETE_FROM_ISR( pxStreamBuffer, pxHigherPriorityTaskWoken )       \
+;  175	    {                                                                                   \
+;  176	        UBaseType_t uxSavedInterruptStatus;                                             \
+;  177	                                                                                        \
+;  178	        uxSavedInterruptStatus = ( UBaseType_t ) portSET_INTERRUPT_MASK_FROM_ISR();     \
+;  179	        {                                                                               \
+;  180	            if( ( pxStreamBuffer )->xTaskWaitingToReceive != NULL )                     \
+;  181	            {                                                                           \
+;  182	                ( void ) xTaskNotifyFromISR( ( pxStreamBuffer )->xTaskWaitingToReceive, \
+;  183	                                             ( uint32_t ) 0,                            \
+;  184	                                             eNoAction,                                 \
+;  185	                                             ( pxHigherPriorityTaskWoken ) );           \
+;  186	                ( pxStreamBuffer )->xTaskWaitingToReceive = NULL;                       \
+;  187	            }                                                                           \
+;  188	        }                                                                               \
+;  189	        portCLEAR_INTERRUPT_MASK_FROM_ISR( uxSavedInterruptStatus );                    \
+;  190	    }
+;  191	#endif /* sbSEND_COMPLETE_FROM_ISR */
+;  192	
+;  193	
+;  194	#if ( configUSE_SB_COMPLETED_CALLBACK == 1 )
+;  195	    #define prvSEND_COMPLETE_FROM_ISR( pxStreamBuffer, pxHigherPriorityTaskWoken )                                    \
+;  196	    {                                                                                                                 \
+;  197	        if( ( pxStreamBuffer )->pxSendCompletedCallback != NULL )                                                     \
+;  198	        {                                                                                                             \
+;  199	            ( pxStreamBuffer )->pxSendCompletedCallback( ( pxStreamBuffer ), pdTRUE, ( pxHigherPriorityTaskWoken ) ); \
+;  200	        }                                                                                                             \
+;  201	        else                                                                                                          \
+;  202	        {                                                                                                             \
+;  203	            sbSEND_COMPLETE_FROM_ISR( ( pxStreamBuffer ), ( pxHigherPriorityTaskWoken ) );                            \
+;  204	        }                                                                                                             \
+;  205	    }
+;  206	#else /* if ( configUSE_SB_COMPLETED_CALLBACK == 1 ) */
+;  207	    #define prvSEND_COMPLETE_FROM_ISR( pxStreamBuffer, pxHigherPriorityTaskWoken ) \
+;  208	    sbSEND_COMPLETE_FROM_ISR( ( pxStreamBuffer ), ( pxHigherPriorityTaskWoken ) )
+;  209	#endif /* if ( configUSE_SB_COMPLETED_CALLBACK == 1 ) */
+;  210	
+;  211	/*lint -restore (9026) */
+;  212	
+;  213	/* The number of bytes used to hold the length of a message in the buffer. */
+;  214	#define sbBYTES_TO_STORE_MESSAGE_LENGTH    ( sizeof( configMESSAGE_BUFFER_LENGTH_TYPE ) )
+;  215	
+;  216	/* Bits stored in the ucFlags field of the stream buffer. */
+;  217	#define sbFLAGS_IS_MESSAGE_BUFFER          ( ( uint8_t ) 1 ) /* Set if the stream buffer was created as a message buffer, in which case it holds discrete messages rather than a stream. */
+;  218	#define sbFLAGS_IS_STATICALLY_ALLOCATED    ( ( uint8_t ) 2 ) /* Set if the stream buffer was created using statically allocated memory. */
+;  219	
+;  220	/*-----------------------------------------------------------*/
+;  221	
+;  222	/* Structure that hold state information on the buffer. */
+;  223	typedef struct StreamBufferDef_t                 /*lint !e9058 Style convention uses tag. */
+;  224	{
+;  225	    volatile size_t xTail;                       /* Index to the next item to read within the buffer. */
+;  226	    volatile size_t xHead;                       /* Index to the next item to write within the buffer. */
+;  227	    size_t xLength;                              /* The length of the buffer pointed to by pucBuffer. */
+;  228	    size_t xTriggerLevelBytes;                   /* The number of bytes that must be in the stream buffer before a task that is waiting for data is unblocked. */
+;  229	    volatile TaskHandle_t xTaskWaitingToReceive; /* Holds the handle of a task waiting for data, or NULL if no tasks are waiting. */
+;  230	    volatile TaskHandle_t xTaskWaitingToSend;    /* Holds the handle of a task waiting to send data to a message buffer that is full. */
+;  231	    uint8_t * pucBuffer;                         /* Points to the buffer itself - that is - the RAM that stores the data passed through the buffer. */
+;  232	    uint8_t ucFlags;
+;  233	
+;  234	    #if ( configUSE_TRACE_FACILITY == 1 )
+;  235	        UBaseType_t uxStreamBufferNumber; /* Used for tracing purposes. */
+;  236	    #endif
+;  237	
+;  238	    #if ( configUSE_SB_COMPLETED_CALLBACK == 1 )
+;  239	        StreamBufferCallbackFunction_t pxSendCompletedCallback;    /* Optional callback called on send complete. sbSEND_COMPLETED is called if this is NULL. */
+;  240	        StreamBufferCallbackFunction_t pxReceiveCompletedCallback; /* Optional callback called on receive complete.  sbRECEIVE_COMPLETED is called if this is NULL. */
+;  241	    #endif
+;  242	} StreamBuffer_t;
+.BEGREC "StreamBufferDef_t",22
+.DEFINE "xTail"
+.VALUE 0
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "xHead"
+.VALUE 3
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "xLength"
+.VALUE 6
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "xTriggerLevelBytes"
+.VALUE 9
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "xTaskWaitingToReceive"
+.VALUE 12
+.CLASS 8
+.TAG "~tag"
+.TYPE 40
+.ENDEF
+.DEFINE "xTaskWaitingToSend"
+.VALUE 15
+.CLASS 8
+.TAG "~tag"
+.TYPE 40
+.ENDEF
+.DEFINE "pucBuffer"
+.VALUE 18
+.CLASS 8
+.TYPE 44
+.ENDEF
+.DEFINE "ucFlags"
+.VALUE 21
+.CLASS 8
+.TYPE 12
+.ENDEF
+.ENDREC "StreamBufferDef_t"
+;  243	
+;  244	/*
+;  245	 * The number of bytes available to be read from the buffer.
+;  246	 */
+;  247	static size_t prvBytesInBuffer( const StreamBuffer_t * const pxStreamBuffer ) PRIVILEGED_FUNCTION;
+;  248	
+;  249	/*
+;  250	 * Add xCount bytes from pucData into the pxStreamBuffer's data storage area.
+;  251	 * This function does not update the buffer's xHead pointer, so multiple writes
+;  252	 * may be chained together "atomically". This is useful for Message Buffers where
+;  253	 * the length and data bytes are written in two separate chunks, and we don't want
+;  254	 * the reader to see the buffer as having grown until after all data is copied over.
+;  255	 * This function takes a custom xHead value to indicate where to write to (necessary
+;  256	 * for chaining) and returns the the resulting xHead position.
+;  257	 * To mark the write as complete, manually set the buffer's xHead field with the
+;  258	 * returned xHead from this function.
+;  259	 */
+;  260	static size_t prvWriteBytesToBuffer( StreamBuffer_t * const pxStreamBuffer,
+;  261	                                     const uint8_t * pucData,
+;  262	                                     size_t xCount,
+;  263	                                     size_t xHead ) PRIVILEGED_FUNCTION;
+;  264	
+;  265	/*
+;  266	 * If the stream buffer is being used as a message buffer, then reads an entire
+;  267	 * message out of the buffer.  If the stream buffer is being used as a stream
+;  268	 * buffer then read as many bytes as possible from the buffer.
+;  269	 * prvReadBytesFromBuffer() is called to actually extract the bytes from the
+;  270	 * buffer's data storage area.
+;  271	 */
+;  272	static size_t prvReadMessageFromBuffer( StreamBuffer_t * pxStreamBuffer,
+;  273	                                        void * pvRxData,
+;  274	                                        size_t xBufferLengthBytes,
+;  275	                                        size_t xBytesAvailable ) PRIVILEGED_FUNCTION;
+;  276	
+;  277	/*
+;  278	 * If the stream buffer is being used as a message buffer, then writes an entire
+;  279	 * message to the buffer.  If the stream buffer is being used as a stream
+;  280	 * buffer then write as many bytes as possible to the buffer.
+;  281	 * prvWriteBytestoBuffer() is called to actually send the bytes to the buffer's
+;  282	 * data storage area.
+;  283	 */
+;  284	static size_t prvWriteMessageToBuffer( StreamBuffer_t * const pxStreamBuffer,
+;  285	                                       const void * pvTxData,
+;  286	                                       size_t xDataLengthBytes,
+;  287	                                       size_t xSpace,
+;  288	                                       size_t xRequiredSpace ) PRIVILEGED_FUNCTION;
+;  289	
+;  290	/*
+;  291	 * Copies xCount bytes from the pxStreamBuffer's data storage area to pucData.
+;  292	 * This function does not update the buffer's xTail pointer, so multiple reads
+;  293	 * may be chained together "atomically". This is useful for Message Buffers where
+;  294	 * the length and data bytes are read in two separate chunks, and we don't want
+;  295	 * the writer to see the buffer as having more free space until after all data is
+;  296	 * copied over, especially if we have to abort the read due to insufficient receiving space.
+;  297	 * This function takes a custom xTail value to indicate where to read from (necessary
+;  298	 * for chaining) and returns the the resulting xTail position.
+;  299	 * To mark the read as complete, manually set the buffer's xTail field with the
+;  300	 * returned xTail from this function.
+;  301	 */
+;  302	static size_t prvReadBytesFromBuffer( StreamBuffer_t * pxStreamBuffer,
+;  303	                                      uint8_t * pucData,
+;  304	                                      size_t xCount,
+;  305	                                      size_t xTail ) PRIVILEGED_FUNCTION;
+;  306	
+;  307	/*
+;  308	 * Called by both pxStreamBufferCreate() and pxStreamBufferCreateStatic() to
+;  309	 * initialise the members of the newly created stream buffer structure.
+;  310	 */
+;  311	static void prvInitialiseNewStreamBuffer( StreamBuffer_t * const pxStreamBuffer,
+;  312	                                          uint8_t * const pucBuffer,
+;  313	                                          size_t xBufferSizeBytes,
+;  314	                                          size_t xTriggerLevelBytes,
+;  315	                                          uint8_t ucFlags,
+;  316	                                          StreamBufferCallbackFunction_t pxSendCompletedCallback,
+;  317	                                          StreamBufferCallbackFunction_t pxReceiveCompletedCallback ) PRIVILEGED_FUNCTION;
+;  318	
+;  319	/*-----------------------------------------------------------*/
+;  320	#if ( configSUPPORT_DYNAMIC_ALLOCATION == 1 )
+;  321	    StreamBufferHandle_t xStreamBufferGenericCreate( size_t xBufferSizeBytes,
+;  322	                                                     size_t xTriggerLevelBytes,
+;  323	                                                     BaseType_t xIsMessageBuffer,
+;  324	                                                     StreamBufferCallbackFunction_t pxSendCompletedCallback,
+;  325	                                                     StreamBufferCallbackFunction_t pxReceiveCompletedCallback )
+;  326	    {
+_xStreamBufferGenericCreate:
+.DEFINE "_xStreamBufferGenericCreate"
+
+.VALUE _xStreamBufferGenericCreate
+
+.CLASS 2
+
+.TAG "StreamBufferDef_t"
+
+.TYPE 328
+
+.ENDEF
+
+.BEGFUNC "xStreamBufferGenericCreate",326,"_xStreamBufferGenericCreate"
+
+.LINE 326
+
+.DEFINE "xBufferSizeBytes"
+
+.CLASS 65
+
+.VALUE 6
+
+.TYPE 14
+
+.ENDEF
+
+.DEFINE "xTriggerLevelBytes"
+
+.CLASS 65
+
+.VALUE 9
+
+.TYPE 14
+
+.ENDEF
+
+.DEFINE "xIsMessageBuffer"
+
+.CLASS 65
+
+.VALUE 12
+
+.TYPE 4
+
+.ENDEF
+
+.DEFINE "pxSendCompletedCallback"
+
+.CLASS 65
+
+.VALUE 15
+
+.TYPE 545
+
+.ENDEF
+
+.DEFINE "pxReceiveCompletedCallback"
+
+.CLASS 65
+
+.VALUE 18
+
+.TYPE 545
+
+.ENDEF
+
+.DEFINE "pucAllocatedMemory"
+
+.CLASS 65
+
+.VALUE -3
+
+.TYPE 44
+
+.ENDEF
+
+.DEFINE "ucFlags"
+
+.CLASS 65
+
+.VALUE -4
+
+.TYPE 12
+
+.ENDEF
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+	PUSH	BC
+	DEC	SP
+;  327	        uint8_t * pucAllocatedMemory;
+;  328	        uint8_t ucFlags;
+;  329	
+;  330	        /* In case the stream buffer is going to be used as a message buffer
+;  331	         * (that is, it will hold discrete messages with a little meta data that
+;  332	         * says how big the next message is) check the buffer will be large enough
+;  333	         * to hold at least one message. */
+;  334	        if( xIsMessageBuffer == pdTRUE )
+.LINE 334
+
+	LD	BC,1
+	LD	HL,(IX+%C)
+	OR	A,A
+	SBC	HL,BC
+	JR	NZ,L_1
+;  335	        {
+;  336	            /* Is a message buffer but not statically allocated. */
+;  337	            ucFlags = sbFLAGS_IS_MESSAGE_BUFFER;
+.LINE 337
+
+	LD	(IX+%FFFFFFFC),%1
+;  338	            configASSERT( xBufferSizeBytes > sbBYTES_TO_STORE_MESSAGE_LENGTH );
+;  339	        }
+;  340	        else
+.LINE 340
+
+	JR	L_2
+L_1:
+;  341	        {
+;  342	            /* Not a message buffer and not statically allocated. */
+;  343	            ucFlags = 0;
+.LINE 343
+
+	LD	(IX+%FFFFFFFC),%0
+;  344	            configASSERT( xBufferSizeBytes > 0 );
+;  345	        }
+L_2:
+.LINE 345
+
+;  346	
+;  347	        configASSERT( xTriggerLevelBytes <= xBufferSizeBytes );
+;  348	
+;  349	        /* A trigger level of 0 would cause a waiting task to unblock even when
+;  350	         * the buffer was empty. */
+;  351	        if( xTriggerLevelBytes == ( size_t ) 0 )
+.LINE 351
+
+	LD	HL,(IX+%9)
+	CALL	__icmpzero
+	JR	NZ,L_7
+;  352	        {
+;  353	            xTriggerLevelBytes = ( size_t ) 1;
+.LINE 353
+
+	LD	BC,1
+	LD	(IX+%9),BC
+;  354	        }
+L_7:
+.LINE 354
+
+;  355	
+;  356	        /* A stream buffer requires a StreamBuffer_t structure and a buffer.
+;  357	         * Both are allocated in a single call to pvPortMalloc().  The
+;  358	         * StreamBuffer_t structure is placed at the start of the allocated memory
+;  359	         * and the buffer follows immediately after.  The requested size is
+;  360	         * incremented so the free space is returned as the user would expect -
+;  361	         * this is a quirk of the implementation that means otherwise the free
+;  362	         * space would be reported as one byte smaller than would be logically
+;  363	         * expected. */
+;  364	        if( xBufferSizeBytes < ( xBufferSizeBytes + 1 + sizeof( StreamBuffer_t ) ) )
+.LINE 364
+
+	LD	IY,(IX+%6)
+	LEA	BC,IY+%17
+	LD	HL,(IX+%6)
+	OR	A,A
+	SBC	HL,BC
+	JR	NC,L_6
+;  365	        {
+;  366	            xBufferSizeBytes++;
+.LINE 366
+
+	LD	BC,(IX+%6)
+	INC	BC
+	LD	(IX+%6),BC
+;  367	            pucAllocatedMemory = ( uint8_t * ) pvPortMalloc( xBufferSizeBytes + sizeof( StreamBuffer_t ) ); /*lint !e9079 malloc() only returns void*. */
+.LINE 367
+
+	LD	IY,(IX+%6)
+	LEA	BC,IY+%16
+	PUSH	BC
+	CALL	_pvPortMalloc
+	POP	BC
+	LD	(IX+%FFFFFFFD),HL
+;  368	        }
+;  369	        else
+.LINE 369
+
+	JR	L_10
+L_6:
+;  370	        {
+;  371	            pucAllocatedMemory = NULL;
+.LINE 371
+
+	LD	BC,0
+	LD	(IX+%FFFFFFFD),BC
+;  372	        }
+L_10:
+.LINE 372
+
+;  373	
+;  374	        if( pucAllocatedMemory != NULL )
+.LINE 374
+
+	LD	HL,(IX+%FFFFFFFD)
+	CALL	__icmpzero
+	JR	Z,L_9
+;  375	        {
+;  376	            prvInitialiseNewStreamBuffer( ( StreamBuffer_t * ) pucAllocatedMemory,       /* Structure at the start of the allocated memory. */ /*lint !e9087 Safe cast as allocated memory is aligned. */ /*lint !e826 Area is not too small and alignment is guaranteed provided malloc() behaves as expected and returns aligned buffer. */
+;  377	                                          pucAllocatedMemory + sizeof( StreamBuffer_t ), /* Storage area follows. */ /*lint !e9016 Indexing past structure valid for uint8_t pointer, also storage area has no alignment requirement. */
+;  378	                                          xBufferSizeBytes,
+;  379	                                          xTriggerLevelBytes,
+;  380	                                          ucFlags,
+;  381	                                          pxSendCompletedCallback,
+;  382	                                          pxReceiveCompletedCallback );
+.LINE 382
+
+	LD	BC,(IX+%12)
+	PUSH	BC
+	LD	BC,(IX+%F)
+	PUSH	BC
+	LD	C,(IX+%FFFFFFFC)
+	LD	B,%0
+	PUSH	BC
+	LD	BC,(IX+%9)
+	PUSH	BC
+	LD	BC,(IX+%6)
+	PUSH	BC
+	LD	IY,(IX+%FFFFFFFD)
+	LEA	BC,IY+%16
+	PUSH	BC
+	LD	BC,(IX+%FFFFFFFD)
+	PUSH	BC
+	CALL	_prvInitialiseNewStreamBuffer
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+;  383	
+;  384	            traceSTREAM_BUFFER_CREATE( ( ( StreamBuffer_t * ) pucAllocatedMemory ), xIsMessageBuffer );
+;  385	        }
+;  386	        else
+L_9:
+.LINE 386
+
+;  387	        {
+;  388	            traceSTREAM_BUFFER_CREATE_FAILED( xIsMessageBuffer );
+;  389	        }
+;  390	
+;  391	        return ( StreamBufferHandle_t ) pucAllocatedMemory; /*lint !e9087 !e826 Safe cast as allocated memory is aligned. */
+.LINE 391
+
+	LD	HL,(IX+%FFFFFFFD)
+;  392	    }
+.LINE 392
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _xStreamBufferGenericCreate ***************************
+;Name                         Addr/Register   Size   Type
+;_prvInitialiseNewStreamBuffer       STATIC  -----   function
+;_pvPortMalloc                       IMPORT  -----   function
+;ucFlags                               IX-4      1   variable
+;pucAllocatedMemory                    IX-3      3   variable
+;pxReceiveCompletedCallback           IX+18      3   parameter
+;pxSendCompletedCallback              IX+15      3   parameter
+;xIsMessageBuffer                     IX+12      3   parameter
+;xTriggerLevelBytes                    IX+9      3   parameter
+;xBufferSizeBytes                      IX+6      3   parameter
+
+
+; Stack Frame Size: 25 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "xStreamBufferGenericCreate",392,"_xStreamBufferGenericCreate"
+;  393	#endif /* configSUPPORT_DYNAMIC_ALLOCATION */
+;  394	/*-----------------------------------------------------------*/
+;  395	
+;  396	#if ( configSUPPORT_STATIC_ALLOCATION == 1 )
+;  397	
+;  398	    StreamBufferHandle_t xStreamBufferGenericCreateStatic( size_t xBufferSizeBytes,
+;  399	                                                           size_t xTriggerLevelBytes,
+;  400	                                                           BaseType_t xIsMessageBuffer,
+;  401	                                                           uint8_t * const pucStreamBufferStorageArea,
+;  402	                                                           StaticStreamBuffer_t * const pxStaticStreamBuffer,
+;  403	                                                           StreamBufferCallbackFunction_t pxSendCompletedCallback,
+;  404	                                                           StreamBufferCallbackFunction_t pxReceiveCompletedCallback )
+;  405	    {
+;  406	        StreamBuffer_t * const pxStreamBuffer = ( StreamBuffer_t * ) pxStaticStreamBuffer; /*lint !e740 !e9087 Safe cast as StaticStreamBuffer_t is opaque Streambuffer_t. */
+;  407	        StreamBufferHandle_t xReturn;
+;  408	        uint8_t ucFlags;
+;  409	
+;  410	        configASSERT( pucStreamBufferStorageArea );
+;  411	        configASSERT( pxStaticStreamBuffer );
+;  412	        configASSERT( xTriggerLevelBytes <= xBufferSizeBytes );
+;  413	
+;  414	        /* A trigger level of 0 would cause a waiting task to unblock even when
+;  415	         * the buffer was empty. */
+;  416	        if( xTriggerLevelBytes == ( size_t ) 0 )
+;  417	        {
+;  418	            xTriggerLevelBytes = ( size_t ) 1;
+;  419	        }
+;  420	
+;  421	        if( xIsMessageBuffer != pdFALSE )
+;  422	        {
+;  423	            /* Statically allocated message buffer. */
+;  424	            ucFlags = sbFLAGS_IS_MESSAGE_BUFFER | sbFLAGS_IS_STATICALLY_ALLOCATED;
+;  425	        }
+;  426	        else
+;  427	        {
+;  428	            /* Statically allocated stream buffer. */
+;  429	            ucFlags = sbFLAGS_IS_STATICALLY_ALLOCATED;
+;  430	        }
+;  431	
+;  432	        /* In case the stream buffer is going to be used as a message buffer
+;  433	         * (that is, it will hold discrete messages with a little meta data that
+;  434	         * says how big the next message is) check the buffer will be large enough
+;  435	         * to hold at least one message. */
+;  436	        configASSERT( xBufferSizeBytes > sbBYTES_TO_STORE_MESSAGE_LENGTH );
+;  437	
+;  438	        #if ( configASSERT_DEFINED == 1 )
+;  439	        {
+;  440	            /* Sanity check that the size of the structure used to declare a
+;  441	             * variable of type StaticStreamBuffer_t equals the size of the real
+;  442	             * message buffer structure. */
+;  443	            volatile size_t xSize = sizeof( StaticStreamBuffer_t );
+;  444	            configASSERT( xSize == sizeof( StreamBuffer_t ) );
+;  445	        } /*lint !e529 xSize is referenced is configASSERT() is defined. */
+;  446	        #endif /* configASSERT_DEFINED */
+;  447	
+;  448	        if( ( pucStreamBufferStorageArea != NULL ) && ( pxStaticStreamBuffer != NULL ) )
+;  449	        {
+;  450	            prvInitialiseNewStreamBuffer( pxStreamBuffer,
+;  451	                                          pucStreamBufferStorageArea,
+;  452	                                          xBufferSizeBytes,
+;  453	                                          xTriggerLevelBytes,
+;  454	                                          ucFlags,
+;  455	                                          pxSendCompletedCallback,
+;  456	                                          pxReceiveCompletedCallback );
+;  457	
+;  458	            /* Remember this was statically allocated in case it is ever deleted
+;  459	             * again. */
+;  460	            pxStreamBuffer->ucFlags |= sbFLAGS_IS_STATICALLY_ALLOCATED;
+;  461	
+;  462	            traceSTREAM_BUFFER_CREATE( pxStreamBuffer, xIsMessageBuffer );
+;  463	
+;  464	            xReturn = ( StreamBufferHandle_t ) pxStaticStreamBuffer; /*lint !e9087 Data hiding requires cast to opaque type. */
+;  465	        }
+;  466	        else
+;  467	        {
+;  468	            xReturn = NULL;
+;  469	            traceSTREAM_BUFFER_CREATE_STATIC_FAILED( xReturn, xIsMessageBuffer );
+;  470	        }
+;  471	
+;  472	        return xReturn;
+;  473	    }
+;  474	#endif /* ( configSUPPORT_STATIC_ALLOCATION == 1 ) */
+;  475	/*-----------------------------------------------------------*/
+;  476	
+;  477	void vStreamBufferDelete( StreamBufferHandle_t xStreamBuffer )
+;  478	{
+_vStreamBufferDelete:
+.DEFINE "_vStreamBufferDelete"
+
+.VALUE _vStreamBufferDelete
+
+.CLASS 2
+
+.TYPE 65
+
+.ENDEF
+
+.BEGFUNC "vStreamBufferDelete",478,"_vStreamBufferDelete"
+
+.LINE 478
+
+.DEFINE "xStreamBuffer"
+
+.CLASS 65
+
+.VALUE 6
+
+.TAG "StreamBufferDef_t"
+
+.TYPE 40
+
+.ENDEF
+
+.DEFINE "pxStreamBuffer"
+
+.CLASS 65
+
+.VALUE -3
+
+.TAG "StreamBufferDef_t"
+
+.TYPE 40
+
+.ENDEF
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+	PUSH	BC
+;  479	    StreamBuffer_t * pxStreamBuffer = xStreamBuffer;
+.LINE 479
+
+	LD	BC,(IX+%6)
+	LD	(IX+%FFFFFFFD),BC
+;  480	
+;  481	    configASSERT( pxStreamBuffer );
+;  482	
+;  483	    traceSTREAM_BUFFER_DELETE( xStreamBuffer );
+;  484	
+;  485	    if( ( pxStreamBuffer->ucFlags & sbFLAGS_IS_STATICALLY_ALLOCATED ) == ( uint8_t ) pdFALSE )
+.LINE 485
+
+	LD	IY,(IX+%FFFFFFFD)
+	LD	A,(IY+%15)
+	AND	A,%2
+	JR	NZ,L_14
+;  486	    {
+;  487	        #if ( configSUPPORT_DYNAMIC_ALLOCATION == 1 )
+;  488	        {
+;  489	            /* Both the structure and the buffer were allocated using a single call
+;  490	            * to pvPortMalloc(), hence only one call to vPortFree() is required. */
+;  491	            vPortFree( ( void * ) pxStreamBuffer ); /*lint !e9087 Standard free() semantics require void *, plus pxStreamBuffer was allocated by pvPortMalloc(). */
+.LINE 491
+
+	LD	BC,(IX+%FFFFFFFD)
+	PUSH	BC
+	CALL	_vPortFree
+	POP	BC
+;  492	        }
+;  493	        #else
+;  494	        {
+;  495	            /* Should not be possible to get here, ucFlags must be corrupt.
+;  496	             * Force an assert. */
+;  497	            configASSERT( xStreamBuffer == ( StreamBufferHandle_t ) ~0 );
+;  498	        }
+;  499	        #endif
+;  500	    }
+;  501	    else
+.LINE 501
+
+	JR	L_15
+L_14:
+;  502	    {
+;  503	        /* The structure and buffer were not allocated dynamically and cannot be
+;  504	         * freed - just scrub the structure so future use will assert. */
+;  505	        ( void ) memset( pxStreamBuffer, 0x00, sizeof( StreamBuffer_t ) );
+.LINE 505
+
+	LD	BC,22
+	PUSH	BC
+	LD	BC,0
+	PUSH	BC
+	LD	BC,(IX+%FFFFFFFD)
+	PUSH	BC
+	CALL	_memset
+	POP	BC
+	POP	BC
+	POP	BC
+;  506	    }
+;  507	}
+L_15:
+.LINE 507
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _vStreamBufferDelete ***************************
+;Name                         Addr/Register   Size   Type
+;_memset                             IMPORT  -----   function
+;_vPortFree                          IMPORT  -----   function
+;pxStreamBuffer                        IX-3      3   variable
+;xStreamBuffer                         IX+6      3   parameter
+
+
+; Stack Frame Size: 12 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "vStreamBufferDelete",507,"_vStreamBufferDelete"
+;  508	/*-----------------------------------------------------------*/
+;  509	
+;  510	BaseType_t xStreamBufferReset( StreamBufferHandle_t xStreamBuffer )
+;  511	{
+_xStreamBufferReset:
+.DEFINE "_xStreamBufferReset"
+
+.VALUE _xStreamBufferReset
+
+.CLASS 2
+
+.TYPE 68
+
+.ENDEF
+
+.BEGFUNC "xStreamBufferReset",511,"_xStreamBufferReset"
+
+.LINE 511
+
+.DEFINE "xStreamBuffer"
+
+.CLASS 65
+
+.VALUE 6
+
+.TAG "StreamBufferDef_t"
+
+.TYPE 40
+
+.ENDEF
+
+.DEFINE "pxStreamBuffer"
+
+.CLASS 65
+
+.VALUE -3
+
+.TAG "StreamBufferDef_t"
+
+.TYPE 40
+
+.ENDEF
+
+.DEFINE "xReturn"
+
+.CLASS 65
+
+.VALUE -6
+
+.TYPE 4
+
+.ENDEF
+
+.DEFINE "pxSendCallback"
+
+.CLASS 65
+
+.VALUE -9
+
+.TYPE 545
+
+.ENDEF
+
+.DEFINE "pxReceiveCallback"
+
+.CLASS 65
+
+.VALUE -12
+
+.TYPE 545
+
+.ENDEF
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+	LEA	HL,IX+%FFFFFFF4
+	LD	SP,HL
+;  512	    StreamBuffer_t * const pxStreamBuffer = xStreamBuffer;
+.LINE 512
+
+	LD	BC,(IX+%6)
+	LD	(IX+%FFFFFFFD),BC
+;  513	    BaseType_t xReturn = pdFAIL;
+.LINE 513
+
+	LD	BC,0
+	LD	(IX+%FFFFFFFA),BC
+;  514	    StreamBufferCallbackFunction_t pxSendCallback = NULL, pxReceiveCallback = NULL;
+.LINE 514
+
+	LD	BC,0
+	LD	(IX+%FFFFFFF7),BC
+	LD	(IX+%FFFFFFF4),BC
+;  515	
+;  516	    #if ( configUSE_TRACE_FACILITY == 1 )
+;  517	        UBaseType_t uxStreamBufferNumber;
+;  518	    #endif
+;  519	
+;  520	    configASSERT( pxStreamBuffer );
+;  521	
+;  522	    #if ( configUSE_TRACE_FACILITY == 1 )
+;  523	    {
+;  524	        /* Store the stream buffer number so it can be restored after the
+;  525	         * reset. */
+;  526	        uxStreamBufferNumber = pxStreamBuffer->uxStreamBufferNumber;
+;  527	    }
+;  528	    #endif
+;  529	
+;  530	    /* Can only reset a message buffer if there are no tasks blocked on it. */
+;  531	    taskENTER_CRITICAL();
+.LINE 531
+
+	 di
+;  532	    {
+;  533	        if( ( pxStreamBuffer->xTaskWaitingToReceive == NULL ) && ( pxStreamBuffer->xTaskWaitingToSend == NULL ) )
+.LINE 533
+
+	LD	IY,(IX+%FFFFFFFD)
+	LD	HL,(IY+%C)
+	CALL	__icmpzero
+	JR	NZ,L_18
+	LD	IY,(IX+%FFFFFFFD)
+	LD	HL,(IY+%F)
+	CALL	__icmpzero
+	JR	NZ,L_18
+;  534	        {
+;  535	            #if ( configUSE_SB_COMPLETED_CALLBACK == 1 )
+;  536	            {
+;  537	                pxSendCallback = pxStreamBuffer->pxSendCompletedCallback;
+;  538	                pxReceiveCallback = pxStreamBuffer->pxReceiveCompletedCallback;
+;  539	            }
+;  540	            #endif
+;  541	
+;  542	            prvInitialiseNewStreamBuffer( pxStreamBuffer,
+;  543	                                          pxStreamBuffer->pucBuffer,
+;  544	                                          pxStreamBuffer->xLength,
+;  545	                                          pxStreamBuffer->xTriggerLevelBytes,
+;  546	                                          pxStreamBuffer->ucFlags,
+;  547	                                          pxSendCallback,
+;  548	                                          pxReceiveCallback );
+.LINE 548
+
+	LD	BC,(IX+%FFFFFFF4)
+	PUSH	BC
+	LD	BC,(IX+%FFFFFFF7)
+	PUSH	BC
+	LD	IY,(IX+%FFFFFFFD)
+	LD	C,(IY+%15)
+	LD	B,%0
+	PUSH	BC
+	LD	BC,(IY+%9)
+	PUSH	BC
+	LD	BC,(IY+%6)
+	PUSH	BC
+	LD	BC,(IY+%12)
+	PUSH	BC
+	LD	BC,(IX+%FFFFFFFD)
+	PUSH	BC
+	CALL	_prvInitialiseNewStreamBuffer
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+;  549	
+;  550	            #if ( configUSE_TRACE_FACILITY == 1 )
+;  551	            {
+;  552	                pxStreamBuffer->uxStreamBufferNumber = uxStreamBufferNumber;
+;  553	            }
+;  554	            #endif
+;  555	
+;  556	            traceSTREAM_BUFFER_RESET( xStreamBuffer );
+;  557	
+;  558	            xReturn = pdPASS;
+.LINE 558
+
+	LD	BC,1
+	LD	(IX+%FFFFFFFA),BC
+;  559	        }
+;  560	    }
+L_18:
+.LINE 560
+
+;  561	    taskEXIT_CRITICAL();
+.LINE 561
+
+	 ei
+;  562	
+;  563	    return xReturn;
+.LINE 563
+
+	LD	HL,(IX+%FFFFFFFA)
+;  564	}
+.LINE 564
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _xStreamBufferReset ***************************
+;Name                         Addr/Register   Size   Type
+;_prvInitialiseNewStreamBuffer       STATIC  -----   function
+;pxReceiveCallback                    IX-12      3   variable
+;pxSendCallback                        IX-9      3   variable
+;xReturn                               IX-6      3   variable
+;pxStreamBuffer                        IX-3      3   variable
+;xStreamBuffer                         IX+6      3   parameter
+
+
+; Stack Frame Size: 21 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "xStreamBufferReset",564,"_xStreamBufferReset"
+;  565	/*-----------------------------------------------------------*/
+;  566	
+;  567	BaseType_t xStreamBufferSetTriggerLevel( StreamBufferHandle_t xStreamBuffer,
+;  568	                                         size_t xTriggerLevel )
+;  569	{
+_xStreamBufferSetTriggerLevel:
+.DEFINE "_xStreamBufferSetTriggerLevel"
+
+.VALUE _xStreamBufferSetTriggerLevel
+
+.CLASS 2
+
+.TYPE 68
+
+.ENDEF
+
+.BEGFUNC "xStreamBufferSetTriggerLevel",569,"_xStreamBufferSetTriggerLevel"
+
+.LINE 569
+
+.DEFINE "xStreamBuffer"
+
+.CLASS 65
+
+.VALUE 6
+
+.TAG "StreamBufferDef_t"
+
+.TYPE 40
+
+.ENDEF
+
+.DEFINE "xTriggerLevel"
+
+.CLASS 65
+
+.VALUE 9
+
+.TYPE 14
+
+.ENDEF
+
+.DEFINE "pxStreamBuffer"
+
+.CLASS 65
+
+.VALUE -3
+
+.TAG "StreamBufferDef_t"
+
+.TYPE 40
+
+.ENDEF
+
+.DEFINE "xReturn"
+
+.CLASS 65
+
+.VALUE -6
+
+.TYPE 4
+
+.ENDEF
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+	PUSH	BC
+	PUSH	BC
+;  570	    StreamBuffer_t * const pxStreamBuffer = xStreamBuffer;
+.LINE 570
+
+	LD	BC,(IX+%6)
+	LD	(IX+%FFFFFFFD),BC
+;  571	    BaseType_t xReturn;
+;  572	
+;  573	    configASSERT( pxStreamBuffer );
+;  574	
+;  575	    /* It is not valid for the trigger level to be 0. */
+;  576	    if( xTriggerLevel == ( size_t ) 0 )
+.LINE 576
+
+	LD	HL,(IX+%9)
+	CALL	__icmpzero
+	JR	NZ,L_23
+;  577	    {
+;  578	        xTriggerLevel = ( size_t ) 1;
+.LINE 578
+
+	LD	BC,1
+	LD	(IX+%9),BC
+;  579	    }
+L_23:
+.LINE 579
+
+;  580	
+;  581	    /* The trigger level is the number of bytes that must be in the stream
+;  582	     * buffer before a task that is waiting for data is unblocked. */
+;  583	    if( xTriggerLevel < pxStreamBuffer->xLength )
+.LINE 583
+
+	LD	IY,(IX+%FFFFFFFD)
+	LD	BC,(IY+%6)
+	LD	HL,(IX+%9)
+	OR	A,A
+	SBC	HL,BC
+	JR	NC,L_22
+;  584	    {
+;  585	        pxStreamBuffer->xTriggerLevelBytes = xTriggerLevel;
+.LINE 585
+
+	LD	BC,(IX+%9)
+	LD	IY,(IX+%FFFFFFFD)
+	LD	(IY+%9),BC
+;  586	        xReturn = pdPASS;
+.LINE 586
+
+	LD	BC,1
+	LD	(IX+%FFFFFFFA),BC
+;  587	    }
+;  588	    else
+.LINE 588
+
+	JR	L_24
+L_22:
+;  589	    {
+;  590	        xReturn = pdFALSE;
+.LINE 590
+
+	LD	BC,0
+	LD	(IX+%FFFFFFFA),BC
+;  591	    }
+L_24:
+.LINE 591
+
+;  592	
+;  593	    return xReturn;
+.LINE 593
+
+	LD	HL,(IX+%FFFFFFFA)
+;  594	}
+.LINE 594
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _xStreamBufferSetTriggerLevel ***************************
+;Name                         Addr/Register   Size   Type
+;xReturn                               IX-6      3   variable
+;pxStreamBuffer                        IX-3      3   variable
+;xTriggerLevel                         IX+9      3   parameter
+;xStreamBuffer                         IX+6      3   parameter
+
+
+; Stack Frame Size: 18 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "xStreamBufferSetTriggerLevel",594,"_xStreamBufferSetTriggerLevel"
+;  595	/*-----------------------------------------------------------*/
+;  596	
+;  597	size_t xStreamBufferSpacesAvailable( StreamBufferHandle_t xStreamBuffer )
+;  598	{
+_xStreamBufferSpacesAvailable:
+.DEFINE "_xStreamBufferSpacesAvailable"
+
+.VALUE _xStreamBufferSpacesAvailable
+
+.CLASS 2
+
+.TYPE 78
+
+.ENDEF
+
+.BEGFUNC "xStreamBufferSpacesAvailable",598,"_xStreamBufferSpacesAvailable"
+
+.LINE 598
+
+.DEFINE "xStreamBuffer"
+
+.CLASS 65
+
+.VALUE 6
+
+.TAG "StreamBufferDef_t"
+
+.TYPE 40
+
+.ENDEF
+
+.DEFINE "xSpace"
+
+.CLASS 65
+
+.VALUE -3
+
+.TYPE 14
+
+.ENDEF
+
+.DEFINE "pxStreamBuffer"
+
+.CLASS 65
+
+.VALUE -6
+
+.TAG "StreamBufferDef_t"
+
+.TYPE 200
+
+.ENDEF
+
+.DEFINE "xOriginalTail"
+
+.CLASS 65
+
+.VALUE -9
+
+.TYPE 14
+
+.ENDEF
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+	PUSH	BC
+	PUSH	BC
+	PUSH	BC
+;  599	    const StreamBuffer_t * const pxStreamBuffer = xStreamBuffer;
+.LINE 599
+
+	LD	BC,(IX+%6)
+	LD	(IX+%FFFFFFFA),BC
+;  600	    size_t xSpace;
+;  601	    size_t xOriginalTail;
+;  602	
+;  603	    configASSERT( pxStreamBuffer );
+;  604	
+;  605	    /* The code below reads xTail and then xHead.  This is safe if the stream
+;  606	     * buffer is updated once between the two reads - but not if the stream buffer
+;  607	     * is updated more than once between the two reads - hence the loop. */
+;  608	    do
+L_26:
+.LINE 608
+
+;  609	    {
+;  610	        xOriginalTail = pxStreamBuffer->xTail;
+.LINE 610
+
+	LD	IY,(IX+%FFFFFFFA)
+	LD	BC,(IY+%0)
+	LD	(IX+%FFFFFFF7),BC
+;  611	        xSpace = pxStreamBuffer->xLength + pxStreamBuffer->xTail;
+.LINE 611
+
+	LD	IY,(IX+%FFFFFFFA)
+	LD	BC,(IY+%0)
+	LD	HL,(IY+%6)
+	ADD	HL,BC
+	LD	(IX+%FFFFFFFD),HL
+;  612	        xSpace -= pxStreamBuffer->xHead;
+.LINE 612
+
+	LD	IY,(IX+%FFFFFFFA)
+	LD	BC,(IY+%3)
+	LD	HL,(IX+%FFFFFFFD)
+	OR	A,A
+	SBC	HL,BC
+	LD	(IX+%FFFFFFFD),HL
+;  613	    } while( xOriginalTail != pxStreamBuffer->xTail );
+.LINE 613
+
+	LD	BC,(IX+%FFFFFFF7)
+	LD	IY,(IX+%FFFFFFFA)
+	LD	HL,(IY+%0)
+	OR	A,A
+	SBC	HL,BC
+	JR	NZ,L_26
+;  614	
+;  615	    xSpace -= ( size_t ) 1;
+.LINE 615
+
+	LD	IY,(IX+%FFFFFFFD)
+	LEA	IY,IY+%FFFFFFFF
+	LD	(IX+%FFFFFFFD),IY
+;  616	
+;  617	    if( xSpace >= pxStreamBuffer->xLength )
+.LINE 617
+
+	LD	IY,(IX+%FFFFFFFA)
+	LD	BC,(IY+%6)
+	LD	HL,(IX+%FFFFFFFD)
+	OR	A,A
+	SBC	HL,BC
+	JR	C,L_30
+;  618	    {
+;  619	        xSpace -= pxStreamBuffer->xLength;
+.LINE 619
+
+	LD	IY,(IX+%FFFFFFFA)
+	LD	BC,(IY+%6)
+	LD	HL,(IX+%FFFFFFFD)
+	OR	A,A
+	SBC	HL,BC
+	LD	(IX+%FFFFFFFD),HL
+;  620	    }
+;  621	    else
+L_30:
+.LINE 621
+
+;  622	    {
+;  623	        mtCOVERAGE_TEST_MARKER();
+;  624	    }
+;  625	
+;  626	    return xSpace;
+.LINE 626
+
+	LD	HL,(IX+%FFFFFFFD)
+;  627	}
+.LINE 627
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _xStreamBufferSpacesAvailable ***************************
+;Name                         Addr/Register   Size   Type
+;xOriginalTail                         IX-9      3   variable
+;pxStreamBuffer                        IX-6      3   variable
+;xSpace                                IX-3      3   variable
+;xStreamBuffer                         IX+6      3   parameter
+
+
+; Stack Frame Size: 18 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "xStreamBufferSpacesAvailable",627,"_xStreamBufferSpacesAvailable"
+;  628	/*-----------------------------------------------------------*/
+;  629	
+;  630	size_t xStreamBufferBytesAvailable( StreamBufferHandle_t xStreamBuffer )
+;  631	{
+_xStreamBufferBytesAvailable:
+.DEFINE "_xStreamBufferBytesAvailable"
+
+.VALUE _xStreamBufferBytesAvailable
+
+.CLASS 2
+
+.TYPE 78
+
+.ENDEF
+
+.BEGFUNC "xStreamBufferBytesAvailable",631,"_xStreamBufferBytesAvailable"
+
+.LINE 631
+
+.DEFINE "xStreamBuffer"
+
+.CLASS 65
+
+.VALUE 6
+
+.TAG "StreamBufferDef_t"
+
+.TYPE 40
+
+.ENDEF
+
+.DEFINE "pxStreamBuffer"
+
+.CLASS 65
+
+.VALUE -3
+
+.TAG "StreamBufferDef_t"
+
+.TYPE 200
+
+.ENDEF
+
+.DEFINE "xReturn"
+
+.CLASS 65
+
+.VALUE -6
+
+.TYPE 14
+
+.ENDEF
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+	PUSH	BC
+	PUSH	BC
+;  632	    const StreamBuffer_t * const pxStreamBuffer = xStreamBuffer;
+.LINE 632
+
+	LD	BC,(IX+%6)
+	LD	(IX+%FFFFFFFD),BC
+;  633	    size_t xReturn;
+;  634	
+;  635	    configASSERT( pxStreamBuffer );
+;  636	
+;  637	    xReturn = prvBytesInBuffer( pxStreamBuffer );
+.LINE 637
+
+	LD	BC,(IX+%FFFFFFFD)
+	PUSH	BC
+	CALL	_prvBytesInBuffer
+	POP	BC
+	LD	(IX+%FFFFFFFA),HL
+;  638	    return xReturn;
+.LINE 638
+
+	LD	HL,(IX+%FFFFFFFA)
+;  639	}
+.LINE 639
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _xStreamBufferBytesAvailable ***************************
+;Name                         Addr/Register   Size   Type
+;_prvBytesInBuffer                   STATIC  -----   function
+;xReturn                               IX-6      3   variable
+;pxStreamBuffer                        IX-3      3   variable
+;xStreamBuffer                         IX+6      3   parameter
+
+
+; Stack Frame Size: 15 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "xStreamBufferBytesAvailable",639,"_xStreamBufferBytesAvailable"
+;  640	/*-----------------------------------------------------------*/
+;  641	
+;  642	size_t xStreamBufferSend( StreamBufferHandle_t xStreamBuffer,
+;  643	                          const void * pvTxData,
+;  644	                          size_t xDataLengthBytes,
+;  645	                          TickType_t xTicksToWait )
+;  646	{
+_xStreamBufferSend:
+.DEFINE "_xStreamBufferSend"
+
+.VALUE _xStreamBufferSend
+
+.CLASS 2
+
+.TYPE 78
+
+.ENDEF
+
+.BEGFUNC "xStreamBufferSend",646,"_xStreamBufferSend"
+
+.LINE 646
+
+.DEFINE "xStreamBuffer"
+
+.CLASS 65
+
+.VALUE 6
+
+.TAG "StreamBufferDef_t"
+
+.TYPE 40
+
+.ENDEF
+
+.DEFINE "pvTxData"
+
+.CLASS 65
+
+.VALUE 9
+
+.TYPE 193
+
+.ENDEF
+
+.DEFINE "xDataLengthBytes"
+
+.CLASS 65
+
+.VALUE 12
+
+.TYPE 14
+
+.ENDEF
+
+.DEFINE "xTicksToWait"
+
+.CLASS 65
+
+.VALUE 15
+
+.TYPE 15
+
+.ENDEF
+
+.DEFINE "pxStreamBuffer"
+
+.CLASS 65
+
+.VALUE -3
+
+.TAG "StreamBufferDef_t"
+
+.TYPE 40
+
+.ENDEF
+
+.DEFINE "xRequiredSpace"
+
+.CLASS 65
+
+.VALUE -6
+
+.TYPE 14
+
+.ENDEF
+
+.DEFINE "xSpace"
+
+.CLASS 65
+
+.VALUE -9
+
+.TYPE 14
+
+.ENDEF
+
+.DEFINE "xMaxReportedSpace"
+
+.CLASS 65
+
+.VALUE -12
+
+.TYPE 14
+
+.ENDEF
+
+.DEFINE "xReturn"
+
+.CLASS 65
+
+.VALUE -15
+
+.TYPE 14
+
+.ENDEF
+
+.DEFINE "xTimeOut"
+
+.CLASS 65
+
+.VALUE -22
+
+.TAG "xTIME_OUT"
+
+.TYPE 8
+
+.ENDEF
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+	LEA	HL,IX+%FFFFFFE7
+	LD	SP,HL
+;  647	    StreamBuffer_t * const pxStreamBuffer = xStreamBuffer;
+.LINE 647
+
+	LD	BC,(IX+%6)
+	LD	(IX+%FFFFFFFD),BC
+;  648	    size_t xReturn, xSpace = 0;
+.LINE 648
+
+	LD	BC,0
+	LD	(IX+%FFFFFFF7),BC
+;  649	    size_t xRequiredSpace = xDataLengthBytes;
+.LINE 649
+
+	LD	BC,(IX+%C)
+	LD	(IX+%FFFFFFFA),BC
+;  650	    TimeOut_t xTimeOut;
+;  651	    size_t xMaxReportedSpace = 0;
+.LINE 651
+
+	LD	BC,0
+	LD	(IX+%FFFFFFF4),BC
+;  652	
+;  653	    configASSERT( pvTxData );
+;  654	    configASSERT( pxStreamBuffer );
+;  655	
+;  656	    /* The maximum amount of space a stream buffer will ever report is its length
+;  657	     * minus 1. */
+;  658	    xMaxReportedSpace = pxStreamBuffer->xLength - ( size_t ) 1;
+.LINE 658
+
+	LD	IY,(IX+%FFFFFFFD)
+	LD	IY,(IY+%6)
+	LEA	IY,IY+%FFFFFFFF
+	LD	(IX+%FFFFFFF4),IY
+;  659	
+;  660	    /* This send function is used to write to both message buffers and stream
+;  661	     * buffers.  If this is a message buffer then the space needed must be
+;  662	     * increased by the amount of bytes needed to store the length of the
+;  663	     * message. */
+;  664	    if( ( pxStreamBuffer->ucFlags & sbFLAGS_IS_MESSAGE_BUFFER ) != ( uint8_t ) 0 )
+.LINE 664
+
+	LD	IY,(IX+%FFFFFFFD)
+	LD	A,(IY+%15)
+	AND	A,%1
+	JR	Z,L_39
+;  665	    {
+;  666	        xRequiredSpace += sbBYTES_TO_STORE_MESSAGE_LENGTH;
+.LINE 666
+
+	LD	IY,(IX+%FFFFFFFA)
+	LEA	IY,IY+%3
+	LD	(IX+%FFFFFFFA),IY
+;  667	
+;  668	        /* Overflow? */
+;  669	        configASSERT( xRequiredSpace > xDataLengthBytes );
+;  670	
+;  671	        /* If this is a message buffer then it must be possible to write the
+;  672	         * whole message. */
+;  673	        if( xRequiredSpace > xMaxReportedSpace )
+.LINE 673
+
+	LD	BC,(IX+%FFFFFFFA)
+	LD	HL,(IX+%FFFFFFF4)
+	OR	A,A
+	SBC	HL,BC
+	JR	NC,L_47
+;  674	        {
+;  675	            /* The message would not fit even if the entire buffer was empty,
+;  676	             * so don't wait for space. */
+;  677	            xTicksToWait = ( TickType_t ) 0;
+.LINE 677
+
+	LD	BC,0
+	XOR	A,A
+	LD	(IX+%F),BC
+	LD	(IX+%12),A
+;  678	        }
+;  679	        else
+.LINE 679
+
+	JR	L_47
+;  680	        {
+;  681	            mtCOVERAGE_TEST_MARKER();
+;  682	        }
+;  683	    }
+;  684	    else
+.LINE 684
+
+L_39:
+;  685	    {
+;  686	        /* If this is a stream buffer then it is acceptable to write only part
+;  687	         * of the message to the buffer.  Cap the length to the total length of
+;  688	         * the buffer. */
+;  689	        if( xRequiredSpace > xMaxReportedSpace )
+.LINE 689
+
+	LD	BC,(IX+%FFFFFFFA)
+	LD	HL,(IX+%FFFFFFF4)
+	OR	A,A
+	SBC	HL,BC
+	JR	NC,L_37
+;  690	        {
+;  691	            xRequiredSpace = xMaxReportedSpace;
+.LINE 691
+
+	LD	BC,(IX+%FFFFFFF4)
+	LD	(IX+%FFFFFFFA),BC
+;  692	        }
+;  693	        else
+L_37:
+.LINE 693
+
+;  694	        {
+;  695	            mtCOVERAGE_TEST_MARKER();
+;  696	        }
+;  697	    }
+L_47:
+.LINE 697
+
+;  698	
+;  699	    if( xTicksToWait != ( TickType_t ) 0 )
+.LINE 699
+
+	LD	HL,(IX+%F)
+	LD	E,(IX+%12)
+	CALL	__lcmpzero
+	JR	Z,L_46
+;  700	    {
+;  701	        vTaskSetTimeOutState( &xTimeOut );
+.LINE 701
+
+	PEA	IX+%FFFFFFEA
+	CALL	_vTaskSetTimeOutState
+	POP	BC
+;  702	
+;  703	        do
+L_43:
+.LINE 703
+
+;  704	        {
+;  705	            /* Wait until the required number of bytes are free in the message
+;  706	             * buffer. */
+;  707	            taskENTER_CRITICAL();
+.LINE 707
+
+	 di
+;  708	            {
+;  709	                xSpace = xStreamBufferSpacesAvailable( pxStreamBuffer );
+.LINE 709
+
+	LD	BC,(IX+%FFFFFFFD)
+	PUSH	BC
+	CALL	_xStreamBufferSpacesAvailable
+	POP	BC
+	LD	(IX+%FFFFFFF7),HL
+;  710	
+;  711	                if( xSpace < xRequiredSpace )
+.LINE 711
+
+	LD	BC,(IX+%FFFFFFFA)
+	LD	HL,(IX+%FFFFFFF7)
+	OR	A,A
+	SBC	HL,BC
+	JR	NC,L_41
+;  712	                {
+;  713	                    /* Clear notification state as going to wait for space. */
+;  714	                    ( void ) xTaskNotifyStateClear( NULL );
+.LINE 714
+
+	LD	BC,0
+	PUSH	BC
+	PUSH	BC
+	CALL	_xTaskGenericNotifyStateClear
+	POP	BC
+	POP	BC
+;  715	
+;  716	                    /* Should only be one writer. */
+;  717	                    configASSERT( pxStreamBuffer->xTaskWaitingToSend == NULL );
+;  718	                    pxStreamBuffer->xTaskWaitingToSend = xTaskGetCurrentTaskHandle();
+.LINE 718
+
+	CALL	_xTaskGetCurrentTaskHandle
+	LD	IY,(IX+%FFFFFFFD)
+	LD	(IY+%F),HL
+;  719	                }
+;  720	                else
+.LINE 720
+
+	JR	L_42
+L_41:
+;  721	                {
+;  722	                    taskEXIT_CRITICAL();
+.LINE 722
+
+	 ei
+;  723	                    break;
+.LINE 723
+
+	JR	L_50
+;  724	                }
+;  725	            }
+L_42:
+.LINE 725
+
+;  726	            taskEXIT_CRITICAL();
+.LINE 726
+
+	 ei
+;  727	
+;  728	            traceBLOCKING_ON_STREAM_BUFFER_SEND( xStreamBuffer );
+;  729	            ( void ) xTaskNotifyWait( ( uint32_t ) 0, ( uint32_t ) 0, NULL, xTicksToWait );
+.LINE 729
+
+	LD	C,(IX+%12)
+	LD	B,%0
+	PUSH	BC
+	LD	BC,(IX+%F)
+	PUSH	BC
+	LD	BC,0
+	PUSH	BC
+	PUSH	BC
+	PUSH	BC
+	PUSH	BC
+	PUSH	BC
+	PUSH	BC
+	CALL	_xTaskGenericNotifyWait
+	LD	IY,24
+	ADD	IY,SP
+	LD	SP,IY
+;  730	            pxStreamBuffer->xTaskWaitingToSend = NULL;
+.LINE 730
+
+	LD	BC,0
+	LD	IY,(IX+%FFFFFFFD)
+	LD	(IY+%F),BC
+;  731	        } while( xTaskCheckForTimeOut( &xTimeOut, &xTicksToWait ) == pdFALSE );
+.LINE 731
+
+	PEA	IX+%F
+	PEA	IX+%FFFFFFEA
+	CALL	_xTaskCheckForTimeOut
+	POP	BC
+	POP	BC
+	CALL	__icmpzero
+	JR	Z,L_43
+;  732	    }
+;  733	    else
+L_46:
+.LINE 733
+
+;  734	    {
+;  735	        mtCOVERAGE_TEST_MARKER();
+;  736	    }
+L_50:
+.LINE 736
+
+;  737	
+;  738	    if( xSpace == ( size_t ) 0 )
+.LINE 738
+
+	LD	HL,(IX+%FFFFFFF7)
+	CALL	__icmpzero
+	JR	NZ,L_49
+;  739	    {
+;  740	        xSpace = xStreamBufferSpacesAvailable( pxStreamBuffer );
+.LINE 740
+
+	LD	BC,(IX+%FFFFFFFD)
+	PUSH	BC
+	CALL	_xStreamBufferSpacesAvailable
+	POP	BC
+	LD	(IX+%FFFFFFF7),HL
+;  741	    }
+;  742	    else
+L_49:
+.LINE 742
+
+;  743	    {
+;  744	        mtCOVERAGE_TEST_MARKER();
+;  745	    }
+;  746	
+;  747	    xReturn = prvWriteMessageToBuffer( pxStreamBuffer, pvTxData, xDataLengthBytes, xSpace, xRequiredSpace );
+.LINE 747
+
+	LD	BC,(IX+%FFFFFFFA)
+	PUSH	BC
+	LD	BC,(IX+%FFFFFFF7)
+	PUSH	BC
+	LD	BC,(IX+%C)
+	PUSH	BC
+	LD	BC,(IX+%9)
+	PUSH	BC
+	LD	BC,(IX+%FFFFFFFD)
+	PUSH	BC
+	CALL	_prvWriteMessageToBuffer
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+	LD	(IX+%FFFFFFF1),HL
+;  748	
+;  749	    if( xReturn > ( size_t ) 0 )
+.LINE 749
+
+	LD	BC,(IX+%FFFFFFF1)
+	OR	A,A
+	SBC	HL,HL
+	OR	A,A
+	SBC	HL,BC
+	JR	NC,L_57
+;  750	    {
+;  751	        traceSTREAM_BUFFER_SEND( xStreamBuffer, xReturn );
+;  752	
+;  753	        /* Was a task waiting for the data? */
+;  754	        if( prvBytesInBuffer( pxStreamBuffer ) >= pxStreamBuffer->xTriggerLevelBytes )
+.LINE 754
+
+	LD	BC,(IX+%FFFFFFFD)
+	LD	DE,(IX+%FFFFFFFD)
+	PUSH	DE
+	LD	(IX+%FFFFFFE7),BC
+	CALL	_prvBytesInBuffer
+	LD	BC,(IX+%FFFFFFE7)
+	POP	DE
+	LD	IY,BC
+	LD	BC,(IY+%9)
+	OR	A,A
+	SBC	HL,BC
+	JR	C,L_55
+;  755	        {
+;  756	            prvSEND_COMPLETED( pxStreamBuffer );
+.LINE 756
+
+	CALL	_vTaskSuspendAll
+	LD	IY,(IX+%FFFFFFFD)
+	LD	HL,(IY+%C)
+	CALL	__icmpzero
+	JR	Z,L_53
+	LD	BC,0
+	PUSH	BC
+	PUSH	BC
+	PUSH	BC
+	PUSH	BC
+	PUSH	BC
+	LD	IY,(IX+%FFFFFFFD)
+	LD	BC,(IY+%C)
+	PUSH	BC
+	CALL	_xTaskGenericNotify
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+	LD	BC,0
+	LD	IY,(IX+%FFFFFFFD)
+	LD	(IY+%C),BC
+L_53:
+	CALL	_xTaskResumeAll
+;  757	        }
+;  758	        else
+L_55:
+.LINE 758
+
+;  759	        {
+;  760	            mtCOVERAGE_TEST_MARKER();
+;  761	        }
+;  762	    }
+;  763	    else
+L_57:
+.LINE 763
+
+;  764	    {
+;  765	        mtCOVERAGE_TEST_MARKER();
+;  766	        traceSTREAM_BUFFER_SEND_FAILED( xStreamBuffer );
+;  767	    }
+;  768	
+;  769	    return xReturn;
+.LINE 769
+
+	LD	HL,(IX+%FFFFFFF1)
+;  770	}
+.LINE 770
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _xStreamBufferSend ***************************
+;Name                         Addr/Register   Size   Type
+;_xTaskResumeAll                     IMPORT  -----   function
+;_xTaskGenericNotify                 IMPORT  -----   function
+;_vTaskSuspendAll                    IMPORT  -----   function
+;_prvBytesInBuffer                   STATIC  -----   function
+;_prvWriteMessageToBuffer            STATIC  -----   function
+;_xTaskCheckForTimeOut               IMPORT  -----   function
+;_xTaskGenericNotifyWait             IMPORT  -----   function
+;_xTaskGetCurrentTaskHandle          IMPORT  -----   function
+;_xTaskGenericNotifyStateClear       IMPORT  -----   function
+;_xStreamBufferSpacesAvailable       IMPORT  -----   function
+;_vTaskSetTimeOutState               IMPORT  -----   function
+;xTimeOut                             IX-22      7   variable
+;xReturn                              IX-15      3   variable
+;xMaxReportedSpace                    IX-12      3   variable
+;xSpace                                IX-9      3   variable
+;xRequiredSpace                        IX-6      3   variable
+;pxStreamBuffer                        IX-3      3   variable
+;xTicksToWait                         IX+15      4   parameter
+;xDataLengthBytes                     IX+12      3   parameter
+;pvTxData                              IX+9      3   parameter
+;xStreamBuffer                         IX+6      3   parameter
+
+
+; Stack Frame Size: 46 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "xStreamBufferSend",770,"_xStreamBufferSend"
+;  771	/*-----------------------------------------------------------*/
+;  772	
+;  773	size_t xStreamBufferSendFromISR( StreamBufferHandle_t xStreamBuffer,
+;  774	                                 const void * pvTxData,
+;  775	                                 size_t xDataLengthBytes,
+;  776	                                 BaseType_t * const pxHigherPriorityTaskWoken )
+;  777	{
+_xStreamBufferSendFromISR:
+.DEFINE "_xStreamBufferSendFromISR"
+
+.VALUE _xStreamBufferSendFromISR
+
+.CLASS 2
+
+.TYPE 78
+
+.ENDEF
+
+.BEGFUNC "xStreamBufferSendFromISR",777,"_xStreamBufferSendFromISR"
+
+.LINE 777
+
+.DEFINE "xStreamBuffer"
+
+.CLASS 65
+
+.VALUE 6
+
+.TAG "StreamBufferDef_t"
+
+.TYPE 40
+
+.ENDEF
+
+.DEFINE "pvTxData"
+
+.CLASS 65
+
+.VALUE 9
+
+.TYPE 193
+
+.ENDEF
+
+.DEFINE "xDataLengthBytes"
+
+.CLASS 65
+
+.VALUE 12
+
+.TYPE 14
+
+.ENDEF
+
+.DEFINE "pxHigherPriorityTaskWoken"
+
+.CLASS 65
+
+.VALUE 15
+
+.TYPE 36
+
+.ENDEF
+
+.DEFINE "pxStreamBuffer"
+
+.CLASS 65
+
+.VALUE -3
+
+.TAG "StreamBufferDef_t"
+
+.TYPE 40
+
+.ENDEF
+
+.DEFINE "xRequiredSpace"
+
+.CLASS 65
+
+.VALUE -6
+
+.TYPE 14
+
+.ENDEF
+
+.DEFINE "xReturn"
+
+.CLASS 65
+
+.VALUE -9
+
+.TYPE 14
+
+.ENDEF
+
+.DEFINE "xSpace"
+
+.CLASS 65
+
+.VALUE -12
+
+.TYPE 14
+
+.ENDEF
+
+.DEFINE "uxSavedInterruptStatus"
+
+.CLASS 65
+
+.VALUE -15
+
+.TYPE 14
+
+.ENDEF
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+	LEA	HL,IX+%FFFFFFEE
+	LD	SP,HL
+;  778	    StreamBuffer_t * const pxStreamBuffer = xStreamBuffer;
+.LINE 778
+
+	LD	BC,(IX+%6)
+	LD	(IX+%FFFFFFFD),BC
+;  779	    size_t xReturn, xSpace;
+;  780	    size_t xRequiredSpace = xDataLengthBytes;
+.LINE 780
+
+	LD	BC,(IX+%C)
+	LD	(IX+%FFFFFFFA),BC
+;  781	
+;  782	    configASSERT( pvTxData );
+;  783	    configASSERT( pxStreamBuffer );
+;  784	
+;  785	    /* This send function is used to write to both message buffers and stream
+;  786	     * buffers.  If this is a message buffer then the space needed must be
+;  787	     * increased by the amount of bytes needed to store the length of the
+;  788	     * message. */
+;  789	    if( ( pxStreamBuffer->ucFlags & sbFLAGS_IS_MESSAGE_BUFFER ) != ( uint8_t ) 0 )
+.LINE 789
+
+	LD	IY,(IX+%FFFFFFFD)
+	LD	A,(IY+%15)
+	AND	A,%1
+	JR	Z,L_61
+;  790	    {
+;  791	        xRequiredSpace += sbBYTES_TO_STORE_MESSAGE_LENGTH;
+.LINE 791
+
+	LD	IY,(IX+%FFFFFFFA)
+	LEA	IY,IY+%3
+	LD	(IX+%FFFFFFFA),IY
+;  792	    }
+;  793	    else
+L_61:
+.LINE 793
+
+;  794	    {
+;  795	        mtCOVERAGE_TEST_MARKER();
+;  796	    }
+;  797	
+;  798	    xSpace = xStreamBufferSpacesAvailable( pxStreamBuffer );
+.LINE 798
+
+	LD	BC,(IX+%FFFFFFFD)
+	PUSH	BC
+	CALL	_xStreamBufferSpacesAvailable
+	POP	BC
+	LD	(IX+%FFFFFFF4),HL
+;  799	    xReturn = prvWriteMessageToBuffer( pxStreamBuffer, pvTxData, xDataLengthBytes, xSpace, xRequiredSpace );
+.LINE 799
+
+	LD	BC,(IX+%FFFFFFFA)
+	PUSH	BC
+	LD	BC,(IX+%FFFFFFF4)
+	PUSH	BC
+	LD	BC,(IX+%C)
+	PUSH	BC
+	LD	BC,(IX+%9)
+	PUSH	BC
+	LD	BC,(IX+%FFFFFFFD)
+	PUSH	BC
+	CALL	_prvWriteMessageToBuffer
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+	LD	(IX+%FFFFFFF7),HL
+;  800	
+;  801	    if( xReturn > ( size_t ) 0 )
+.LINE 801
+
+	LD	BC,(IX+%FFFFFFF7)
+	OR	A,A
+	SBC	HL,HL
+	OR	A,A
+	SBC	HL,BC
+	JR	NC,L_68
+;  802	    {
+;  803	        /* Was a task waiting for the data? */
+;  804	        if( prvBytesInBuffer( pxStreamBuffer ) >= pxStreamBuffer->xTriggerLevelBytes )
+.LINE 804
+
+	LD	BC,(IX+%FFFFFFFD)
+	LD	DE,(IX+%FFFFFFFD)
+	PUSH	DE
+	LD	(IX+%FFFFFFEE),BC
+	CALL	_prvBytesInBuffer
+	LD	BC,(IX+%FFFFFFEE)
+	POP	DE
+	LD	IY,BC
+	LD	BC,(IY+%9)
+	OR	A,A
+	SBC	HL,BC
+	JR	C,L_66
+;  805	        {
+;  806	            prvSEND_COMPLETE_FROM_ISR( pxStreamBuffer, pxHigherPriorityTaskWoken );
+.LINE 806
+
+	LD	BC,0
+	LD	(IX+%FFFFFFF1),BC
+	LD	IY,(IX+%FFFFFFFD)
+	LD	HL,(IY+%C)
+	CALL	__icmpzero
+	JR	Z,L_66
+	LD	BC,(IX+%F)
+	PUSH	BC
+	LD	BC,0
+	PUSH	BC
+	PUSH	BC
+	PUSH	BC
+	PUSH	BC
+	PUSH	BC
+	LD	IY,(IX+%FFFFFFFD)
+	LD	BC,(IY+%C)
+	PUSH	BC
+	CALL	_xTaskGenericNotifyFromISR
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+	LD	BC,0
+	LD	IY,(IX+%FFFFFFFD)
+	LD	(IY+%C),BC
+;  807	        }
+;  808	        else
+L_66:
+.LINE 808
+
+;  809	        {
+;  810	            mtCOVERAGE_TEST_MARKER();
+;  811	        }
+;  812	    }
+;  813	    else
+L_68:
+.LINE 813
+
+;  814	    {
+;  815	        mtCOVERAGE_TEST_MARKER();
+;  816	    }
+;  817	
+;  818	    traceSTREAM_BUFFER_SEND_FROM_ISR( xStreamBuffer, xReturn );
+;  819	
+;  820	    return xReturn;
+.LINE 820
+
+	LD	HL,(IX+%FFFFFFF7)
+;  821	}
+.LINE 821
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _xStreamBufferSendFromISR ***************************
+;Name                         Addr/Register   Size   Type
+;_xTaskGenericNotifyFromISR          IMPORT  -----   function
+;_prvBytesInBuffer                   STATIC  -----   function
+;_prvWriteMessageToBuffer            STATIC  -----   function
+;_xStreamBufferSpacesAvailable       IMPORT  -----   function
+;uxSavedInterruptStatus               IX-15      3   variable
+;xSpace                               IX-12      3   variable
+;xReturn                               IX-9      3   variable
+;xRequiredSpace                        IX-6      3   variable
+;pxStreamBuffer                        IX-3      3   variable
+;pxHigherPriorityTaskWoken            IX+15      3   parameter
+;xDataLengthBytes                     IX+12      3   parameter
+;pvTxData                              IX+9      3   parameter
+;xStreamBuffer                         IX+6      3   parameter
+
+
+; Stack Frame Size: 36 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "xStreamBufferSendFromISR",821,"_xStreamBufferSendFromISR"
+;  822	/*-----------------------------------------------------------*/
+;  823	
+;  824	static size_t prvWriteMessageToBuffer( StreamBuffer_t * const pxStreamBuffer,
+;  825	                                       const void * pvTxData,
+;  826	                                       size_t xDataLengthBytes,
+;  827	                                       size_t xSpace,
+;  828	                                       size_t xRequiredSpace )
+;  829	{
+_prvWriteMessageToBuffer:
+.DEFINE "_prvWriteMessageToBuffer"
+
+.VALUE _prvWriteMessageToBuffer
+
+.CLASS 3
+
+.TYPE 78
+
+.ENDEF
+
+.BEGFUNC "prvWriteMessageToBuffer",829,"_prvWriteMessageToBuffer"
+
+.LINE 829
+
+.DEFINE "pxStreamBuffer"
+
+.CLASS 65
+
+.VALUE 6
+
+.TAG "StreamBufferDef_t"
+
+.TYPE 40
+
+.ENDEF
+
+.DEFINE "pvTxData"
+
+.CLASS 65
+
+.VALUE 9
+
+.TYPE 193
+
+.ENDEF
+
+.DEFINE "xDataLengthBytes"
+
+.CLASS 65
+
+.VALUE 12
+
+.TYPE 14
+
+.ENDEF
+
+.DEFINE "xSpace"
+
+.CLASS 65
+
+.VALUE 15
+
+.TYPE 14
+
+.ENDEF
+
+.DEFINE "xRequiredSpace"
+
+.CLASS 65
+
+.VALUE 18
+
+.TYPE 14
+
+.ENDEF
+
+.DEFINE "xNextHead"
+
+.CLASS 65
+
+.VALUE -3
+
+.TYPE 14
+
+.ENDEF
+
+.DEFINE "xMessageLength"
+
+.CLASS 65
+
+.VALUE -9
+
+.TYPE 14
+
+.ENDEF
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+	PUSH	BC
+	PUSH	BC
+	PUSH	BC
+;  830	    size_t xNextHead = pxStreamBuffer->xHead;
+.LINE 830
+
+	LD	IY,(IX+%6)
+	LD	BC,(IY+%3)
+	LD	(IX+%FFFFFFFD),BC
+;  831	    configMESSAGE_BUFFER_LENGTH_TYPE xMessageLength;
+;  832	
+;  833	    if( ( pxStreamBuffer->ucFlags & sbFLAGS_IS_MESSAGE_BUFFER ) != ( uint8_t ) 0 )
+.LINE 833
+
+	LD	IY,(IX+%6)
+	LD	A,(IY+%15)
+	AND	A,%1
+	JR	Z,L_78
+;  834	    {
+;  835	        /* This is a message buffer, as opposed to a stream buffer. */
+;  836	
+;  837	        /* Convert xDataLengthBytes to the message length type. */
+;  838	        xMessageLength = ( configMESSAGE_BUFFER_LENGTH_TYPE ) xDataLengthBytes;
+.LINE 838
+
+	LD	BC,(IX+%C)
+	LD	(IX+%FFFFFFF7),BC
+;  839	
+;  840	        /* Ensure the data length given fits within configMESSAGE_BUFFER_LENGTH_TYPE. */
+;  841	        configASSERT( ( size_t ) xMessageLength == xDataLengthBytes );
+;  842	
+;  843	        if( xSpace >= xRequiredSpace )
+.LINE 843
+
+	LD	BC,(IX+%12)
+	LD	HL,(IX+%F)
+	OR	A,A
+	SBC	HL,BC
+	JR	C,L_72
+;  844	        {
+;  845	            /* There is enough space to write both the message length and the message
+;  846	             * itself into the buffer.  Start by writing the length of the data, the data
+;  847	             * itself will be written later in this function. */
+;  848	            xNextHead = prvWriteBytesToBuffer( pxStreamBuffer, ( const uint8_t * ) &( xMessageLength ), sbBYTES_TO_STORE_MESSAGE_LENGTH, xNextHead );
+.LINE 848
+
+	LD	BC,(IX+%FFFFFFFD)
+	PUSH	BC
+	LD	BC,3
+	PUSH	BC
+	PEA	IX+%FFFFFFF7
+	LD	BC,(IX+%6)
+	PUSH	BC
+	CALL	_prvWriteBytesToBuffer
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+	LD	(IX+%FFFFFFFD),HL
+;  849	        }
+;  850	        else
+.LINE 850
+
+	JR	L_80
+L_72:
+;  851	        {
+;  852	            /* Not enough space, so do not write data to the buffer. */
+;  853	            xDataLengthBytes = 0;
+.LINE 853
+
+	LD	BC,0
+	LD	(IX+%C),BC
+;  854	        }
+;  855	    }
+;  856	    else
+.LINE 856
+
+	JR	L_80
+L_78:
+;  857	    {
+;  858	        /* This is a stream buffer, as opposed to a message buffer, so writing a
+;  859	         * stream of bytes rather than discrete messages.  Plan to write as many
+;  860	         * bytes as possible. */
+;  861	        xDataLengthBytes = configMIN( xDataLengthBytes, xSpace );
+.LINE 861
+
+	LD	BC,(IX+%F)
+	LD	HL,(IX+%C)
+	OR	A,A
+	SBC	HL,BC
+	JR	NC,L_75
+	LD	BC,(IX+%C)
+	LD	(IX+%FFFFFFFA),BC
+	JR	L_76
+L_75:
+	LD	BC,(IX+%F)
+	LD	(IX+%FFFFFFFA),BC
+L_76:
+	LD	BC,(IX+%FFFFFFFA)
+	LD	(IX+%C),BC
+;  862	    }
+L_80:
+.LINE 862
+
+;  863	
+;  864	    if( xDataLengthBytes != ( size_t ) 0 )
+.LINE 864
+
+	LD	HL,(IX+%C)
+	CALL	__icmpzero
+	JR	Z,L_81
+;  865	    {
+;  866	        /* Write the data to the buffer. */
+;  867	        pxStreamBuffer->xHead = prvWriteBytesToBuffer( pxStreamBuffer, ( const uint8_t * ) pvTxData, xDataLengthBytes, xNextHead ); /*lint !e9079 Storage buffer is implemented as uint8_t for ease of sizing, alignment and access. */
+.LINE 867
+
+	LD	BC,(IX+%FFFFFFFD)
+	PUSH	BC
+	LD	BC,(IX+%C)
+	PUSH	BC
+	LD	BC,(IX+%9)
+	PUSH	BC
+	LD	BC,(IX+%6)
+	PUSH	BC
+	CALL	_prvWriteBytesToBuffer
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+	LD	IY,(IX+%6)
+	LD	(IY+%3),HL
+;  868	    }
+L_81:
+.LINE 868
+
+;  869	
+;  870	    return xDataLengthBytes;
+.LINE 870
+
+	LD	HL,(IX+%C)
+;  871	}
+.LINE 871
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _prvWriteMessageToBuffer ***************************
+;Name                         Addr/Register   Size   Type
+;_prvWriteBytesToBuffer              STATIC  -----   function
+;xMessageLength                        IX-9      3   variable
+;temp73                                IX-6      3   variable
+;xNextHead                             IX-3      3   variable
+;xRequiredSpace                       IX+18      3   parameter
+;xSpace                               IX+15      3   parameter
+;xDataLengthBytes                     IX+12      3   parameter
+;pvTxData                              IX+9      3   parameter
+;pxStreamBuffer                        IX+6      3   parameter
+
+
+; Stack Frame Size: 30 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "prvWriteMessageToBuffer",871,"_prvWriteMessageToBuffer"
+;  872	/*-----------------------------------------------------------*/
+;  873	
+;  874	size_t xStreamBufferReceive( StreamBufferHandle_t xStreamBuffer,
+;  875	                             void * pvRxData,
+;  876	                             size_t xBufferLengthBytes,
+;  877	                             TickType_t xTicksToWait )
+;  878	{
+_xStreamBufferReceive:
+.DEFINE "_xStreamBufferReceive"
+
+.VALUE _xStreamBufferReceive
+
+.CLASS 2
+
+.TYPE 78
+
+.ENDEF
+
+.BEGFUNC "xStreamBufferReceive",878,"_xStreamBufferReceive"
+
+.LINE 878
+
+.DEFINE "xStreamBuffer"
+
+.CLASS 65
+
+.VALUE 6
+
+.TAG "StreamBufferDef_t"
+
+.TYPE 40
+
+.ENDEF
+
+.DEFINE "pvRxData"
+
+.CLASS 65
+
+.VALUE 9
+
+.TYPE 33
+
+.ENDEF
+
+.DEFINE "xBufferLengthBytes"
+
+.CLASS 65
+
+.VALUE 12
+
+.TYPE 14
+
+.ENDEF
+
+.DEFINE "xTicksToWait"
+
+.CLASS 65
+
+.VALUE 15
+
+.TYPE 15
+
+.ENDEF
+
+.DEFINE "pxStreamBuffer"
+
+.CLASS 65
+
+.VALUE -3
+
+.TAG "StreamBufferDef_t"
+
+.TYPE 40
+
+.ENDEF
+
+.DEFINE "xBytesAvailable"
+
+.CLASS 65
+
+.VALUE -6
+
+.TYPE 14
+
+.ENDEF
+
+.DEFINE "xBytesToStoreMessageLength"
+
+.CLASS 65
+
+.VALUE -9
+
+.TYPE 14
+
+.ENDEF
+
+.DEFINE "xReceivedLength"
+
+.CLASS 65
+
+.VALUE -12
+
+.TYPE 14
+
+.ENDEF
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+	LEA	HL,IX+%FFFFFFF4
+	LD	SP,HL
+;  879	    StreamBuffer_t * const pxStreamBuffer = xStreamBuffer;
+.LINE 879
+
+	LD	BC,(IX+%6)
+	LD	(IX+%FFFFFFFD),BC
+;  880	    size_t xReceivedLength = 0, xBytesAvailable, xBytesToStoreMessageLength;
+.LINE 880
+
+	LD	BC,0
+	LD	(IX+%FFFFFFF4),BC
+;  881	
+;  882	    configASSERT( pvRxData );
+;  883	    configASSERT( pxStreamBuffer );
+;  884	
+;  885	    /* This receive function is used by both message buffers, which store
+;  886	     * discrete messages, and stream buffers, which store a continuous stream of
+;  887	     * bytes.  Discrete messages include an additional
+;  888	     * sbBYTES_TO_STORE_MESSAGE_LENGTH bytes that hold the length of the
+;  889	     * message. */
+;  890	    if( ( pxStreamBuffer->ucFlags & sbFLAGS_IS_MESSAGE_BUFFER ) != ( uint8_t ) 0 )
+.LINE 890
+
+	LD	IY,(IX+%FFFFFFFD)
+	LD	A,(IY+%15)
+	AND	A,%1
+	JR	Z,L_84
+;  891	    {
+;  892	        xBytesToStoreMessageLength = sbBYTES_TO_STORE_MESSAGE_LENGTH;
+.LINE 892
+
+	LD	BC,3
+	LD	(IX+%FFFFFFF7),BC
+;  893	    }
+;  894	    else
+.LINE 894
+
+	JR	L_92
+L_84:
+;  895	    {
+;  896	        xBytesToStoreMessageLength = 0;
+.LINE 896
+
+	LD	BC,0
+	LD	(IX+%FFFFFFF7),BC
+;  897	    }
+L_92:
+.LINE 897
+
+;  898	
+;  899	    if( xTicksToWait != ( TickType_t ) 0 )
+.LINE 899
+
+	LD	HL,(IX+%F)
+	LD	E,(IX+%12)
+	CALL	__lcmpzero
+	JR	Z,L_91
+;  900	    {
+;  901	        /* Checking if there is data and clearing the notification state must be
+;  902	         * performed atomically. */
+;  903	        taskENTER_CRITICAL();
+.LINE 903
+
+	 di
+;  904	        {
+;  905	            xBytesAvailable = prvBytesInBuffer( pxStreamBuffer );
+.LINE 905
+
+	LD	BC,(IX+%FFFFFFFD)
+	PUSH	BC
+	CALL	_prvBytesInBuffer
+	POP	BC
+	LD	(IX+%FFFFFFFA),HL
+;  906	
+;  907	            /* If this function was invoked by a message buffer read then
+;  908	             * xBytesToStoreMessageLength holds the number of bytes used to hold
+;  909	             * the length of the next discrete message.  If this function was
+;  910	             * invoked by a stream buffer read then xBytesToStoreMessageLength will
+;  911	             * be 0. */
+;  912	            if( xBytesAvailable <= xBytesToStoreMessageLength )
+.LINE 912
+
+	LD	BC,(IX+%FFFFFFFA)
+	LD	HL,(IX+%FFFFFFF7)
+	OR	A,A
+	SBC	HL,BC
+	JR	C,L_86
+;  913	            {
+;  914	                /* Clear notification state as going to wait for data. */
+;  915	                ( void ) xTaskNotifyStateClear( NULL );
+.LINE 915
+
+	LD	BC,0
+	PUSH	BC
+	PUSH	BC
+	CALL	_xTaskGenericNotifyStateClear
+	POP	BC
+	POP	BC
+;  916	
+;  917	                /* Should only be one reader. */
+;  918	                configASSERT( pxStreamBuffer->xTaskWaitingToReceive == NULL );
+;  919	                pxStreamBuffer->xTaskWaitingToReceive = xTaskGetCurrentTaskHandle();
+.LINE 919
+
+	CALL	_xTaskGetCurrentTaskHandle
+	LD	IY,(IX+%FFFFFFFD)
+	LD	(IY+%C),HL
+;  920	            }
+;  921	            else
+L_86:
+.LINE 921
+
+;  922	            {
+;  923	                mtCOVERAGE_TEST_MARKER();
+;  924	            }
+;  925	        }
+;  926	        taskEXIT_CRITICAL();
+.LINE 926
+
+	 ei
+;  927	
+;  928	        if( xBytesAvailable <= xBytesToStoreMessageLength )
+.LINE 928
+
+	LD	BC,(IX+%FFFFFFFA)
+	LD	HL,(IX+%FFFFFFF7)
+	OR	A,A
+	SBC	HL,BC
+	JR	C,L_99
+;  929	        {
+;  930	            /* Wait for data to be available. */
+;  931	            traceBLOCKING_ON_STREAM_BUFFER_RECEIVE( xStreamBuffer );
+;  932	            ( void ) xTaskNotifyWait( ( uint32_t ) 0, ( uint32_t ) 0, NULL, xTicksToWait );
+.LINE 932
+
+	LD	C,(IX+%12)
+	LD	B,%0
+	PUSH	BC
+	LD	BC,(IX+%F)
+	PUSH	BC
+	LD	BC,0
+	PUSH	BC
+	PUSH	BC
+	PUSH	BC
+	PUSH	BC
+	PUSH	BC
+	PUSH	BC
+	CALL	_xTaskGenericNotifyWait
+	LD	IY,24
+	ADD	IY,SP
+	LD	SP,IY
+;  933	            pxStreamBuffer->xTaskWaitingToReceive = NULL;
+.LINE 933
+
+	LD	BC,0
+	LD	IY,(IX+%FFFFFFFD)
+	LD	(IY+%C),BC
+;  934	
+;  935	            /* Recheck the data available after blocking. */
+;  936	            xBytesAvailable = prvBytesInBuffer( pxStreamBuffer );
+.LINE 936
+
+	LD	BC,(IX+%FFFFFFFD)
+	PUSH	BC
+	CALL	_prvBytesInBuffer
+	POP	BC
+	LD	(IX+%FFFFFFFA),HL
+;  937	        }
+;  938	        else
+.LINE 938
+
+	JR	L_99
+;  939	        {
+;  940	            mtCOVERAGE_TEST_MARKER();
+;  941	        }
+;  942	    }
+;  943	    else
+.LINE 943
+
+L_91:
+;  944	    {
+;  945	        xBytesAvailable = prvBytesInBuffer( pxStreamBuffer );
+.LINE 945
+
+	LD	BC,(IX+%FFFFFFFD)
+	PUSH	BC
+	CALL	_prvBytesInBuffer
+	POP	BC
+	LD	(IX+%FFFFFFFA),HL
+;  946	    }
+L_99:
+.LINE 946
+
+;  947	
+;  948	    /* Whether receiving a discrete message (where xBytesToStoreMessageLength
+;  949	     * holds the number of bytes used to store the message length) or a stream of
+;  950	     * bytes (where xBytesToStoreMessageLength is zero), the number of bytes
+;  951	     * available must be greater than xBytesToStoreMessageLength to be able to
+;  952	     * read bytes from the buffer. */
+;  953	    if( xBytesAvailable > xBytesToStoreMessageLength )
+.LINE 953
+
+	LD	BC,(IX+%FFFFFFFA)
+	LD	HL,(IX+%FFFFFFF7)
+	OR	A,A
+	SBC	HL,BC
+	JR	NC,L_98
+;  954	    {
+;  955	        xReceivedLength = prvReadMessageFromBuffer( pxStreamBuffer, pvRxData, xBufferLengthBytes, xBytesAvailable );
+.LINE 955
+
+	LD	BC,(IX+%FFFFFFFA)
+	PUSH	BC
+	LD	BC,(IX+%C)
+	PUSH	BC
+	LD	BC,(IX+%9)
+	PUSH	BC
+	LD	BC,(IX+%FFFFFFFD)
+	PUSH	BC
+	CALL	_prvReadMessageFromBuffer
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+	LD	(IX+%FFFFFFF4),HL
+;  956	
+;  957	        /* Was a task waiting for space in the buffer? */
+;  958	        if( xReceivedLength != ( size_t ) 0 )
+.LINE 958
+
+	LD	HL,(IX+%FFFFFFF4)
+	CALL	__icmpzero
+	JR	Z,L_96
+;  959	        {
+;  960	            traceSTREAM_BUFFER_RECEIVE( xStreamBuffer, xReceivedLength );
+;  961	            prvRECEIVE_COMPLETED( xStreamBuffer );
+.LINE 961
+
+	CALL	_vTaskSuspendAll
+	LD	IY,(IX+%6)
+	LD	HL,(IY+%F)
+	CALL	__icmpzero
+	JR	Z,L_94
+	LD	BC,0
+	PUSH	BC
+	PUSH	BC
+	PUSH	BC
+	PUSH	BC
+	PUSH	BC
+	LD	IY,(IX+%6)
+	LD	BC,(IY+%F)
+	PUSH	BC
+	CALL	_xTaskGenericNotify
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+	LD	BC,0
+	LD	IY,(IX+%6)
+	LD	(IY+%F),BC
+L_94:
+	CALL	_xTaskResumeAll
+;  962	        }
+;  963	        else
+L_96:
+.LINE 963
+
+;  964	        {
+;  965	            mtCOVERAGE_TEST_MARKER();
+;  966	        }
+;  967	    }
+;  968	    else
+L_98:
+.LINE 968
+
+;  969	    {
+;  970	        traceSTREAM_BUFFER_RECEIVE_FAILED( xStreamBuffer );
+;  971	        mtCOVERAGE_TEST_MARKER();
+;  972	    }
+;  973	
+;  974	    return xReceivedLength;
+.LINE 974
+
+	LD	HL,(IX+%FFFFFFF4)
+;  975	}
+.LINE 975
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _xStreamBufferReceive ***************************
+;Name                         Addr/Register   Size   Type
+;_xTaskResumeAll                     IMPORT  -----   function
+;_xTaskGenericNotify                 IMPORT  -----   function
+;_vTaskSuspendAll                    IMPORT  -----   function
+;_prvReadMessageFromBuffer           STATIC  -----   function
+;_xTaskGenericNotifyWait             IMPORT  -----   function
+;_xTaskGetCurrentTaskHandle          IMPORT  -----   function
+;_xTaskGenericNotifyStateClear       IMPORT  -----   function
+;_prvBytesInBuffer                   STATIC  -----   function
+;xReceivedLength                      IX-12      3   variable
+;xBytesToStoreMessageLength            IX-9      3   variable
+;xBytesAvailable                       IX-6      3   variable
+;pxStreamBuffer                        IX-3      3   variable
+;xTicksToWait                         IX+15      4   parameter
+;xBufferLengthBytes                   IX+12      3   parameter
+;pvRxData                              IX+9      3   parameter
+;xStreamBuffer                         IX+6      3   parameter
+
+
+; Stack Frame Size: 33 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "xStreamBufferReceive",975,"_xStreamBufferReceive"
+;  976	/*-----------------------------------------------------------*/
+;  977	
+;  978	size_t xStreamBufferNextMessageLengthBytes( StreamBufferHandle_t xStreamBuffer )
+;  979	{
+_xStreamBufferNextMessageLengthBytes:
+.DEFINE "_xStreamBufferNextMessageLengthBytes"
+
+.VALUE _xStreamBufferNextMessageLengthBytes
+
+.CLASS 2
+
+.TYPE 78
+
+.ENDEF
+
+.BEGFUNC "xStreamBufferNextMessageLengthBytes",979,"_xStreamBufferNextMessageLengthBytes"
+
+.LINE 979
+
+.DEFINE "xStreamBuffer"
+
+.CLASS 65
+
+.VALUE 6
+
+.TAG "StreamBufferDef_t"
+
+.TYPE 40
+
+.ENDEF
+
+.DEFINE "pxStreamBuffer"
+
+.CLASS 65
+
+.VALUE -3
+
+.TAG "StreamBufferDef_t"
+
+.TYPE 40
+
+.ENDEF
+
+.DEFINE "xReturn"
+
+.CLASS 65
+
+.VALUE -6
+
+.TYPE 14
+
+.ENDEF
+
+.DEFINE "xBytesAvailable"
+
+.CLASS 65
+
+.VALUE -9
+
+.TYPE 14
+
+.ENDEF
+
+.DEFINE "xTempReturn"
+
+.CLASS 65
+
+.VALUE -12
+
+.TYPE 14
+
+.ENDEF
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+	LEA	HL,IX+%FFFFFFF4
+	LD	SP,HL
+;  980	    StreamBuffer_t * const pxStreamBuffer = xStreamBuffer;
+.LINE 980
+
+	LD	BC,(IX+%6)
+	LD	(IX+%FFFFFFFD),BC
+;  981	    size_t xReturn, xBytesAvailable;
+;  982	    configMESSAGE_BUFFER_LENGTH_TYPE xTempReturn;
+;  983	
+;  984	    configASSERT( pxStreamBuffer );
+;  985	
+;  986	    /* Ensure the stream buffer is being used as a message buffer. */
+;  987	    if( ( pxStreamBuffer->ucFlags & sbFLAGS_IS_MESSAGE_BUFFER ) != ( uint8_t ) 0 )
+.LINE 987
+
+	LD	IY,(IX+%FFFFFFFD)
+	LD	A,(IY+%15)
+	AND	A,%1
+	JR	Z,L_105
+;  988	    {
+;  989	        xBytesAvailable = prvBytesInBuffer( pxStreamBuffer );
+.LINE 989
+
+	LD	BC,(IX+%FFFFFFFD)
+	PUSH	BC
+	CALL	_prvBytesInBuffer
+	POP	BC
+	LD	(IX+%FFFFFFF7),HL
+;  990	
+;  991	        if( xBytesAvailable > sbBYTES_TO_STORE_MESSAGE_LENGTH )
+.LINE 991
+
+	LD	BC,(IX+%FFFFFFF7)
+	LD	HL,3
+	OR	A,A
+	SBC	HL,BC
+	JR	NC,L_103
+;  992	        {
+;  993	            /* The number of bytes available is greater than the number of bytes
+;  994	             * required to hold the length of the next message, so another message
+;  995	             * is available. */
+;  996	            ( void ) prvReadBytesFromBuffer( pxStreamBuffer, ( uint8_t * ) &xTempReturn, sbBYTES_TO_STORE_MESSAGE_LENGTH, pxStreamBuffer->xTail );
+.LINE 996
+
+	LD	IY,(IX+%FFFFFFFD)
+	LD	BC,(IY+%0)
+	PUSH	BC
+	LD	BC,3
+	PUSH	BC
+	PEA	IX+%FFFFFFF4
+	LD	BC,(IX+%FFFFFFFD)
+	PUSH	BC
+	CALL	_prvReadBytesFromBuffer
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+;  997	            xReturn = ( size_t ) xTempReturn;
+.LINE 997
+
+	LD	BC,(IX+%FFFFFFF4)
+	LD	(IX+%FFFFFFFA),BC
+;  998	        }
+;  999	        else
+.LINE 999
+
+	JR	L_106
+L_103:
+; 1000	        {
+; 1001	            /* The minimum amount of bytes in a message buffer is
+; 1002	             * ( sbBYTES_TO_STORE_MESSAGE_LENGTH + 1 ), so if xBytesAvailable is
+; 1003	             * less than sbBYTES_TO_STORE_MESSAGE_LENGTH the only other valid
+; 1004	             * value is 0. */
+; 1005	            configASSERT( xBytesAvailable == 0 );
+; 1006	            xReturn = 0;
+.LINE 1006
+
+	LD	BC,0
+	LD	(IX+%FFFFFFFA),BC
+; 1007	        }
+; 1008	    }
+; 1009	    else
+.LINE 1009
+
+	JR	L_106
+L_105:
+; 1010	    {
+; 1011	        xReturn = 0;
+.LINE 1011
+
+	LD	BC,0
+	LD	(IX+%FFFFFFFA),BC
+; 1012	    }
+L_106:
+.LINE 1012
+
+; 1013	
+; 1014	    return xReturn;
+.LINE 1014
+
+	LD	HL,(IX+%FFFFFFFA)
+; 1015	}
+.LINE 1015
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _xStreamBufferNextMessageLengthBytes ***************************
+;Name                         Addr/Register   Size   Type
+;_prvReadBytesFromBuffer             STATIC  -----   function
+;_prvBytesInBuffer                   STATIC  -----   function
+;xTempReturn                          IX-12      3   variable
+;xBytesAvailable                       IX-9      3   variable
+;xReturn                               IX-6      3   variable
+;pxStreamBuffer                        IX-3      3   variable
+;xStreamBuffer                         IX+6      3   parameter
+
+
+; Stack Frame Size: 21 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "xStreamBufferNextMessageLengthBytes",1015,"_xStreamBufferNextMessageLengthBytes"
+; 1016	/*-----------------------------------------------------------*/
+; 1017	
+; 1018	size_t xStreamBufferReceiveFromISR( StreamBufferHandle_t xStreamBuffer,
+; 1019	                                    void * pvRxData,
+; 1020	                                    size_t xBufferLengthBytes,
+; 1021	                                    BaseType_t * const pxHigherPriorityTaskWoken )
+; 1022	{
+_xStreamBufferReceiveFromISR:
+.DEFINE "_xStreamBufferReceiveFromISR"
+
+.VALUE _xStreamBufferReceiveFromISR
+
+.CLASS 2
+
+.TYPE 78
+
+.ENDEF
+
+.BEGFUNC "xStreamBufferReceiveFromISR",1022,"_xStreamBufferReceiveFromISR"
+
+.LINE 1022
+
+.DEFINE "xStreamBuffer"
+
+.CLASS 65
+
+.VALUE 6
+
+.TAG "StreamBufferDef_t"
+
+.TYPE 40
+
+.ENDEF
+
+.DEFINE "pvRxData"
+
+.CLASS 65
+
+.VALUE 9
+
+.TYPE 33
+
+.ENDEF
+
+.DEFINE "xBufferLengthBytes"
+
+.CLASS 65
+
+.VALUE 12
+
+.TYPE 14
+
+.ENDEF
+
+.DEFINE "pxHigherPriorityTaskWoken"
+
+.CLASS 65
+
+.VALUE 15
+
+.TYPE 36
+
+.ENDEF
+
+.DEFINE "pxStreamBuffer"
+
+.CLASS 65
+
+.VALUE -3
+
+.TAG "StreamBufferDef_t"
+
+.TYPE 40
+
+.ENDEF
+
+.DEFINE "xReceivedLength"
+
+.CLASS 65
+
+.VALUE -6
+
+.TYPE 14
+
+.ENDEF
+
+.DEFINE "xBytesAvailable"
+
+.CLASS 65
+
+.VALUE -9
+
+.TYPE 14
+
+.ENDEF
+
+.DEFINE "xBytesToStoreMessageLength"
+
+.CLASS 65
+
+.VALUE -12
+
+.TYPE 14
+
+.ENDEF
+
+.DEFINE "uxSavedInterruptStatus"
+
+.CLASS 65
+
+.VALUE -15
+
+.TYPE 14
+
+.ENDEF
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+	LEA	HL,IX+%FFFFFFF1
+	LD	SP,HL
+; 1023	    StreamBuffer_t * const pxStreamBuffer = xStreamBuffer;
+.LINE 1023
+
+	LD	BC,(IX+%6)
+	LD	(IX+%FFFFFFFD),BC
+; 1024	    size_t xReceivedLength = 0, xBytesAvailable, xBytesToStoreMessageLength;
+.LINE 1024
+
+	LD	BC,0
+	LD	(IX+%FFFFFFFA),BC
+; 1025	
+; 1026	    configASSERT( pvRxData );
+; 1027	    configASSERT( pxStreamBuffer );
+; 1028	
+; 1029	    /* This receive function is used by both message buffers, which store
+; 1030	     * discrete messages, and stream buffers, which store a continuous stream of
+; 1031	     * bytes.  Discrete messages include an additional
+; 1032	     * sbBYTES_TO_STORE_MESSAGE_LENGTH bytes that hold the length of the
+; 1033	     * message. */
+; 1034	    if( ( pxStreamBuffer->ucFlags & sbFLAGS_IS_MESSAGE_BUFFER ) != ( uint8_t ) 0 )
+.LINE 1034
+
+	LD	IY,(IX+%FFFFFFFD)
+	LD	A,(IY+%15)
+	AND	A,%1
+	JR	Z,L_109
+; 1035	    {
+; 1036	        xBytesToStoreMessageLength = sbBYTES_TO_STORE_MESSAGE_LENGTH;
+.LINE 1036
+
+	LD	BC,3
+	LD	(IX+%FFFFFFF4),BC
+; 1037	    }
+; 1038	    else
+.LINE 1038
+
+	JR	L_110
+L_109:
+; 1039	    {
+; 1040	        xBytesToStoreMessageLength = 0;
+.LINE 1040
+
+	LD	BC,0
+	LD	(IX+%FFFFFFF4),BC
+; 1041	    }
+L_110:
+.LINE 1041
+
+; 1042	
+; 1043	    xBytesAvailable = prvBytesInBuffer( pxStreamBuffer );
+.LINE 1043
+
+	LD	BC,(IX+%FFFFFFFD)
+	PUSH	BC
+	CALL	_prvBytesInBuffer
+	POP	BC
+	LD	(IX+%FFFFFFF7),HL
+; 1044	
+; 1045	    /* Whether receiving a discrete message (where xBytesToStoreMessageLength
+; 1046	     * holds the number of bytes used to store the message length) or a stream of
+; 1047	     * bytes (where xBytesToStoreMessageLength is zero), the number of bytes
+; 1048	     * available must be greater than xBytesToStoreMessageLength to be able to
+; 1049	     * read bytes from the buffer. */
+; 1050	    if( xBytesAvailable > xBytesToStoreMessageLength )
+.LINE 1050
+
+	LD	BC,(IX+%FFFFFFF7)
+	LD	HL,(IX+%FFFFFFF4)
+	OR	A,A
+	SBC	HL,BC
+	JR	NC,L_116
+; 1051	    {
+; 1052	        xReceivedLength = prvReadMessageFromBuffer( pxStreamBuffer, pvRxData, xBufferLengthBytes, xBytesAvailable );
+.LINE 1052
+
+	LD	BC,(IX+%FFFFFFF7)
+	PUSH	BC
+	LD	BC,(IX+%C)
+	PUSH	BC
+	LD	BC,(IX+%9)
+	PUSH	BC
+	LD	BC,(IX+%FFFFFFFD)
+	PUSH	BC
+	CALL	_prvReadMessageFromBuffer
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+	LD	(IX+%FFFFFFFA),HL
+; 1053	
+; 1054	        /* Was a task waiting for space in the buffer? */
+; 1055	        if( xReceivedLength != ( size_t ) 0 )
+.LINE 1055
+
+	LD	HL,(IX+%FFFFFFFA)
+	CALL	__icmpzero
+	JR	Z,L_114
+; 1056	        {
+; 1057	            prvRECEIVE_COMPLETED_FROM_ISR( pxStreamBuffer, pxHigherPriorityTaskWoken );
+.LINE 1057
+
+	LD	BC,0
+	LD	(IX+%FFFFFFF1),BC
+	LD	IY,(IX+%FFFFFFFD)
+	LD	HL,(IY+%F)
+	CALL	__icmpzero
+	JR	Z,L_114
+	LD	BC,(IX+%F)
+	PUSH	BC
+	LD	BC,0
+	PUSH	BC
+	PUSH	BC
+	PUSH	BC
+	PUSH	BC
+	PUSH	BC
+	LD	IY,(IX+%FFFFFFFD)
+	LD	BC,(IY+%F)
+	PUSH	BC
+	CALL	_xTaskGenericNotifyFromISR
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+	LD	BC,0
+	LD	IY,(IX+%FFFFFFFD)
+	LD	(IY+%F),BC
+; 1058	        }
+; 1059	        else
+L_114:
+.LINE 1059
+
+; 1060	        {
+; 1061	            mtCOVERAGE_TEST_MARKER();
+; 1062	        }
+; 1063	    }
+; 1064	    else
+L_116:
+.LINE 1064
+
+; 1065	    {
+; 1066	        mtCOVERAGE_TEST_MARKER();
+; 1067	    }
+; 1068	
+; 1069	    traceSTREAM_BUFFER_RECEIVE_FROM_ISR( xStreamBuffer, xReceivedLength );
+; 1070	
+; 1071	    return xReceivedLength;
+.LINE 1071
+
+	LD	HL,(IX+%FFFFFFFA)
+; 1072	}
+.LINE 1072
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _xStreamBufferReceiveFromISR ***************************
+;Name                         Addr/Register   Size   Type
+;_xTaskGenericNotifyFromISR          IMPORT  -----   function
+;_prvReadMessageFromBuffer           STATIC  -----   function
+;_prvBytesInBuffer                   STATIC  -----   function
+;uxSavedInterruptStatus               IX-15      3   variable
+;xBytesToStoreMessageLength           IX-12      3   variable
+;xBytesAvailable                       IX-9      3   variable
+;xReceivedLength                       IX-6      3   variable
+;pxStreamBuffer                        IX-3      3   variable
+;pxHigherPriorityTaskWoken            IX+15      3   parameter
+;xBufferLengthBytes                   IX+12      3   parameter
+;pvRxData                              IX+9      3   parameter
+;xStreamBuffer                         IX+6      3   parameter
+
+
+; Stack Frame Size: 33 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "xStreamBufferReceiveFromISR",1072,"_xStreamBufferReceiveFromISR"
+; 1073	/*-----------------------------------------------------------*/
+; 1074	
+; 1075	static size_t prvReadMessageFromBuffer( StreamBuffer_t * pxStreamBuffer,
+; 1076	                                        void * pvRxData,
+; 1077	                                        size_t xBufferLengthBytes,
+; 1078	                                        size_t xBytesAvailable )
+; 1079	{
+_prvReadMessageFromBuffer:
+.DEFINE "_prvReadMessageFromBuffer"
+
+.VALUE _prvReadMessageFromBuffer
+
+.CLASS 3
+
+.TYPE 78
+
+.ENDEF
+
+.BEGFUNC "prvReadMessageFromBuffer",1079,"_prvReadMessageFromBuffer"
+
+.LINE 1079
+
+.DEFINE "pxStreamBuffer"
+
+.CLASS 65
+
+.VALUE 6
+
+.TAG "StreamBufferDef_t"
+
+.TYPE 40
+
+.ENDEF
+
+.DEFINE "pvRxData"
+
+.CLASS 65
+
+.VALUE 9
+
+.TYPE 33
+
+.ENDEF
+
+.DEFINE "xBufferLengthBytes"
+
+.CLASS 65
+
+.VALUE 12
+
+.TYPE 14
+
+.ENDEF
+
+.DEFINE "xBytesAvailable"
+
+.CLASS 65
+
+.VALUE 15
+
+.TYPE 14
+
+.ENDEF
+
+.DEFINE "xNextMessageLength"
+
+.CLASS 65
+
+.VALUE -3
+
+.TYPE 14
+
+.ENDEF
+
+.DEFINE "xCount"
+
+.CLASS 65
+
+.VALUE -6
+
+.TYPE 14
+
+.ENDEF
+
+.DEFINE "xNextTail"
+
+.CLASS 65
+
+.VALUE -9
+
+.TYPE 14
+
+.ENDEF
+
+.DEFINE "xTempNextMessageLength"
+
+.CLASS 65
+
+.VALUE -15
+
+.TYPE 14
+
+.ENDEF
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+	LEA	HL,IX+%FFFFFFF1
+	LD	SP,HL
+; 1080	    size_t xCount, xNextMessageLength;
+; 1081	    configMESSAGE_BUFFER_LENGTH_TYPE xTempNextMessageLength;
+; 1082	    size_t xNextTail = pxStreamBuffer->xTail;
+.LINE 1082
+
+	LD	IY,(IX+%6)
+	LD	BC,(IY+%0)
+	LD	(IX+%FFFFFFF7),BC
+; 1083	
+; 1084	    if( ( pxStreamBuffer->ucFlags & sbFLAGS_IS_MESSAGE_BUFFER ) != ( uint8_t ) 0 )
+.LINE 1084
+
+	LD	IY,(IX+%6)
+	LD	A,(IY+%15)
+	AND	A,%1
+	JR	Z,L_122
+; 1085	    {
+; 1086	        /* A discrete message is being received.  First receive the length
+; 1087	         * of the message. */
+; 1088	        xNextTail = prvReadBytesFromBuffer( pxStreamBuffer, ( uint8_t * ) &xTempNextMessageLength, sbBYTES_TO_STORE_MESSAGE_LENGTH, xNextTail );
+.LINE 1088
+
+	LD	BC,(IX+%FFFFFFF7)
+	PUSH	BC
+	LD	BC,3
+	PUSH	BC
+	PEA	IX+%FFFFFFF1
+	LD	BC,(IX+%6)
+	PUSH	BC
+	CALL	_prvReadBytesFromBuffer
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+	LD	(IX+%FFFFFFF7),HL
+; 1089	        xNextMessageLength = ( size_t ) xTempNextMessageLength;
+.LINE 1089
+
+	LD	BC,(IX+%FFFFFFF1)
+	LD	(IX+%FFFFFFFD),BC
+; 1090	
+; 1091	        /* Reduce the number of bytes available by the number of bytes just
+; 1092	         * read out. */
+; 1093	        xBytesAvailable -= sbBYTES_TO_STORE_MESSAGE_LENGTH;
+.LINE 1093
+
+	LD	IY,(IX+%F)
+	LEA	IY,IY+%FFFFFFFD
+	LD	(IX+%F),IY
+; 1094	
+; 1095	        /* Check there is enough space in the buffer provided by the
+; 1096	         * user. */
+; 1097	        if( xNextMessageLength > xBufferLengthBytes )
+.LINE 1097
+
+	LD	BC,(IX+%FFFFFFFD)
+	LD	HL,(IX+%C)
+	OR	A,A
+	SBC	HL,BC
+	JR	NC,L_127
+; 1098	        {
+; 1099	            /* The user has provided insufficient space to read the message. */
+; 1100	            xNextMessageLength = 0;
+.LINE 1100
+
+	LD	BC,0
+	LD	(IX+%FFFFFFFD),BC
+; 1101	        }
+; 1102	        else
+.LINE 1102
+
+	JR	L_127
+; 1103	        {
+; 1104	            mtCOVERAGE_TEST_MARKER();
+; 1105	        }
+; 1106	    }
+; 1107	    else
+.LINE 1107
+
+L_122:
+; 1108	    {
+; 1109	        /* A stream of bytes is being received (as opposed to a discrete
+; 1110	         * message), so read as many bytes as possible. */
+; 1111	        xNextMessageLength = xBufferLengthBytes;
+.LINE 1111
+
+	LD	BC,(IX+%C)
+	LD	(IX+%FFFFFFFD),BC
+; 1112	    }
+L_127:
+.LINE 1112
+
+; 1113	
+; 1114	    /* Use the minimum of the wanted bytes and the available bytes. */
+; 1115	    xCount = configMIN( xNextMessageLength, xBytesAvailable );
+.LINE 1115
+
+	LD	BC,(IX+%F)
+	LD	HL,(IX+%FFFFFFFD)
+	OR	A,A
+	SBC	HL,BC
+	JR	NC,L_125
+	LD	BC,(IX+%FFFFFFFD)
+	LD	(IX+%FFFFFFF4),BC
+	JR	L_126
+L_125:
+	LD	BC,(IX+%F)
+	LD	(IX+%FFFFFFF4),BC
+L_126:
+	LD	BC,(IX+%FFFFFFF4)
+	LD	(IX+%FFFFFFFA),BC
+; 1116	
+; 1117	    if( xCount != ( size_t ) 0 )
+.LINE 1117
+
+	LD	HL,(IX+%FFFFFFFA)
+	CALL	__icmpzero
+	JR	Z,L_129
+; 1118	    {
+; 1119	        /* Read the actual data and update the tail to mark the data as officially consumed. */
+; 1120	        pxStreamBuffer->xTail = prvReadBytesFromBuffer( pxStreamBuffer, ( uint8_t * ) pvRxData, xCount, xNextTail ); /*lint !e9079 Data storage area is implemented as uint8_t array for ease of sizing, indexing and alignment. */
+.LINE 1120
+
+	LD	BC,(IX+%FFFFFFF7)
+	PUSH	BC
+	LD	BC,(IX+%FFFFFFFA)
+	PUSH	BC
+	LD	BC,(IX+%9)
+	PUSH	BC
+	LD	BC,(IX+%6)
+	PUSH	BC
+	CALL	_prvReadBytesFromBuffer
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+	LD	IY,(IX+%6)
+	LD	(IY+%0),HL
+; 1121	    }
+L_129:
+.LINE 1121
+
+; 1122	
+; 1123	    return xCount;
+.LINE 1123
+
+	LD	HL,(IX+%FFFFFFFA)
+; 1124	}
+.LINE 1124
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _prvReadMessageFromBuffer ***************************
+;Name                         Addr/Register   Size   Type
+;_prvReadBytesFromBuffer             STATIC  -----   function
+;xTempNextMessageLength               IX-15      3   variable
+;temp123                              IX-12      3   variable
+;xNextTail                             IX-9      3   variable
+;xCount                                IX-6      3   variable
+;xNextMessageLength                    IX-3      3   variable
+;xBytesAvailable                      IX+15      3   parameter
+;xBufferLengthBytes                   IX+12      3   parameter
+;pvRxData                              IX+9      3   parameter
+;pxStreamBuffer                        IX+6      3   parameter
+
+
+; Stack Frame Size: 33 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "prvReadMessageFromBuffer",1124,"_prvReadMessageFromBuffer"
+; 1125	/*-----------------------------------------------------------*/
+; 1126	
+; 1127	BaseType_t xStreamBufferIsEmpty( StreamBufferHandle_t xStreamBuffer )
+; 1128	{
+_xStreamBufferIsEmpty:
+.DEFINE "_xStreamBufferIsEmpty"
+
+.VALUE _xStreamBufferIsEmpty
+
+.CLASS 2
+
+.TYPE 68
+
+.ENDEF
+
+.BEGFUNC "xStreamBufferIsEmpty",1128,"_xStreamBufferIsEmpty"
+
+.LINE 1128
+
+.DEFINE "xStreamBuffer"
+
+.CLASS 65
+
+.VALUE 6
+
+.TAG "StreamBufferDef_t"
+
+.TYPE 40
+
+.ENDEF
+
+.DEFINE "pxStreamBuffer"
+
+.CLASS 65
+
+.VALUE -3
+
+.TAG "StreamBufferDef_t"
+
+.TYPE 200
+
+.ENDEF
+
+.DEFINE "xReturn"
+
+.CLASS 65
+
+.VALUE -6
+
+.TYPE 4
+
+.ENDEF
+
+.DEFINE "xTail"
+
+.CLASS 65
+
+.VALUE -9
+
+.TYPE 14
+
+.ENDEF
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+	PUSH	BC
+	PUSH	BC
+	PUSH	BC
+; 1129	    const StreamBuffer_t * const pxStreamBuffer = xStreamBuffer;
+.LINE 1129
+
+	LD	BC,(IX+%6)
+	LD	(IX+%FFFFFFFD),BC
+; 1130	    BaseType_t xReturn;
+; 1131	    size_t xTail;
+; 1132	
+; 1133	    configASSERT( pxStreamBuffer );
+; 1134	
+; 1135	    /* True if no bytes are available. */
+; 1136	    xTail = pxStreamBuffer->xTail;
+.LINE 1136
+
+	LD	IY,(IX+%FFFFFFFD)
+	LD	BC,(IY+%0)
+	LD	(IX+%FFFFFFF7),BC
+; 1137	
+; 1138	    if( pxStreamBuffer->xHead == xTail )
+.LINE 1138
+
+	LD	BC,(IX+%FFFFFFF7)
+	LD	IY,(IX+%FFFFFFFD)
+	LD	HL,(IY+%3)
+	OR	A,A
+	SBC	HL,BC
+	JR	NZ,L_132
+; 1139	    {
+; 1140	        xReturn = pdTRUE;
+.LINE 1140
+
+	LD	BC,1
+	LD	(IX+%FFFFFFFA),BC
+; 1141	    }
+; 1142	    else
+.LINE 1142
+
+	JR	L_133
+L_132:
+; 1143	    {
+; 1144	        xReturn = pdFALSE;
+.LINE 1144
+
+	LD	BC,0
+	LD	(IX+%FFFFFFFA),BC
+; 1145	    }
+L_133:
+.LINE 1145
+
+; 1146	
+; 1147	    return xReturn;
+.LINE 1147
+
+	LD	HL,(IX+%FFFFFFFA)
+; 1148	}
+.LINE 1148
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _xStreamBufferIsEmpty ***************************
+;Name                         Addr/Register   Size   Type
+;xTail                                 IX-9      3   variable
+;xReturn                               IX-6      3   variable
+;pxStreamBuffer                        IX-3      3   variable
+;xStreamBuffer                         IX+6      3   parameter
+
+
+; Stack Frame Size: 18 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "xStreamBufferIsEmpty",1148,"_xStreamBufferIsEmpty"
+; 1149	/*-----------------------------------------------------------*/
+; 1150	
+; 1151	BaseType_t xStreamBufferIsFull( StreamBufferHandle_t xStreamBuffer )
+; 1152	{
+_xStreamBufferIsFull:
+.DEFINE "_xStreamBufferIsFull"
+
+.VALUE _xStreamBufferIsFull
+
+.CLASS 2
+
+.TYPE 68
+
+.ENDEF
+
+.BEGFUNC "xStreamBufferIsFull",1152,"_xStreamBufferIsFull"
+
+.LINE 1152
+
+.DEFINE "xStreamBuffer"
+
+.CLASS 65
+
+.VALUE 6
+
+.TAG "StreamBufferDef_t"
+
+.TYPE 40
+
+.ENDEF
+
+.DEFINE "xReturn"
+
+.CLASS 65
+
+.VALUE -3
+
+.TYPE 4
+
+.ENDEF
+
+.DEFINE "xBytesToStoreMessageLength"
+
+.CLASS 65
+
+.VALUE -6
+
+.TYPE 14
+
+.ENDEF
+
+.DEFINE "pxStreamBuffer"
+
+.CLASS 65
+
+.VALUE -9
+
+.TAG "StreamBufferDef_t"
+
+.TYPE 200
+
+.ENDEF
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+	PUSH	BC
+	PUSH	BC
+	PUSH	BC
+; 1153	    BaseType_t xReturn;
+; 1154	    size_t xBytesToStoreMessageLength;
+; 1155	    const StreamBuffer_t * const pxStreamBuffer = xStreamBuffer;
+.LINE 1155
+
+	LD	BC,(IX+%6)
+	LD	(IX+%FFFFFFF7),BC
+; 1156	
+; 1157	    configASSERT( pxStreamBuffer );
+; 1158	
+; 1159	    /* This generic version of the receive function is used by both message
+; 1160	     * buffers, which store discrete messages, and stream buffers, which store a
+; 1161	     * continuous stream of bytes.  Discrete messages include an additional
+; 1162	     * sbBYTES_TO_STORE_MESSAGE_LENGTH bytes that hold the length of the message. */
+; 1163	    if( ( pxStreamBuffer->ucFlags & sbFLAGS_IS_MESSAGE_BUFFER ) != ( uint8_t ) 0 )
+.LINE 1163
+
+	LD	IY,(IX+%FFFFFFF7)
+	LD	A,(IY+%15)
+	AND	A,%1
+	JR	Z,L_136
+; 1164	    {
+; 1165	        xBytesToStoreMessageLength = sbBYTES_TO_STORE_MESSAGE_LENGTH;
+.LINE 1165
+
+	LD	BC,3
+	LD	(IX+%FFFFFFFA),BC
+; 1166	    }
+; 1167	    else
+.LINE 1167
+
+	JR	L_139
+L_136:
+; 1168	    {
+; 1169	        xBytesToStoreMessageLength = 0;
+.LINE 1169
+
+	LD	BC,0
+	LD	(IX+%FFFFFFFA),BC
+; 1170	    }
+L_139:
+.LINE 1170
+
+; 1171	
+; 1172	    /* True if the available space equals zero. */
+; 1173	    if( xStreamBufferSpacesAvailable( xStreamBuffer ) <= xBytesToStoreMessageLength )
+.LINE 1173
+
+	LD	BC,(IX+%6)
+	PUSH	BC
+	CALL	_xStreamBufferSpacesAvailable
+	POP	BC
+	LD	BC,HL
+	LD	HL,(IX+%FFFFFFFA)
+	OR	A,A
+	SBC	HL,BC
+	JR	C,L_138
+; 1174	    {
+; 1175	        xReturn = pdTRUE;
+.LINE 1175
+
+	LD	BC,1
+	LD	(IX+%FFFFFFFD),BC
+; 1176	    }
+; 1177	    else
+.LINE 1177
+
+	JR	L_140
+L_138:
+; 1178	    {
+; 1179	        xReturn = pdFALSE;
+.LINE 1179
+
+	LD	BC,0
+	LD	(IX+%FFFFFFFD),BC
+; 1180	    }
+L_140:
+.LINE 1180
+
+; 1181	
+; 1182	    return xReturn;
+.LINE 1182
+
+	LD	HL,(IX+%FFFFFFFD)
+; 1183	}
+.LINE 1183
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _xStreamBufferIsFull ***************************
+;Name                         Addr/Register   Size   Type
+;_xStreamBufferSpacesAvailable       IMPORT  -----   function
+;pxStreamBuffer                        IX-9      3   variable
+;xBytesToStoreMessageLength            IX-6      3   variable
+;xReturn                               IX-3      3   variable
+;xStreamBuffer                         IX+6      3   parameter
+
+
+; Stack Frame Size: 18 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "xStreamBufferIsFull",1183,"_xStreamBufferIsFull"
+; 1184	/*-----------------------------------------------------------*/
+; 1185	
+; 1186	BaseType_t xStreamBufferSendCompletedFromISR( StreamBufferHandle_t xStreamBuffer,
+; 1187	                                              BaseType_t * pxHigherPriorityTaskWoken )
+; 1188	{
+_xStreamBufferSendCompletedFromISR:
+.DEFINE "_xStreamBufferSendCompletedFromISR"
+
+.VALUE _xStreamBufferSendCompletedFromISR
+
+.CLASS 2
+
+.TYPE 68
+
+.ENDEF
+
+.BEGFUNC "xStreamBufferSendCompletedFromISR",1188,"_xStreamBufferSendCompletedFromISR"
+
+.LINE 1188
+
+.DEFINE "xStreamBuffer"
+
+.CLASS 65
+
+.VALUE 6
+
+.TAG "StreamBufferDef_t"
+
+.TYPE 40
+
+.ENDEF
+
+.DEFINE "pxHigherPriorityTaskWoken"
+
+.CLASS 65
+
+.VALUE 9
+
+.TYPE 36
+
+.ENDEF
+
+.DEFINE "pxStreamBuffer"
+
+.CLASS 65
+
+.VALUE -3
+
+.TAG "StreamBufferDef_t"
+
+.TYPE 40
+
+.ENDEF
+
+.DEFINE "xReturn"
+
+.CLASS 65
+
+.VALUE -6
+
+.TYPE 4
+
+.ENDEF
+
+.DEFINE "uxSavedInterruptStatus"
+
+.CLASS 65
+
+.VALUE -9
+
+.TYPE 14
+
+.ENDEF
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+	PUSH	BC
+	PUSH	BC
+	PUSH	BC
+; 1189	    StreamBuffer_t * const pxStreamBuffer = xStreamBuffer;
+.LINE 1189
+
+	LD	BC,(IX+%6)
+	LD	(IX+%FFFFFFFD),BC
+; 1190	    BaseType_t xReturn;
+; 1191	    UBaseType_t uxSavedInterruptStatus;
+; 1192	
+; 1193	    configASSERT( pxStreamBuffer );
+; 1194	
+; 1195	    uxSavedInterruptStatus = ( UBaseType_t ) portSET_INTERRUPT_MASK_FROM_ISR();
+.LINE 1195
+
+	LD	BC,0
+	LD	(IX+%FFFFFFF7),BC
+; 1196	    {
+; 1197	        if( ( pxStreamBuffer )->xTaskWaitingToReceive != NULL )
+.LINE 1197
+
+	LD	IY,(IX+%FFFFFFFD)
+	LD	HL,(IY+%C)
+	CALL	__icmpzero
+	JR	Z,L_143
+; 1198	        {
+; 1199	            ( void ) xTaskNotifyFromISR( ( pxStreamBuffer )->xTaskWaitingToReceive,
+; 1200	                                         ( uint32_t ) 0,
+; 1201	                                         eNoAction,
+; 1202	                                         pxHigherPriorityTaskWoken );
+.LINE 1202
+
+	LD	BC,(IX+%9)
+	PUSH	BC
+	LD	BC,0
+	PUSH	BC
+	PUSH	BC
+	PUSH	BC
+	PUSH	BC
+	PUSH	BC
+	LD	IY,(IX+%FFFFFFFD)
+	LD	BC,(IY+%C)
+	PUSH	BC
+	CALL	_xTaskGenericNotifyFromISR
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+; 1203	            ( pxStreamBuffer )->xTaskWaitingToReceive = NULL;
+.LINE 1203
+
+	LD	BC,0
+	LD	IY,(IX+%FFFFFFFD)
+	LD	(IY+%C),BC
+; 1204	            xReturn = pdTRUE;
+.LINE 1204
+
+	LD	BC,1
+	LD	(IX+%FFFFFFFA),BC
+; 1205	        }
+; 1206	        else
+.LINE 1206
+
+	JR	L_144
+L_143:
+; 1207	        {
+; 1208	            xReturn = pdFALSE;
+.LINE 1208
+
+	LD	BC,0
+	LD	(IX+%FFFFFFFA),BC
+; 1209	        }
+; 1210	    }
+L_144:
+.LINE 1210
+
+; 1211	    portCLEAR_INTERRUPT_MASK_FROM_ISR( uxSavedInterruptStatus );
+; 1212	
+; 1213	    return xReturn;
+.LINE 1213
+
+	LD	HL,(IX+%FFFFFFFA)
+; 1214	}
+.LINE 1214
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _xStreamBufferSendCompletedFromISR ***************************
+;Name                         Addr/Register   Size   Type
+;_xTaskGenericNotifyFromISR          IMPORT  -----   function
+;uxSavedInterruptStatus                IX-9      3   variable
+;xReturn                               IX-6      3   variable
+;pxStreamBuffer                        IX-3      3   variable
+;pxHigherPriorityTaskWoken             IX+9      3   parameter
+;xStreamBuffer                         IX+6      3   parameter
+
+
+; Stack Frame Size: 21 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "xStreamBufferSendCompletedFromISR",1214,"_xStreamBufferSendCompletedFromISR"
+; 1215	/*-----------------------------------------------------------*/
+; 1216	
+; 1217	BaseType_t xStreamBufferReceiveCompletedFromISR( StreamBufferHandle_t xStreamBuffer,
+; 1218	                                                 BaseType_t * pxHigherPriorityTaskWoken )
+; 1219	{
+_xStreamBufferReceiveCompletedFromISR:
+.DEFINE "_xStreamBufferReceiveCompletedFromISR"
+
+.VALUE _xStreamBufferReceiveCompletedFromISR
+
+.CLASS 2
+
+.TYPE 68
+
+.ENDEF
+
+.BEGFUNC "xStreamBufferReceiveCompletedFromISR",1219,"_xStreamBufferReceiveCompletedFromISR"
+
+.LINE 1219
+
+.DEFINE "xStreamBuffer"
+
+.CLASS 65
+
+.VALUE 6
+
+.TAG "StreamBufferDef_t"
+
+.TYPE 40
+
+.ENDEF
+
+.DEFINE "pxHigherPriorityTaskWoken"
+
+.CLASS 65
+
+.VALUE 9
+
+.TYPE 36
+
+.ENDEF
+
+.DEFINE "pxStreamBuffer"
+
+.CLASS 65
+
+.VALUE -3
+
+.TAG "StreamBufferDef_t"
+
+.TYPE 40
+
+.ENDEF
+
+.DEFINE "xReturn"
+
+.CLASS 65
+
+.VALUE -6
+
+.TYPE 4
+
+.ENDEF
+
+.DEFINE "uxSavedInterruptStatus"
+
+.CLASS 65
+
+.VALUE -9
+
+.TYPE 14
+
+.ENDEF
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+	PUSH	BC
+	PUSH	BC
+	PUSH	BC
+; 1220	    StreamBuffer_t * const pxStreamBuffer = xStreamBuffer;
+.LINE 1220
+
+	LD	BC,(IX+%6)
+	LD	(IX+%FFFFFFFD),BC
+; 1221	    BaseType_t xReturn;
+; 1222	    UBaseType_t uxSavedInterruptStatus;
+; 1223	
+; 1224	    configASSERT( pxStreamBuffer );
+; 1225	
+; 1226	    uxSavedInterruptStatus = ( UBaseType_t ) portSET_INTERRUPT_MASK_FROM_ISR();
+.LINE 1226
+
+	LD	BC,0
+	LD	(IX+%FFFFFFF7),BC
+; 1227	    {
+; 1228	        if( ( pxStreamBuffer )->xTaskWaitingToSend != NULL )
+.LINE 1228
+
+	LD	IY,(IX+%FFFFFFFD)
+	LD	HL,(IY+%F)
+	CALL	__icmpzero
+	JR	Z,L_147
+; 1229	        {
+; 1230	            ( void ) xTaskNotifyFromISR( ( pxStreamBuffer )->xTaskWaitingToSend,
+; 1231	                                         ( uint32_t ) 0,
+; 1232	                                         eNoAction,
+; 1233	                                         pxHigherPriorityTaskWoken );
+.LINE 1233
+
+	LD	BC,(IX+%9)
+	PUSH	BC
+	LD	BC,0
+	PUSH	BC
+	PUSH	BC
+	PUSH	BC
+	PUSH	BC
+	PUSH	BC
+	LD	IY,(IX+%FFFFFFFD)
+	LD	BC,(IY+%F)
+	PUSH	BC
+	CALL	_xTaskGenericNotifyFromISR
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+; 1234	            ( pxStreamBuffer )->xTaskWaitingToSend = NULL;
+.LINE 1234
+
+	LD	BC,0
+	LD	IY,(IX+%FFFFFFFD)
+	LD	(IY+%F),BC
+; 1235	            xReturn = pdTRUE;
+.LINE 1235
+
+	LD	BC,1
+	LD	(IX+%FFFFFFFA),BC
+; 1236	        }
+; 1237	        else
+.LINE 1237
+
+	JR	L_148
+L_147:
+; 1238	        {
+; 1239	            xReturn = pdFALSE;
+.LINE 1239
+
+	LD	BC,0
+	LD	(IX+%FFFFFFFA),BC
+; 1240	        }
+; 1241	    }
+L_148:
+.LINE 1241
+
+; 1242	    portCLEAR_INTERRUPT_MASK_FROM_ISR( uxSavedInterruptStatus );
+; 1243	
+; 1244	    return xReturn;
+.LINE 1244
+
+	LD	HL,(IX+%FFFFFFFA)
+; 1245	}
+.LINE 1245
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _xStreamBufferReceiveCompletedFromISR ***************************
+;Name                         Addr/Register   Size   Type
+;_xTaskGenericNotifyFromISR          IMPORT  -----   function
+;uxSavedInterruptStatus                IX-9      3   variable
+;xReturn                               IX-6      3   variable
+;pxStreamBuffer                        IX-3      3   variable
+;pxHigherPriorityTaskWoken             IX+9      3   parameter
+;xStreamBuffer                         IX+6      3   parameter
+
+
+; Stack Frame Size: 21 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "xStreamBufferReceiveCompletedFromISR",1245,"_xStreamBufferReceiveCompletedFromISR"
+; 1246	/*-----------------------------------------------------------*/
+; 1247	
+; 1248	static size_t prvWriteBytesToBuffer( StreamBuffer_t * const pxStreamBuffer,
+; 1249	                                     const uint8_t * pucData,
+; 1250	                                     size_t xCount,
+; 1251	                                     size_t xHead )
+; 1252	{
+_prvWriteBytesToBuffer:
+.DEFINE "_prvWriteBytesToBuffer"
+
+.VALUE _prvWriteBytesToBuffer
+
+.CLASS 3
+
+.TYPE 78
+
+.ENDEF
+
+.BEGFUNC "prvWriteBytesToBuffer",1252,"_prvWriteBytesToBuffer"
+
+.LINE 1252
+
+.DEFINE "pxStreamBuffer"
+
+.CLASS 65
+
+.VALUE 6
+
+.TAG "StreamBufferDef_t"
+
+.TYPE 40
+
+.ENDEF
+
+.DEFINE "pucData"
+
+.CLASS 65
+
+.VALUE 9
+
+.TYPE 204
+
+.ENDEF
+
+.DEFINE "xCount"
+
+.CLASS 65
+
+.VALUE 12
+
+.TYPE 14
+
+.ENDEF
+
+.DEFINE "xHead"
+
+.CLASS 65
+
+.VALUE 15
+
+.TYPE 14
+
+.ENDEF
+
+.DEFINE "xFirstLength"
+
+.CLASS 65
+
+.VALUE -3
+
+.TYPE 14
+
+.ENDEF
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+	PUSH	BC
+	PUSH	BC
+	DEC	SP
+; 1253	    size_t xFirstLength;
+; 1254	
+; 1255	    configASSERT( xCount > ( size_t ) 0 );
+; 1256	
+; 1257	    /* Calculate the number of bytes that can be added in the first write -
+; 1258	     * which may be less than the total number of bytes that need to be added if
+; 1259	     * the buffer will wrap back to the beginning. */
+; 1260	    xFirstLength = configMIN( pxStreamBuffer->xLength - xHead, xCount );
+.LINE 1260
+
+	LD	IY,(IX+%6)
+	LD	HL,(IY+%6)
+	LD	BC,(IX+%F)
+	OR	A,A
+	SBC	HL,BC
+	LD	BC,(IX+%C)
+	OR	A,A
+	SBC	HL,BC
+	JR	NC,L_152
+	LD	IY,(IX+%6)
+	LD	HL,(IY+%6)
+	LD	BC,(IX+%F)
+	OR	A,A
+	SBC	HL,BC
+	LD	(IX+%FFFFFFFA),HL
+	JR	L_153
+L_152:
+	LD	BC,(IX+%C)
+	LD	(IX+%FFFFFFFA),BC
+L_153:
+	LD	BC,(IX+%FFFFFFFA)
+	LD	(IX+%FFFFFFFD),BC
+; 1261	
+; 1262	    /* Write as many bytes as can be written in the first write. */
+; 1263	    configASSERT( ( xHead + xFirstLength ) <= pxStreamBuffer->xLength );
+; 1264	    ( void ) memcpy( ( void * ) ( &( pxStreamBuffer->pucBuffer[ xHead ] ) ), ( const void * ) pucData, xFirstLength ); /*lint !e9087 memcpy() requires void *. */
+.LINE 1264
+
+	LD	BC,(IX+%FFFFFFFD)
+	PUSH	BC
+	LD	BC,(IX+%9)
+	PUSH	BC
+	LD	BC,(IX+%F)
+	LD	IY,(IX+%6)
+	LD	HL,(IY+%12)
+	ADD	HL,BC
+	PUSH	HL
+	LD	(IX+%FFFFFFF9),A
+	CALL	_memcpy
+	LD	A,(IX+%FFFFFFF9)
+	POP	BC
+	POP	BC
+	POP	BC
+; 1265	
+; 1266	    /* If the number of bytes written was less than the number that could be
+; 1267	     * written in the first write... */
+; 1268	    if( xCount > xFirstLength )
+.LINE 1268
+
+	LD	BC,(IX+%C)
+	LD	HL,(IX+%FFFFFFFD)
+	OR	A,A
+	SBC	HL,BC
+	JR	NC,L_155
+; 1269	    {
+; 1270	        /* ...then write the remaining bytes to the start of the buffer. */
+; 1271	        configASSERT( ( xCount - xFirstLength ) <= pxStreamBuffer->xLength );
+; 1272	        ( void ) memcpy( ( void * ) pxStreamBuffer->pucBuffer, ( const void * ) &( pucData[ xFirstLength ] ), xCount - xFirstLength ); /*lint !e9087 memcpy() requires void *. */
+.LINE 1272
+
+	LD	BC,(IX+%FFFFFFFD)
+	LD	HL,(IX+%C)
+	OR	A,A
+	SBC	HL,BC
+	PUSH	HL
+	LD	BC,(IX+%FFFFFFFD)
+	LD	HL,(IX+%9)
+	ADD	HL,BC
+	PUSH	HL
+	LD	IY,(IX+%6)
+	LD	BC,(IY+%12)
+	PUSH	BC
+	LD	(IX+%FFFFFFF9),A
+	CALL	_memcpy
+	LD	A,(IX+%FFFFFFF9)
+	POP	BC
+	POP	BC
+	POP	BC
+; 1273	    }
+; 1274	    else
+L_155:
+.LINE 1274
+
+; 1275	    {
+; 1276	        mtCOVERAGE_TEST_MARKER();
+; 1277	    }
+; 1278	
+; 1279	    xHead += xCount;
+.LINE 1279
+
+	LD	BC,(IX+%C)
+	LD	HL,(IX+%F)
+	ADD	HL,BC
+	LD	(IX+%F),HL
+; 1280	
+; 1281	    if( xHead >= pxStreamBuffer->xLength )
+.LINE 1281
+
+	LD	IY,(IX+%6)
+	LD	BC,(IY+%6)
+	LD	HL,(IX+%F)
+	OR	A,A
+	SBC	HL,BC
+	JR	C,L_158
+; 1282	    {
+; 1283	        xHead -= pxStreamBuffer->xLength;
+.LINE 1283
+
+	LD	IY,(IX+%6)
+	LD	BC,(IY+%6)
+	LD	HL,(IX+%F)
+	OR	A,A
+	SBC	HL,BC
+	LD	(IX+%F),HL
+; 1284	    }
+; 1285	    else
+L_158:
+.LINE 1285
+
+; 1286	    {
+; 1287	        mtCOVERAGE_TEST_MARKER();
+; 1288	    }
+; 1289	
+; 1290	    return xHead;
+.LINE 1290
+
+	LD	HL,(IX+%F)
+; 1291	}
+.LINE 1291
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _prvWriteBytesToBuffer ***************************
+;Name                         Addr/Register   Size   Type
+;_memcpy                             IMPORT  -----   function
+;temp150                               IX-6      3   variable
+;xFirstLength                          IX-3      3   variable
+;xHead                                IX+15      3   parameter
+;xCount                               IX+12      3   parameter
+;pucData                               IX+9      3   parameter
+;pxStreamBuffer                        IX+6      3   parameter
+
+
+; Stack Frame Size: 25 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "prvWriteBytesToBuffer",1291,"_prvWriteBytesToBuffer"
+; 1292	/*-----------------------------------------------------------*/
+; 1293	
+; 1294	static size_t prvReadBytesFromBuffer( StreamBuffer_t * pxStreamBuffer,
+; 1295	                                      uint8_t * pucData,
+; 1296	                                      size_t xCount,
+; 1297	                                      size_t xTail )
+; 1298	{
+_prvReadBytesFromBuffer:
+.DEFINE "_prvReadBytesFromBuffer"
+
+.VALUE _prvReadBytesFromBuffer
+
+.CLASS 3
+
+.TYPE 78
+
+.ENDEF
+
+.BEGFUNC "prvReadBytesFromBuffer",1298,"_prvReadBytesFromBuffer"
+
+.LINE 1298
+
+.DEFINE "pxStreamBuffer"
+
+.CLASS 65
+
+.VALUE 6
+
+.TAG "StreamBufferDef_t"
+
+.TYPE 40
+
+.ENDEF
+
+.DEFINE "pucData"
+
+.CLASS 65
+
+.VALUE 9
+
+.TYPE 44
+
+.ENDEF
+
+.DEFINE "xCount"
+
+.CLASS 65
+
+.VALUE 12
+
+.TYPE 14
+
+.ENDEF
+
+.DEFINE "xTail"
+
+.CLASS 65
+
+.VALUE 15
+
+.TYPE 14
+
+.ENDEF
+
+.DEFINE "xFirstLength"
+
+.CLASS 65
+
+.VALUE -3
+
+.TYPE 14
+
+.ENDEF
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+	PUSH	BC
+	PUSH	BC
+	DEC	SP
+; 1299	    size_t xFirstLength;
+; 1300	
+; 1301	    configASSERT( xCount != ( size_t ) 0 );
+; 1302	
+; 1303	    /* Calculate the number of bytes that can be read - which may be
+; 1304	     * less than the number wanted if the data wraps around to the start of
+; 1305	     * the buffer. */
+; 1306	    xFirstLength = configMIN( pxStreamBuffer->xLength - xTail, xCount );
+.LINE 1306
+
+	LD	IY,(IX+%6)
+	LD	HL,(IY+%6)
+	LD	BC,(IX+%F)
+	OR	A,A
+	SBC	HL,BC
+	LD	BC,(IX+%C)
+	OR	A,A
+	SBC	HL,BC
+	JR	NC,L_163
+	LD	IY,(IX+%6)
+	LD	HL,(IY+%6)
+	LD	BC,(IX+%F)
+	OR	A,A
+	SBC	HL,BC
+	LD	(IX+%FFFFFFFA),HL
+	JR	L_164
+L_163:
+	LD	BC,(IX+%C)
+	LD	(IX+%FFFFFFFA),BC
+L_164:
+	LD	BC,(IX+%FFFFFFFA)
+	LD	(IX+%FFFFFFFD),BC
+; 1307	
+; 1308	    /* Obtain the number of bytes it is possible to obtain in the first
+; 1309	     * read.  Asserts check bounds of read and write. */
+; 1310	    configASSERT( xFirstLength <= xCount );
+; 1311	    configASSERT( ( xTail + xFirstLength ) <= pxStreamBuffer->xLength );
+; 1312	    ( void ) memcpy( ( void * ) pucData, ( const void * ) &( pxStreamBuffer->pucBuffer[ xTail ] ), xFirstLength ); /*lint !e9087 memcpy() requires void *. */
+.LINE 1312
+
+	LD	BC,(IX+%FFFFFFFD)
+	PUSH	BC
+	LD	BC,(IX+%F)
+	LD	IY,(IX+%6)
+	LD	HL,(IY+%12)
+	ADD	HL,BC
+	PUSH	HL
+	LD	BC,(IX+%9)
+	PUSH	BC
+	LD	(IX+%FFFFFFF9),A
+	CALL	_memcpy
+	LD	A,(IX+%FFFFFFF9)
+	POP	BC
+	POP	BC
+	POP	BC
+; 1313	
+; 1314	    /* If the total number of wanted bytes is greater than the number
+; 1315	     * that could be read in the first read... */
+; 1316	    if( xCount > xFirstLength )
+.LINE 1316
+
+	LD	BC,(IX+%C)
+	LD	HL,(IX+%FFFFFFFD)
+	OR	A,A
+	SBC	HL,BC
+	JR	NC,L_166
+; 1317	    {
+; 1318	        /* ...then read the remaining bytes from the start of the buffer. */
+; 1319	        ( void ) memcpy( ( void * ) &( pucData[ xFirstLength ] ), ( void * ) ( pxStreamBuffer->pucBuffer ), xCount - xFirstLength ); /*lint !e9087 memcpy() requires void *. */
+.LINE 1319
+
+	LD	BC,(IX+%FFFFFFFD)
+	LD	HL,(IX+%C)
+	OR	A,A
+	SBC	HL,BC
+	PUSH	HL
+	LD	IY,(IX+%6)
+	LD	BC,(IY+%12)
+	PUSH	BC
+	LD	BC,(IX+%FFFFFFFD)
+	LD	HL,(IX+%9)
+	ADD	HL,BC
+	PUSH	HL
+	LD	(IX+%FFFFFFF9),A
+	CALL	_memcpy
+	LD	A,(IX+%FFFFFFF9)
+	POP	BC
+	POP	BC
+	POP	BC
+; 1320	    }
+; 1321	    else
+L_166:
+.LINE 1321
+
+; 1322	    {
+; 1323	        mtCOVERAGE_TEST_MARKER();
+; 1324	    }
+; 1325	
+; 1326	    /* Move the tail pointer to effectively remove the data read from the buffer. */
+; 1327	    xTail += xCount;
+.LINE 1327
+
+	LD	BC,(IX+%C)
+	LD	HL,(IX+%F)
+	ADD	HL,BC
+	LD	(IX+%F),HL
+; 1328	
+; 1329	    if( xTail >= pxStreamBuffer->xLength )
+.LINE 1329
+
+	LD	IY,(IX+%6)
+	LD	BC,(IY+%6)
+	LD	HL,(IX+%F)
+	OR	A,A
+	SBC	HL,BC
+	JR	C,L_169
+; 1330	    {
+; 1331	        xTail -= pxStreamBuffer->xLength;
+.LINE 1331
+
+	LD	IY,(IX+%6)
+	LD	BC,(IY+%6)
+	LD	HL,(IX+%F)
+	OR	A,A
+	SBC	HL,BC
+	LD	(IX+%F),HL
+; 1332	    }
+L_169:
+.LINE 1332
+
+; 1333	
+; 1334	    return xTail;
+.LINE 1334
+
+	LD	HL,(IX+%F)
+; 1335	}
+.LINE 1335
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _prvReadBytesFromBuffer ***************************
+;Name                         Addr/Register   Size   Type
+;_memcpy                             IMPORT  -----   function
+;temp161                               IX-6      3   variable
+;xFirstLength                          IX-3      3   variable
+;xTail                                IX+15      3   parameter
+;xCount                               IX+12      3   parameter
+;pucData                               IX+9      3   parameter
+;pxStreamBuffer                        IX+6      3   parameter
+
+
+; Stack Frame Size: 25 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "prvReadBytesFromBuffer",1335,"_prvReadBytesFromBuffer"
+; 1336	/*-----------------------------------------------------------*/
+; 1337	
+; 1338	static size_t prvBytesInBuffer( const StreamBuffer_t * const pxStreamBuffer )
+; 1339	{
+_prvBytesInBuffer:
+.DEFINE "_prvBytesInBuffer"
+
+.VALUE _prvBytesInBuffer
+
+.CLASS 3
+
+.TYPE 78
+
+.ENDEF
+
+.BEGFUNC "prvBytesInBuffer",1339,"_prvBytesInBuffer"
+
+.LINE 1339
+
+.DEFINE "pxStreamBuffer"
+
+.CLASS 65
+
+.VALUE 6
+
+.TAG "StreamBufferDef_t"
+
+.TYPE 200
+
+.ENDEF
+
+.DEFINE "xCount"
+
+.CLASS 65
+
+.VALUE -3
+
+.TYPE 14
+
+.ENDEF
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+	PUSH	BC
+; 1340	/* Returns the distance between xTail and xHead. */
+; 1341	    size_t xCount;
+; 1342	
+; 1343	    xCount = pxStreamBuffer->xLength + pxStreamBuffer->xHead;
+.LINE 1343
+
+	LD	IY,(IX+%6)
+	LD	BC,(IY+%3)
+	LD	HL,(IY+%6)
+	ADD	HL,BC
+	LD	(IX+%FFFFFFFD),HL
+; 1344	    xCount -= pxStreamBuffer->xTail;
+.LINE 1344
+
+	LD	IY,(IX+%6)
+	LD	BC,(IY+%0)
+	LD	HL,(IX+%FFFFFFFD)
+	OR	A,A
+	SBC	HL,BC
+	LD	(IX+%FFFFFFFD),HL
+; 1345	
+; 1346	    if( xCount >= pxStreamBuffer->xLength )
+.LINE 1346
+
+	LD	IY,(IX+%6)
+	LD	BC,(IY+%6)
+	LD	HL,(IX+%FFFFFFFD)
+	OR	A,A
+	SBC	HL,BC
+	JR	C,L_172
+; 1347	    {
+; 1348	        xCount -= pxStreamBuffer->xLength;
+.LINE 1348
+
+	LD	IY,(IX+%6)
+	LD	BC,(IY+%6)
+	LD	HL,(IX+%FFFFFFFD)
+	OR	A,A
+	SBC	HL,BC
+	LD	(IX+%FFFFFFFD),HL
+; 1349	    }
+; 1350	    else
+L_172:
+.LINE 1350
+
+; 1351	    {
+; 1352	        mtCOVERAGE_TEST_MARKER();
+; 1353	    }
+; 1354	
+; 1355	    return xCount;
+.LINE 1355
+
+	LD	HL,(IX+%FFFFFFFD)
+; 1356	}
+.LINE 1356
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _prvBytesInBuffer ***************************
+;Name                         Addr/Register   Size   Type
+;xCount                                IX-3      3   variable
+;pxStreamBuffer                        IX+6      3   parameter
+
+
+; Stack Frame Size: 12 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "prvBytesInBuffer",1356,"_prvBytesInBuffer"
+; 1357	/*-----------------------------------------------------------*/
+; 1358	
+; 1359	static void prvInitialiseNewStreamBuffer( StreamBuffer_t * const pxStreamBuffer,
+; 1360	                                          uint8_t * const pucBuffer,
+; 1361	                                          size_t xBufferSizeBytes,
+; 1362	                                          size_t xTriggerLevelBytes,
+; 1363	                                          uint8_t ucFlags,
+; 1364	                                          StreamBufferCallbackFunction_t pxSendCompletedCallback,
+; 1365	                                          StreamBufferCallbackFunction_t pxReceiveCompletedCallback )
+; 1366	{
+_prvInitialiseNewStreamBuffer:
+.DEFINE "_prvInitialiseNewStreamBuffer"
+
+.VALUE _prvInitialiseNewStreamBuffer
+
+.CLASS 3
+
+.TYPE 65
+
+.ENDEF
+
+.BEGFUNC "prvInitialiseNewStreamBuffer",1366,"_prvInitialiseNewStreamBuffer"
+
+.LINE 1366
+
+.DEFINE "pxStreamBuffer"
+
+.CLASS 65
+
+.VALUE 6
+
+.TAG "StreamBufferDef_t"
+
+.TYPE 40
+
+.ENDEF
+
+.DEFINE "pucBuffer"
+
+.CLASS 65
+
+.VALUE 9
+
+.TYPE 44
+
+.ENDEF
+
+.DEFINE "xBufferSizeBytes"
+
+.CLASS 65
+
+.VALUE 12
+
+.TYPE 14
+
+.ENDEF
+
+.DEFINE "xTriggerLevelBytes"
+
+.CLASS 65
+
+.VALUE 15
+
+.TYPE 14
+
+.ENDEF
+
+.DEFINE "ucFlags"
+
+.CLASS 65
+
+.VALUE 18
+
+.TYPE 12
+
+.ENDEF
+
+.DEFINE "pxSendCompletedCallback"
+
+.CLASS 65
+
+.VALUE 21
+
+.TYPE 545
+
+.ENDEF
+
+.DEFINE "pxReceiveCompletedCallback"
+
+.CLASS 65
+
+.VALUE 24
+
+.TYPE 545
+
+.ENDEF
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+; 1367	    /* Assert here is deliberately writing to the entire buffer to ensure it can
+; 1368	     * be written to without generating exceptions, and is setting the buffer to a
+; 1369	     * known value to assist in development/debugging. */
+; 1370	    #if ( configASSERT_DEFINED == 1 )
+; 1371	    {
+; 1372	        /* The value written just has to be identifiable when looking at the
+; 1373	         * memory.  Don't use 0xA5 as that is the stack fill value and could
+; 1374	         * result in confusion as to what is actually being observed. */
+; 1375	        const BaseType_t xWriteValue = 0x55;
+; 1376	        configASSERT( memset( pucBuffer, ( int ) xWriteValue, xBufferSizeBytes ) == pucBuffer );
+; 1377	    } /*lint !e529 !e438 xWriteValue is only used if configASSERT() is defined. */
+; 1378	    #endif
+; 1379	
+; 1380	    ( void ) memset( ( void * ) pxStreamBuffer, 0x00, sizeof( StreamBuffer_t ) ); /*lint !e9087 memset() requires void *. */
+.LINE 1380
+
+	LD	BC,22
+	PUSH	BC
+	LD	BC,0
+	PUSH	BC
+	LD	BC,(IX+%6)
+	PUSH	BC
+	CALL	_memset
+	POP	BC
+	POP	BC
+	POP	BC
+; 1381	    pxStreamBuffer->pucBuffer = pucBuffer;
+.LINE 1381
+
+	LD	BC,(IX+%9)
+	LD	IY,(IX+%6)
+	LD	(IY+%12),BC
+; 1382	    pxStreamBuffer->xLength = xBufferSizeBytes;
+.LINE 1382
+
+	LD	BC,(IX+%C)
+	LD	IY,(IX+%6)
+	LD	(IY+%6),BC
+; 1383	    pxStreamBuffer->xTriggerLevelBytes = xTriggerLevelBytes;
+.LINE 1383
+
+	LD	BC,(IX+%F)
+	LD	IY,(IX+%6)
+	LD	(IY+%9),BC
+; 1384	    pxStreamBuffer->ucFlags = ucFlags;
+.LINE 1384
+
+	LD	A,(IX+%12)
+	LD	IY,(IX+%6)
+	LD	(IY+%15),A
+; 1385	    #if ( configUSE_SB_COMPLETED_CALLBACK == 1 )
+; 1386	    {
+; 1387	        pxStreamBuffer->pxSendCompletedCallback = pxSendCompletedCallback;
+; 1388	        pxStreamBuffer->pxReceiveCompletedCallback = pxReceiveCompletedCallback;
+; 1389	    }
+; 1390	    #else
+; 1391	    {
+; 1392	        ( void ) pxSendCompletedCallback;
+; 1393	        ( void ) pxReceiveCompletedCallback;
+; 1394	    }
+; 1395	    #endif
+; 1396	}
+.LINE 1396
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _prvInitialiseNewStreamBuffer ***************************
+;Name                         Addr/Register   Size   Type
+;_memset                             IMPORT  -----   function
+;pxReceiveCompletedCallback           IX+24      3   parameter
+;pxSendCompletedCallback              IX+21      3   parameter
+;ucFlags                              IX+18      1   parameter
+;xTriggerLevelBytes                   IX+15      3   parameter
+;xBufferSizeBytes                     IX+12      3   parameter
+;pucBuffer                             IX+9      3   parameter
+;pxStreamBuffer                        IX+6      3   parameter
+
+
+; Stack Frame Size: 27 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "prvInitialiseNewStreamBuffer",1396,"_prvInitialiseNewStreamBuffer"
+	XREF _xTaskGetCurrentTaskHandle:ROM
+	XREF _xTaskCheckForTimeOut:ROM
+	XREF _vTaskSetTimeOutState:ROM
+	XREF _xTaskGenericNotifyStateClear:ROM
+	XREF _xTaskGenericNotifyWait:ROM
+	XREF _xTaskGenericNotifyFromISR:ROM
+	XREF _xTaskGenericNotify:ROM
+	XREF _xTaskResumeAll:ROM
+	XREF _vTaskSuspendAll:ROM
+	XREF _vPortFree:ROM
+	XREF _pvPortMalloc:ROM
+	XREF _memset:ROM
+	XREF _memcpy:ROM
+	XREF __icmpzero:ROM
+	XREF __lcmpzero:ROM
+	XDEF _xStreamBufferReceiveCompletedFromISR
+	XDEF _xStreamBufferSendCompletedFromISR
+	XDEF _xStreamBufferIsFull
+	XDEF _xStreamBufferIsEmpty
+	XDEF _xStreamBufferReceiveFromISR
+	XDEF _xStreamBufferNextMessageLengthBytes
+	XDEF _xStreamBufferReceive
+	XDEF _xStreamBufferSendFromISR
+	XDEF _xStreamBufferSend
+	XDEF _xStreamBufferBytesAvailable
+	XDEF _xStreamBufferSpacesAvailable
+	XDEF _xStreamBufferSetTriggerLevel
+	XDEF _xStreamBufferReset
+	XDEF _vStreamBufferDelete
+	XDEF _xStreamBufferGenericCreate
+	END

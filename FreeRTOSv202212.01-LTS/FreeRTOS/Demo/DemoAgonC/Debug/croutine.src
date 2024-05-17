@@ -1,0 +1,2111 @@
+; Zilog eZ80 ANSI C Compiler Release 3.4
+; -noglobalopt -nolocalcse -optsize -nomodsect -reduceopt
+; -nopadbranch -debug -peephole -const=ROM 
+	FILE	"..\..\..\Source\croutine.c"
+	.assume ADL=1
+.DEBUG "C"
+	SEGMENT CODE
+.BEGREC "HeapRegion",6
+.DEFINE "pucStartAddress"
+.VALUE 0
+.CLASS 8
+.TYPE 44
+.ENDEF
+.DEFINE "xSizeInBytes"
+.VALUE 3
+.CLASS 8
+.TYPE 14
+.ENDEF
+.ENDREC "HeapRegion"
+.BEGREC "xHeapStats",21
+.DEFINE "xAvailableHeapSpaceInBytes"
+.VALUE 0
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "xSizeOfLargestFreeBlockInBytes"
+.VALUE 3
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "xSizeOfSmallestFreeBlockInBytes"
+.VALUE 6
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "xNumberOfFreeBlocks"
+.VALUE 9
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "xMinimumEverFreeBytesRemaining"
+.VALUE 12
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "xNumberOfSuccessfulAllocations"
+.VALUE 15
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "xNumberOfSuccessfulFrees"
+.VALUE 18
+.CLASS 8
+.TYPE 14
+.ENDEF
+.ENDREC "xHeapStats"
+.BEGREC "xSTATIC_LIST_ITEM",16
+.DEFINE "xDummy2"
+.VALUE 0
+.CLASS 8
+.TYPE 15
+.ENDEF
+.DEFINE "pvDummy3"
+.VALUE 4
+.CLASS 8
+.DIM 4
+.TYPE 353
+.ENDEF
+.ENDREC "xSTATIC_LIST_ITEM"
+.BEGREC "xSTATIC_MINI_LIST_ITEM",10
+.DEFINE "xDummy2"
+.VALUE 0
+.CLASS 8
+.TYPE 15
+.ENDEF
+.DEFINE "pvDummy3"
+.VALUE 4
+.CLASS 8
+.DIM 2
+.TYPE 353
+.ENDEF
+.ENDREC "xSTATIC_MINI_LIST_ITEM"
+.BEGREC "xSTATIC_LIST",16
+.DEFINE "uxDummy2"
+.VALUE 0
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "pvDummy3"
+.VALUE 3
+.CLASS 8
+.TYPE 33
+.ENDEF
+.DEFINE "xDummy4"
+.VALUE 6
+.CLASS 8
+.TAG "xSTATIC_MINI_LIST_ITEM"
+.TYPE 8
+.ENDEF
+.ENDREC "xSTATIC_LIST"
+.BEGREC "xSTATIC_TCB",69
+.DEFINE "pxDummy1"
+.VALUE 0
+.CLASS 8
+.TYPE 33
+.ENDEF
+.DEFINE "xDummy3"
+.VALUE 3
+.CLASS 8
+.DIM 2
+.TAG "xSTATIC_LIST_ITEM"
+.TYPE 104
+.ENDEF
+.DEFINE "uxDummy5"
+.VALUE 35
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "pxDummy6"
+.VALUE 38
+.CLASS 8
+.TYPE 33
+.ENDEF
+.DEFINE "ucDummy7"
+.VALUE 41
+.CLASS 8
+.DIM 16
+.TYPE 108
+.ENDEF
+.DEFINE "uxDummy12"
+.VALUE 57
+.CLASS 8
+.DIM 2
+.TYPE 110
+.ENDEF
+.DEFINE "ulDummy18"
+.VALUE 63
+.CLASS 8
+.DIM 1
+.TYPE 111
+.ENDEF
+.DEFINE "ucDummy19"
+.VALUE 67
+.CLASS 8
+.DIM 1
+.TYPE 108
+.ENDEF
+.DEFINE "ucDummy21"
+.VALUE 68
+.CLASS 8
+.TYPE 12
+.ENDEF
+.ENDREC "xSTATIC_TCB"
+.BEGREC "xSTATIC_QUEUE",55
+.DEFINE "pvDummy1"
+.VALUE 0
+.CLASS 8
+.DIM 3
+.TYPE 353
+.ENDEF
+.DEFINE "u"
+.VALUE 9
+.CLASS 8
+.TAG "NONAME0"
+.TYPE 8
+.ENDEF
+.DEFINE "xDummy3"
+.VALUE 12
+.CLASS 8
+.DIM 2
+.TAG "xSTATIC_LIST"
+.TYPE 104
+.ENDEF
+.DEFINE "uxDummy4"
+.VALUE 44
+.CLASS 8
+.DIM 3
+.TYPE 110
+.ENDEF
+.DEFINE "ucDummy5"
+.VALUE 53
+.CLASS 8
+.DIM 2
+.TYPE 108
+.ENDEF
+.ENDREC "xSTATIC_QUEUE"
+.BEGREC "NONAME0",3
+.DEFINE "pvDummy2"
+.VALUE 0
+.CLASS 11
+.TYPE 33
+.ENDEF
+.DEFINE "uxDummy2"
+.VALUE 0
+.CLASS 11
+.TYPE 14
+.ENDEF
+.ENDREC "NONAME0"
+.BEGREC "xSTATIC_EVENT_GROUP",20
+.DEFINE "xDummy1"
+.VALUE 0
+.CLASS 8
+.TYPE 15
+.ENDEF
+.DEFINE "xDummy2"
+.VALUE 4
+.CLASS 8
+.TAG "xSTATIC_LIST"
+.TYPE 8
+.ENDEF
+.ENDREC "xSTATIC_EVENT_GROUP"
+.BEGREC "xSTATIC_TIMER",30
+.DEFINE "pvDummy1"
+.VALUE 0
+.CLASS 8
+.TYPE 33
+.ENDEF
+.DEFINE "xDummy2"
+.VALUE 3
+.CLASS 8
+.TAG "xSTATIC_LIST_ITEM"
+.TYPE 8
+.ENDEF
+.DEFINE "xDummy3"
+.VALUE 19
+.CLASS 8
+.TYPE 15
+.ENDEF
+.DEFINE "pvDummy5"
+.VALUE 23
+.CLASS 8
+.TYPE 33
+.ENDEF
+.DEFINE "pvDummy6"
+.VALUE 26
+.CLASS 8
+.TYPE 545
+.ENDEF
+.DEFINE "ucDummy8"
+.VALUE 29
+.CLASS 8
+.TYPE 12
+.ENDEF
+.ENDREC "xSTATIC_TIMER"
+.BEGREC "xSTATIC_STREAM_BUFFER",22
+.DEFINE "uxDummy1"
+.VALUE 0
+.CLASS 8
+.DIM 4
+.TYPE 110
+.ENDEF
+.DEFINE "pvDummy2"
+.VALUE 12
+.CLASS 8
+.DIM 3
+.TYPE 353
+.ENDEF
+.DEFINE "ucDummy3"
+.VALUE 21
+.CLASS 8
+.TYPE 12
+.ENDEF
+.ENDREC "xSTATIC_STREAM_BUFFER"
+.BEGREC "xLIST_ITEM",16
+.DEFINE "xItemValue"
+.VALUE 0
+.CLASS 8
+.TYPE 15
+.ENDEF
+.DEFINE "pxNext"
+.VALUE 4
+.CLASS 8
+.TAG "xLIST_ITEM"
+.TYPE 40
+.ENDEF
+.DEFINE "pxPrevious"
+.VALUE 7
+.CLASS 8
+.TAG "xLIST_ITEM"
+.TYPE 40
+.ENDEF
+.DEFINE "pvOwner"
+.VALUE 10
+.CLASS 8
+.TYPE 33
+.ENDEF
+.DEFINE "pvContainer"
+.VALUE 13
+.CLASS 8
+.TAG "xLIST"
+.TYPE 40
+.ENDEF
+.ENDREC "xLIST_ITEM"
+.BEGREC "xMINI_LIST_ITEM",10
+.DEFINE "xItemValue"
+.VALUE 0
+.CLASS 8
+.TYPE 15
+.ENDEF
+.DEFINE "pxNext"
+.VALUE 4
+.CLASS 8
+.TAG "xLIST_ITEM"
+.TYPE 40
+.ENDEF
+.DEFINE "pxPrevious"
+.VALUE 7
+.CLASS 8
+.TAG "xLIST_ITEM"
+.TYPE 40
+.ENDEF
+.ENDREC "xMINI_LIST_ITEM"
+.BEGREC "xLIST",16
+.DEFINE "uxNumberOfItems"
+.VALUE 0
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "pxIndex"
+.VALUE 3
+.CLASS 8
+.TAG "xLIST_ITEM"
+.TYPE 40
+.ENDEF
+.DEFINE "xListEnd"
+.VALUE 6
+.CLASS 8
+.TAG "xMINI_LIST_ITEM"
+.TYPE 8
+.ENDEF
+.ENDREC "xLIST"
+.BEGREC "xTIME_OUT",7
+.DEFINE "xOverflowCount"
+.VALUE 0
+.CLASS 8
+.TYPE 4
+.ENDEF
+.DEFINE "xTimeOnEntering"
+.VALUE 3
+.CLASS 8
+.TYPE 15
+.ENDEF
+.ENDREC "xTIME_OUT"
+.BEGREC "xMEMORY_REGION",11
+.DEFINE "pvBaseAddress"
+.VALUE 0
+.CLASS 8
+.TYPE 33
+.ENDEF
+.DEFINE "ulLengthInBytes"
+.VALUE 3
+.CLASS 8
+.TYPE 15
+.ENDEF
+.DEFINE "ulParameters"
+.VALUE 7
+.CLASS 8
+.TYPE 15
+.ENDEF
+.ENDREC "xMEMORY_REGION"
+.BEGREC "xTASK_PARAMETERS",29
+.DEFINE "pvTaskCode"
+.VALUE 0
+.CLASS 8
+.TYPE 545
+.ENDEF
+.DEFINE "pcName"
+.VALUE 3
+.CLASS 8
+.TYPE 194
+.ENDEF
+.DEFINE "usStackDepth"
+.VALUE 6
+.CLASS 8
+.TYPE 4
+.ENDEF
+.DEFINE "pvParameters"
+.VALUE 9
+.CLASS 8
+.TYPE 33
+.ENDEF
+.DEFINE "uxPriority"
+.VALUE 12
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "puxStackBuffer"
+.VALUE 15
+.CLASS 8
+.TYPE 46
+.ENDEF
+.DEFINE "xRegions"
+.VALUE 18
+.CLASS 8
+.DIM 1
+.TAG "xMEMORY_REGION"
+.TYPE 104
+.ENDEF
+.ENDREC "xTASK_PARAMETERS"
+.BEGREC "xTASK_STATUS",28
+.DEFINE "xHandle"
+.VALUE 0
+.CLASS 8
+.TAG "~tag"
+.TYPE 40
+.ENDEF
+.DEFINE "pcTaskName"
+.VALUE 3
+.CLASS 8
+.TYPE 194
+.ENDEF
+.DEFINE "xTaskNumber"
+.VALUE 6
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "eCurrentState"
+.VALUE 9
+.CLASS 8
+.TYPE 4
+.ENDEF
+.DEFINE "uxCurrentPriority"
+.VALUE 12
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "uxBasePriority"
+.VALUE 15
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "ulRunTimeCounter"
+.VALUE 18
+.CLASS 8
+.TYPE 15
+.ENDEF
+.DEFINE "pxStackBase"
+.VALUE 22
+.CLASS 8
+.TYPE 46
+.ENDEF
+.DEFINE "usStackHighWaterMark"
+.VALUE 25
+.CLASS 8
+.TYPE 4
+.ENDEF
+.ENDREC "xTASK_STATUS"
+.BEGREC "corCoRoutineControlBlock",43
+.DEFINE "pxCoRoutineFunction"
+.VALUE 0
+.CLASS 8
+.TYPE 545
+.ENDEF
+.DEFINE "xGenericListItem"
+.VALUE 3
+.CLASS 8
+.TAG "xLIST_ITEM"
+.TYPE 8
+.ENDEF
+.DEFINE "xEventListItem"
+.VALUE 19
+.CLASS 8
+.TAG "xLIST_ITEM"
+.TYPE 8
+.ENDEF
+.DEFINE "uxPriority"
+.VALUE 35
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "uxIndex"
+.VALUE 38
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "uxState"
+.VALUE 41
+.CLASS 8
+.TYPE 13
+.ENDEF
+.ENDREC "corCoRoutineControlBlock"
+	SEGMENT BSS
+_pxReadyCoRoutineLists:
+	DS	32
+.DEFINE "pxReadyCoRoutineLists"
+.ALIAS "_pxReadyCoRoutineLists"
+.CLASS 83
+.VALUE _pxReadyCoRoutineLists
+.DIM 2
+.TAG "xLIST"
+.TYPE 104
+.ENDEF
+_xDelayedCoRoutineList1:
+	DS	16
+.DEFINE "xDelayedCoRoutineList1"
+.ALIAS "_xDelayedCoRoutineList1"
+.CLASS 83
+.VALUE _xDelayedCoRoutineList1
+.TAG "xLIST"
+.TYPE 8
+.ENDEF
+_xDelayedCoRoutineList2:
+	DS	16
+.DEFINE "xDelayedCoRoutineList2"
+.ALIAS "_xDelayedCoRoutineList2"
+.CLASS 83
+.VALUE _xDelayedCoRoutineList2
+.TAG "xLIST"
+.TYPE 8
+.ENDEF
+	SEGMENT DATA
+_pxDelayedCoRoutineList:
+	DW24	0
+.DEFINE "pxDelayedCoRoutineList"
+.ALIAS "_pxDelayedCoRoutineList"
+.CLASS 69
+.VALUE _pxDelayedCoRoutineList
+.TAG "xLIST"
+.TYPE 40
+.ENDEF
+_pxOverflowDelayedCoRoutineList:
+	DW24	0
+.DEFINE "pxOverflowDelayedCoRoutineList"
+.ALIAS "_pxOverflowDelayedCoRoutineList"
+.CLASS 69
+.VALUE _pxOverflowDelayedCoRoutineList
+.TAG "xLIST"
+.TYPE 40
+.ENDEF
+	SEGMENT BSS
+_xPendingReadyCoRoutineList:
+	DS	16
+.DEFINE "xPendingReadyCoRoutineList"
+.ALIAS "_xPendingReadyCoRoutineList"
+.CLASS 83
+.VALUE _xPendingReadyCoRoutineList
+.TAG "xLIST"
+.TYPE 8
+.ENDEF
+	SEGMENT DATA
+_pxCurrentCoRoutine:
+	DW24	0
+.DEFINE "pxCurrentCoRoutine"
+.ALIAS "_pxCurrentCoRoutine"
+.CLASS 69
+.VALUE _pxCurrentCoRoutine
+.TAG "corCoRoutineControlBlock"
+.TYPE 40
+.ENDEF
+_uxTopCoRoutineReadyPriority:
+	DW	0
+	DB	0
+.DEFINE "uxTopCoRoutineReadyPriority"
+.ALIAS "_uxTopCoRoutineReadyPriority"
+.CLASS 69
+.VALUE _uxTopCoRoutineReadyPriority
+.TYPE 14
+.ENDEF
+_xCoRoutineTickCount:
+	DL	0
+.DEFINE "xCoRoutineTickCount"
+.ALIAS "_xCoRoutineTickCount"
+.CLASS 69
+.VALUE _xCoRoutineTickCount
+.TYPE 15
+.ENDEF
+_xLastTickCount:
+	DL	0
+.DEFINE "xLastTickCount"
+.ALIAS "_xLastTickCount"
+.CLASS 69
+.VALUE _xLastTickCount
+.TYPE 15
+.ENDEF
+_xPassedTicks:
+	DL	0
+.DEFINE "xPassedTicks"
+.ALIAS "_xPassedTicks"
+.CLASS 69
+.VALUE _xPassedTicks
+.TYPE 15
+.ENDEF
+;    1	/*
+;    2	 * FreeRTOS Kernel V10.5.1
+;    3	 * Copyright (C) 2021 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
+;    4	 *
+;    5	 * SPDX-License-Identifier: MIT
+;    6	 *
+;    7	 * Permission is hereby granted, free of charge, to any person obtaining a copy of
+;    8	 * this software and associated documentation files (the "Software"), to deal in
+;    9	 * the Software without restriction, including without limitation the rights to
+;   10	 * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+;   11	 * the Software, and to permit persons to whom the Software is furnished to do so,
+;   12	 * subject to the following conditions:
+;   13	 *
+;   14	 * The above copyright notice and this permission notice shall be included in all
+;   15	 * copies or substantial portions of the Software.
+;   16	 *
+;   17	 * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+;   18	 * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+;   19	 * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+;   20	 * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+;   21	 * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+;   22	 * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+;   23	 *
+;   24	 * https://www.FreeRTOS.org
+;   25	 * https://github.com/FreeRTOS
+;   26	 *
+;   27	 */
+;   28	
+;   29	#include "FreeRTOS.h"
+;   30	#include "task.h"
+;   31	#include "croutine.h"
+;   32	
+;   33	/* Remove the whole file is co-routines are not being used. */
+;   34	#if ( configUSE_CO_ROUTINES != 0 )
+;   35	
+;   36	/*
+;   37	 * Some kernel aware debuggers require data to be viewed to be global, rather
+;   38	 * than file scope.
+;   39	 */
+;   40	    #ifdef portREMOVE_STATIC_QUALIFIER
+;   41	        #define static
+;   42	    #endif
+;   43	
+;   44	
+;   45	/* Lists for ready and blocked co-routines. --------------------*/
+;   46	    static List_t pxReadyCoRoutineLists[ configMAX_CO_ROUTINE_PRIORITIES ]; /*< Prioritised ready co-routines. */
+;   47	    static List_t xDelayedCoRoutineList1;                                   /*< Delayed co-routines. */
+;   48	    static List_t xDelayedCoRoutineList2;                                   /*< Delayed co-routines (two lists are used - one for delays that have overflowed the current tick count. */
+;   49	    static List_t * pxDelayedCoRoutineList = NULL;                          /*< Points to the delayed co-routine list currently being used. */
+;   50	    static List_t * pxOverflowDelayedCoRoutineList = NULL;                  /*< Points to the delayed co-routine list currently being used to hold co-routines that have overflowed the current tick count. */
+;   51	    static List_t xPendingReadyCoRoutineList;                               /*< Holds co-routines that have been readied by an external event.  They cannot be added directly to the ready lists as the ready lists cannot be accessed by interrupts. */
+;   52	
+;   53	/* Other file private variables. --------------------------------*/
+;   54	    CRCB_t * pxCurrentCoRoutine = NULL;
+;   55	    static UBaseType_t uxTopCoRoutineReadyPriority = 0;
+;   56	    static TickType_t xCoRoutineTickCount = 0, xLastTickCount = 0, xPassedTicks = 0;
+	SEGMENT CODE
+;   57	
+;   58	/* The initial state of the co-routine when it is created. */
+;   59	    #define corINITIAL_STATE    ( 0 )
+;   60	
+;   61	/*
+;   62	 * Place the co-routine represented by pxCRCB into the appropriate ready queue
+;   63	 * for the priority.  It is inserted at the end of the list.
+;   64	 *
+;   65	 * This macro accesses the co-routine ready lists and therefore must not be
+;   66	 * used from within an ISR.
+;   67	 */
+;   68	    #define prvAddCoRoutineToReadyQueue( pxCRCB )                                                                               \
+;   69	    {                                                                                                                           \
+;   70	        if( ( pxCRCB )->uxPriority > uxTopCoRoutineReadyPriority )                                                              \
+;   71	        {                                                                                                                       \
+;   72	            uxTopCoRoutineReadyPriority = ( pxCRCB )->uxPriority;                                                               \
+;   73	        }                                                                                                                       \
+;   74	        vListInsertEnd( ( List_t * ) &( pxReadyCoRoutineLists[ ( pxCRCB )->uxPriority ] ), &( ( pxCRCB )->xGenericListItem ) ); \
+;   75	    }
+;   76	
+;   77	/*
+;   78	 * Utility to ready all the lists used by the scheduler.  This is called
+;   79	 * automatically upon the creation of the first co-routine.
+;   80	 */
+;   81	    static void prvInitialiseCoRoutineLists( void );
+;   82	
+;   83	/*
+;   84	 * Co-routines that are readied by an interrupt cannot be placed directly into
+;   85	 * the ready lists (there is no mutual exclusion).  Instead they are placed in
+;   86	 * in the pending ready list in order that they can later be moved to the ready
+;   87	 * list by the co-routine scheduler.
+;   88	 */
+;   89	    static void prvCheckPendingReadyList( void );
+;   90	
+;   91	/*
+;   92	 * Macro that looks at the list of co-routines that are currently delayed to
+;   93	 * see if any require waking.
+;   94	 *
+;   95	 * Co-routines are stored in the queue in the order of their wake time -
+;   96	 * meaning once one co-routine has been found whose timer has not expired
+;   97	 * we need not look any further down the list.
+;   98	 */
+;   99	    static void prvCheckDelayedList( void );
+;  100	
+;  101	/*-----------------------------------------------------------*/
+;  102	
+;  103	    BaseType_t xCoRoutineCreate( crCOROUTINE_CODE pxCoRoutineCode,
+;  104	                                 UBaseType_t uxPriority,
+;  105	                                 UBaseType_t uxIndex )
+;  106	    {
+_xCoRoutineCreate:
+.DEFINE "_xCoRoutineCreate"
+
+.VALUE _xCoRoutineCreate
+
+.CLASS 2
+
+.TYPE 68
+
+.ENDEF
+
+.BEGFUNC "xCoRoutineCreate",106,"_xCoRoutineCreate"
+
+.LINE 106
+
+.DEFINE "pxCoRoutineCode"
+
+.CLASS 65
+
+.VALUE 6
+
+.TYPE 545
+
+.ENDEF
+
+.DEFINE "uxPriority"
+
+.CLASS 65
+
+.VALUE 9
+
+.TYPE 14
+
+.ENDEF
+
+.DEFINE "uxIndex"
+
+.CLASS 65
+
+.VALUE 12
+
+.TYPE 14
+
+.ENDEF
+
+.DEFINE "pxCoRoutine"
+
+.CLASS 65
+
+.VALUE -3
+
+.TAG "corCoRoutineControlBlock"
+
+.TYPE 40
+
+.ENDEF
+
+.DEFINE "xReturn"
+
+.CLASS 65
+
+.VALUE -6
+
+.TYPE 4
+
+.ENDEF
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+	PUSH	BC
+	PUSH	BC
+;  107	        BaseType_t xReturn;
+;  108	        CRCB_t * pxCoRoutine;
+;  109	
+;  110	        /* Allocate the memory that will store the co-routine control block. */
+;  111	        pxCoRoutine = ( CRCB_t * ) pvPortMalloc( sizeof( CRCB_t ) );
+.LINE 111
+
+	LD	BC,43
+	PUSH	BC
+	CALL	_pvPortMalloc
+	POP	BC
+	LD	(IX+%FFFFFFFD),HL
+;  112	
+;  113	        if( pxCoRoutine )
+.LINE 113
+
+	LD	HL,(IX+%FFFFFFFD)
+	CALL	__icmpzero
+	JR	Z,L_7
+;  114	        {
+;  115	            /* If pxCurrentCoRoutine is NULL then this is the first co-routine to
+;  116	            * be created and the co-routine data structures need initialising. */
+;  117	            if( pxCurrentCoRoutine == NULL )
+.LINE 117
+
+	LD	HL,(_pxCurrentCoRoutine)
+	CALL	__icmpzero
+	JR	NZ,L_2
+;  118	            {
+;  119	                pxCurrentCoRoutine = pxCoRoutine;
+.LINE 119
+
+	LD	BC,(IX+%FFFFFFFD)
+	LD	(_pxCurrentCoRoutine),BC
+;  120	                prvInitialiseCoRoutineLists();
+.LINE 120
+
+	CALL	_prvInitialiseCoRoutineLists
+;  121	            }
+L_2:
+.LINE 121
+
+;  122	
+;  123	            /* Check the priority is within limits. */
+;  124	            if( uxPriority >= configMAX_CO_ROUTINE_PRIORITIES )
+.LINE 124
+
+	LD	BC,2
+	LD	HL,(IX+%9)
+	OR	A,A
+	SBC	HL,BC
+	JR	C,L_3
+;  125	            {
+;  126	                uxPriority = configMAX_CO_ROUTINE_PRIORITIES - 1;
+.LINE 126
+
+	LD	BC,1
+	LD	(IX+%9),BC
+;  127	            }
+L_3:
+.LINE 127
+
+;  128	
+;  129	            /* Fill out the co-routine control block from the function parameters. */
+;  130	            pxCoRoutine->uxState = corINITIAL_STATE;
+.LINE 130
+
+	LD	IY,(IX+%FFFFFFFD)
+	LD	(IY+%29),%0
+	LD	(IY+%2A),%0
+;  131	            pxCoRoutine->uxPriority = uxPriority;
+.LINE 131
+
+	LD	BC,(IX+%9)
+	LD	IY,(IX+%FFFFFFFD)
+	LD	(IY+%23),BC
+;  132	            pxCoRoutine->uxIndex = uxIndex;
+.LINE 132
+
+	LD	BC,(IX+%C)
+	LD	IY,(IX+%FFFFFFFD)
+	LD	(IY+%26),BC
+;  133	            pxCoRoutine->pxCoRoutineFunction = pxCoRoutineCode;
+.LINE 133
+
+	LD	BC,(IX+%6)
+	LD	IY,(IX+%FFFFFFFD)
+	LD	(IY+%0),BC
+;  134	
+;  135	            /* Initialise all the other co-routine control block parameters. */
+;  136	            vListInitialiseItem( &( pxCoRoutine->xGenericListItem ) );
+.LINE 136
+
+	LD	IY,(IX+%FFFFFFFD)
+	PEA	IY+%3
+	CALL	_vListInitialiseItem
+	POP	BC
+;  137	            vListInitialiseItem( &( pxCoRoutine->xEventListItem ) );
+.LINE 137
+
+	LD	IY,(IX+%FFFFFFFD)
+	PEA	IY+%13
+	CALL	_vListInitialiseItem
+	POP	BC
+;  138	
+;  139	            /* Set the co-routine control block as a link back from the ListItem_t.
+;  140	             * This is so we can get back to the containing CRCB from a generic item
+;  141	             * in a list. */
+;  142	            listSET_LIST_ITEM_OWNER( &( pxCoRoutine->xGenericListItem ), pxCoRoutine );
+.LINE 142
+
+	LD	BC,(IX+%FFFFFFFD)
+	LD	IY,(IX+%FFFFFFFD)
+	LD	(IY+%D),BC
+;  143	            listSET_LIST_ITEM_OWNER( &( pxCoRoutine->xEventListItem ), pxCoRoutine );
+.LINE 143
+
+	LD	BC,(IX+%FFFFFFFD)
+	LD	IY,(IX+%FFFFFFFD)
+	LD	(IY+%1D),BC
+;  144	
+;  145	            /* Event lists are always in priority order. */
+;  146	            listSET_LIST_ITEM_VALUE( &( pxCoRoutine->xEventListItem ), ( ( TickType_t ) configMAX_CO_ROUTINE_PRIORITIES - ( TickType_t ) uxPriority ) );
+.LINE 146
+
+	LD	BC,(IX+%9)
+	XOR	A,A
+	LD	HL,2
+	LD	E,%0
+	CALL	__lsub
+	LD	IY,(IX+%FFFFFFFD)
+	LD	(IY+%13),HL
+	LD	(IY+%16),E
+;  147	
+;  148	            /* Now the co-routine has been initialised it can be added to the ready
+;  149	             * list at the correct priority. */
+;  150	            prvAddCoRoutineToReadyQueue( pxCoRoutine );
+.LINE 150
+
+	LD	IY,(IX+%FFFFFFFD)
+	LD	BC,(IY+%23)
+	LD	HL,(_uxTopCoRoutineReadyPriority)
+	OR	A,A
+	SBC	HL,BC
+	JR	NC,L_5
+	LD	IY,(IX+%FFFFFFFD)
+	LD	BC,(IY+%23)
+	LD	(_uxTopCoRoutineReadyPriority),BC
+L_5:
+	LD	IY,(IX+%FFFFFFFD)
+	PEA	IY+%3
+	LD	HL,(IY+%23)
+	ADD	HL,HL
+	ADD	HL,HL
+	ADD	HL,HL
+	ADD	HL,HL
+	LD	BC,_pxReadyCoRoutineLists
+	ADD	HL,BC
+	PUSH	HL
+	CALL	_vListInsertEnd
+	POP	BC
+	POP	BC
+;  151	
+;  152	            xReturn = pdPASS;
+.LINE 152
+
+	LD	BC,1
+	LD	(IX+%FFFFFFFA),BC
+;  153	        }
+;  154	        else
+.LINE 154
+
+	JR	L_8
+L_7:
+;  155	        {
+;  156	            xReturn = errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY;
+.LINE 156
+
+	LD	BC,16777215
+	LD	(IX+%FFFFFFFA),BC
+;  157	        }
+L_8:
+.LINE 157
+
+;  158	
+;  159	        return xReturn;
+.LINE 159
+
+	LD	HL,(IX+%FFFFFFFA)
+;  160	    }
+.LINE 160
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _xCoRoutineCreate ***************************
+;Name                         Addr/Register   Size   Type
+;_pxReadyCoRoutineLists              STATIC     32   variable
+;_vListInsertEnd                     IMPORT  -----   function
+;_uxTopCoRoutineReadyPriority        STATIC      3   variable
+;_vListInitialiseItem                IMPORT  -----   function
+;_prvInitialiseCoRoutineLists        IMPORT  -----   function
+;_pxCurrentCoRoutine                 STATIC      3   variable
+;_pvPortMalloc                       IMPORT  -----   function
+;xReturn                               IX-6      3   variable
+;pxCoRoutine                           IX-3      3   variable
+;uxIndex                              IX+12      3   parameter
+;uxPriority                            IX+9      3   parameter
+;pxCoRoutineCode                       IX+6      3   parameter
+
+
+; Stack Frame Size: 21 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "xCoRoutineCreate",160,"_xCoRoutineCreate"
+;  161	/*-----------------------------------------------------------*/
+;  162	
+;  163	    void vCoRoutineAddToDelayedList( TickType_t xTicksToDelay,
+;  164	                                     List_t * pxEventList )
+;  165	    {
+_vCoRoutineAddToDelayedList:
+.DEFINE "_vCoRoutineAddToDelayedList"
+
+.VALUE _vCoRoutineAddToDelayedList
+
+.CLASS 2
+
+.TYPE 65
+
+.ENDEF
+
+.BEGFUNC "vCoRoutineAddToDelayedList",165,"_vCoRoutineAddToDelayedList"
+
+.LINE 165
+
+.DEFINE "xTicksToDelay"
+
+.CLASS 65
+
+.VALUE 6
+
+.TYPE 15
+
+.ENDEF
+
+.DEFINE "pxEventList"
+
+.CLASS 65
+
+.VALUE 12
+
+.TAG "xLIST"
+
+.TYPE 40
+
+.ENDEF
+
+.DEFINE "xTimeToWake"
+
+.CLASS 65
+
+.VALUE -4
+
+.TYPE 15
+
+.ENDEF
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+	PUSH	BC
+	DEC	SP
+;  166	        TickType_t xTimeToWake;
+;  167	
+;  168	        /* Calculate the time to wake - this may overflow but this is
+;  169	         * not a problem. */
+;  170	        xTimeToWake = xCoRoutineTickCount + xTicksToDelay;
+.LINE 170
+
+	LD	HL,(_xCoRoutineTickCount)
+	LD	A,(_xCoRoutineTickCount+3)
+	LD	E,A
+	LD	BC,(IX+%6)
+	LD	A,(IX+%9)
+	CALL	__ladd
+	LD	(IX+%FFFFFFFC),HL
+	LD	(IX+%FFFFFFFF),E
+;  171	
+;  172	        /* We must remove ourselves from the ready list before adding
+;  173	         * ourselves to the blocked list as the same list item is used for
+;  174	         * both lists. */
+;  175	        ( void ) uxListRemove( ( ListItem_t * ) &( pxCurrentCoRoutine->xGenericListItem ) );
+.LINE 175
+
+	LD	IY,(_pxCurrentCoRoutine)
+	PEA	IY+%3
+	CALL	_uxListRemove
+	POP	BC
+;  176	
+;  177	        /* The list item will be inserted in wake time order. */
+;  178	        listSET_LIST_ITEM_VALUE( &( pxCurrentCoRoutine->xGenericListItem ), xTimeToWake );
+.LINE 178
+
+	LD	IY,(_pxCurrentCoRoutine)
+	LD	BC,(IX+%FFFFFFFC)
+	LD	A,(IX+%FFFFFFFF)
+	LD	(IY+%3),BC
+	LD	(IY+%6),A
+;  179	
+;  180	        if( xTimeToWake < xCoRoutineTickCount )
+.LINE 180
+
+	LD	HL,(IX+%FFFFFFFC)
+	LD	E,(IX+%FFFFFFFF)
+	LD	BC,(_xCoRoutineTickCount)
+	LD	A,(_xCoRoutineTickCount+3)
+	CALL	__lcmpu
+	JR	NC,L_11
+;  181	        {
+;  182	            /* Wake time has overflowed.  Place this item in the
+;  183	             * overflow list. */
+;  184	            vListInsert( ( List_t * ) pxOverflowDelayedCoRoutineList, ( ListItem_t * ) &( pxCurrentCoRoutine->xGenericListItem ) );
+.LINE 184
+
+	LD	IY,(_pxCurrentCoRoutine)
+	PEA	IY+%3
+	LD	BC,(_pxOverflowDelayedCoRoutineList)
+	PUSH	BC
+	CALL	_vListInsert
+	POP	BC
+	POP	BC
+;  185	        }
+;  186	        else
+.LINE 186
+
+	JR	L_13
+L_11:
+;  187	        {
+;  188	            /* The wake time has not overflowed, so we can use the
+;  189	             * current block list. */
+;  190	            vListInsert( ( List_t * ) pxDelayedCoRoutineList, ( ListItem_t * ) &( pxCurrentCoRoutine->xGenericListItem ) );
+.LINE 190
+
+	LD	IY,(_pxCurrentCoRoutine)
+	PEA	IY+%3
+	LD	BC,(_pxDelayedCoRoutineList)
+	PUSH	BC
+	CALL	_vListInsert
+	POP	BC
+	POP	BC
+;  191	        }
+L_13:
+.LINE 191
+
+;  192	
+;  193	        if( pxEventList )
+.LINE 193
+
+	LD	HL,(IX+%C)
+	CALL	__icmpzero
+	JR	Z,L_14
+;  194	        {
+;  195	            /* Also add the co-routine to an event list.  If this is done then the
+;  196	             * function must be called with interrupts disabled. */
+;  197	            vListInsert( pxEventList, &( pxCurrentCoRoutine->xEventListItem ) );
+.LINE 197
+
+	LD	IY,(_pxCurrentCoRoutine)
+	PEA	IY+%13
+	LD	BC,(IX+%C)
+	PUSH	BC
+	CALL	_vListInsert
+	POP	BC
+	POP	BC
+;  198	        }
+;  199	    }
+L_14:
+.LINE 199
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _vCoRoutineAddToDelayedList ***************************
+;Name                         Addr/Register   Size   Type
+;_pxDelayedCoRoutineList             STATIC      3   variable
+;_pxOverflowDelayedCoRoutineList      STATIC      3   variable
+;_vListInsert                        IMPORT  -----   function
+;_pxCurrentCoRoutine                 STATIC      3   variable
+;_uxListRemove                       IMPORT  -----   function
+;_xCoRoutineTickCount                STATIC      4   variable
+;xTimeToWake                           IX-4      4   variable
+;pxEventList                          IX+12      3   parameter
+;xTicksToDelay                         IX+6      4   parameter
+
+
+; Stack Frame Size: 19 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "vCoRoutineAddToDelayedList",199,"_vCoRoutineAddToDelayedList"
+;  200	/*-----------------------------------------------------------*/
+;  201	
+;  202	    static void prvCheckPendingReadyList( void )
+;  203	    {
+_prvCheckPendingReadyList:
+.DEFINE "_prvCheckPendingReadyList"
+
+.VALUE _prvCheckPendingReadyList
+
+.CLASS 2
+
+.TYPE 65
+
+.ENDEF
+
+.BEGFUNC "prvCheckPendingReadyList",203,"_prvCheckPendingReadyList"
+
+.LINE 203
+
+.DEFINE "pxUnblockedCRCB"
+
+.CLASS 65
+
+.VALUE -3
+
+.TAG "corCoRoutineControlBlock"
+
+.TYPE 40
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+	PUSH	BC
+	PUSH	BC
+.ENDEF
+
+;  204	        /* Are there any co-routines waiting to get moved to the ready list?  These
+;  205	         * are co-routines that have been readied by an ISR.  The ISR cannot access
+;  206	         * the ready lists itself. */
+;  207	        while( listLIST_IS_EMPTY( &xPendingReadyCoRoutineList ) == pdFALSE )
+L_21:
+.LINE 207
+
+	LD	HL,(_xPendingReadyCoRoutineList)
+	CALL	__icmpzero
+	JR	NZ,L_17
+	LD	BC,1
+	LD	(IX+%FFFFFFFA),BC
+	JR	L_18
+L_17:
+	LD	BC,0
+	LD	(IX+%FFFFFFFA),BC
+L_18:
+	LD	HL,(IX+%FFFFFFFA)
+	CALL	__icmpzero
+	JR	NZ,L_23
+;  208	        {
+;  209	            CRCB_t * pxUnblockedCRCB;
+;  210	
+;  211	            /* The pending ready list can be accessed by an ISR. */
+;  212	            portDISABLE_INTERRUPTS();
+.LINE 212
+
+	 di
+;  213	            {
+;  214	                pxUnblockedCRCB = ( CRCB_t * ) listGET_OWNER_OF_HEAD_ENTRY( ( &xPendingReadyCoRoutineList ) );
+.LINE 214
+
+	LD	IY,(_xPendingReadyCoRoutineList+10)
+	LD	BC,(IY+%A)
+	LD	(IX+%FFFFFFFD),BC
+;  215	                ( void ) uxListRemove( &( pxUnblockedCRCB->xEventListItem ) );
+.LINE 215
+
+	LD	IY,(IX+%FFFFFFFD)
+	PEA	IY+%13
+	CALL	_uxListRemove
+	POP	BC
+;  216	            }
+;  217	            portENABLE_INTERRUPTS();
+.LINE 217
+
+	 ei
+;  218	
+;  219	            ( void ) uxListRemove( &( pxUnblockedCRCB->xGenericListItem ) );
+.LINE 219
+
+	LD	IY,(IX+%FFFFFFFD)
+	PEA	IY+%3
+	CALL	_uxListRemove
+	POP	BC
+;  220	            prvAddCoRoutineToReadyQueue( pxUnblockedCRCB );
+.LINE 220
+
+	LD	IY,(IX+%FFFFFFFD)
+	LD	BC,(IY+%23)
+	LD	HL,(_uxTopCoRoutineReadyPriority)
+	OR	A,A
+	SBC	HL,BC
+	JR	NC,L_20
+	LD	IY,(IX+%FFFFFFFD)
+	LD	BC,(IY+%23)
+	LD	(_uxTopCoRoutineReadyPriority),BC
+L_20:
+	LD	IY,(IX+%FFFFFFFD)
+	PEA	IY+%3
+	LD	HL,(IY+%23)
+	ADD	HL,HL
+	ADD	HL,HL
+	ADD	HL,HL
+	ADD	HL,HL
+	LD	BC,_pxReadyCoRoutineLists
+	ADD	HL,BC
+	PUSH	HL
+	CALL	_vListInsertEnd
+	POP	BC
+	POP	BC
+;  221	        }
+.LINE 221
+
+	JR	L_21
+;  222	    }
+L_23:
+.LINE 222
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _prvCheckPendingReadyList ***************************
+;Name                         Addr/Register   Size   Type
+;_pxReadyCoRoutineLists              STATIC     32   variable
+;_vListInsertEnd                     IMPORT  -----   function
+;_uxTopCoRoutineReadyPriority        STATIC      3   variable
+;_uxListRemove                       IMPORT  -----   function
+;_xPendingReadyCoRoutineList         STATIC     16   variable
+;temp15                                IX-6      3   variable
+;pxUnblockedCRCB                       IX-3      3   variable
+
+
+; Stack Frame Size: 12 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "prvCheckPendingReadyList",222,"_prvCheckPendingReadyList"
+;  223	/*-----------------------------------------------------------*/
+;  224	
+;  225	    static void prvCheckDelayedList( void )
+;  226	    {
+_prvCheckDelayedList:
+.DEFINE "_prvCheckDelayedList"
+
+.VALUE _prvCheckDelayedList
+
+.CLASS 2
+
+.TYPE 65
+
+.ENDEF
+
+.BEGFUNC "prvCheckDelayedList",226,"_prvCheckDelayedList"
+
+.LINE 226
+
+.DEFINE "pxCRCB"
+
+.CLASS 65
+
+.VALUE -3
+
+.TAG "corCoRoutineControlBlock"
+
+.TYPE 40
+
+.ENDEF
+
+.DEFINE "pxTemp"
+
+.CLASS 65
+
+.VALUE -9
+
+.TAG "xLIST"
+
+.TYPE 40
+
+.ENDEF
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+	PUSH	BC
+	PUSH	BC
+	PUSH	BC
+;  227	        CRCB_t * pxCRCB;
+;  228	
+;  229	        xPassedTicks = xTaskGetTickCount() - xLastTickCount;
+.LINE 229
+
+	CALL	_xTaskGetTickCount
+	LD	BC,(_xLastTickCount)
+	LD	A,(_xLastTickCount+3)
+	CALL	__lsub
+	LD	(_xPassedTicks),HL
+	LD	A,E
+	LD	(_xPassedTicks+3),A
+;  230	
+;  231	        while( xPassedTicks )
+L_40:
+.LINE 231
+
+	LD	HL,(_xPassedTicks)
+	LD	A,(_xPassedTicks+3)
+	LD	E,A
+	CALL	__lcmpzero
+	JR	Z,L_42
+;  232	        {
+;  233	            xCoRoutineTickCount++;
+.LINE 233
+
+	LD	HL,(_xCoRoutineTickCount)
+	LD	A,(_xCoRoutineTickCount+3)
+	LD	E,A
+	LD	A,%1
+	CALL	__ladd_b
+	LD	(_xCoRoutineTickCount),HL
+	LD	A,E
+	LD	(_xCoRoutineTickCount+3),A
+;  234	            xPassedTicks--;
+.LINE 234
+
+	LD	HL,(_xPassedTicks)
+	LD	A,(_xPassedTicks+3)
+	LD	E,A
+	LD	BC,1
+	XOR	A,A
+	CALL	__lsub
+	LD	(_xPassedTicks),HL
+	LD	A,E
+	LD	(_xPassedTicks+3),A
+;  235	
+;  236	            /* If the tick count has overflowed we need to swap the ready lists. */
+;  237	            if( xCoRoutineTickCount == 0 )
+.LINE 237
+
+	LD	HL,(_xCoRoutineTickCount)
+	LD	A,(_xCoRoutineTickCount+3)
+	LD	E,A
+	CALL	__lcmpzero
+	JR	NZ,L_39
+;  238	            {
+;  239	                List_t * pxTemp;
+;  240	
+;  241	                /* Tick count has overflowed so we need to swap the delay lists.  If there are
+;  242	                 * any items in pxDelayedCoRoutineList here then there is an error! */
+;  243	                pxTemp = pxDelayedCoRoutineList;
+.LINE 243
+
+	LD	BC,(_pxDelayedCoRoutineList)
+	LD	(IX+%FFFFFFF7),BC
+;  244	                pxDelayedCoRoutineList = pxOverflowDelayedCoRoutineList;
+.LINE 244
+
+	LD	BC,(_pxOverflowDelayedCoRoutineList)
+	LD	(_pxDelayedCoRoutineList),BC
+;  245	                pxOverflowDelayedCoRoutineList = pxTemp;
+.LINE 245
+
+	LD	BC,(IX+%FFFFFFF7)
+	LD	(_pxOverflowDelayedCoRoutineList),BC
+;  246	            }
+L_39:
+.LINE 246
+
+;  247	
+;  248	            /* See if this tick has made a timeout expire. */
+;  249	            while( listLIST_IS_EMPTY( pxDelayedCoRoutineList ) == pdFALSE )
+L_37:
+.LINE 249
+
+	LD	IY,(_pxDelayedCoRoutineList)
+	LD	HL,(IY+%0)
+	CALL	__icmpzero
+	JR	NZ,L_29
+	LD	BC,1
+	LD	(IX+%FFFFFFFA),BC
+	JR	L_30
+L_29:
+	LD	BC,0
+	LD	(IX+%FFFFFFFA),BC
+L_30:
+	LD	HL,(IX+%FFFFFFFA)
+	CALL	__icmpzero
+	JR	NZ,L_40
+;  250	            {
+;  251	                pxCRCB = ( CRCB_t * ) listGET_OWNER_OF_HEAD_ENTRY( pxDelayedCoRoutineList );
+.LINE 251
+
+	LD	IY,(_pxDelayedCoRoutineList)
+	LD	IY,(IY+%A)
+	LD	BC,(IY+%A)
+	LD	(IX+%FFFFFFFD),BC
+;  252	
+;  253	                if( xCoRoutineTickCount < listGET_LIST_ITEM_VALUE( &( pxCRCB->xGenericListItem ) ) )
+.LINE 253
+
+	LD	HL,(_xCoRoutineTickCount)
+	LD	A,(_xCoRoutineTickCount+3)
+	LD	E,A
+	LD	IY,(IX+%FFFFFFFD)
+	LD	BC,(IY+%3)
+	LD	A,(IY+%6)
+	CALL	__lcmpu
+	JR	C,L_40
+;  254	                {
+;  255	                    /* Timeout not yet expired. */
+;  256	                    break;
+.LINE 256
+
+;  257	                }
+.LINE 257
+
+;  258	
+;  259	                portDISABLE_INTERRUPTS();
+.LINE 259
+
+	 di
+;  260	                {
+;  261	                    /* The event could have occurred just before this critical
+;  262	                     *  section.  If this is the case then the generic list item will
+;  263	                     *  have been moved to the pending ready list and the following
+;  264	                     *  line is still valid.  Also the pvContainer parameter will have
+;  265	                     *  been set to NULL so the following lines are also valid. */
+;  266	                    ( void ) uxListRemove( &( pxCRCB->xGenericListItem ) );
+.LINE 266
+
+	LD	IY,(IX+%FFFFFFFD)
+	PEA	IY+%3
+	CALL	_uxListRemove
+	POP	BC
+;  267	
+;  268	                    /* Is the co-routine waiting on an event also? */
+;  269	                    if( pxCRCB->xEventListItem.pxContainer )
+.LINE 269
+
+	LD	IY,(IX+%FFFFFFFD)
+	LD	HL,(IY+%20)
+	CALL	__icmpzero
+	JR	Z,L_34
+;  270	                    {
+;  271	                        ( void ) uxListRemove( &( pxCRCB->xEventListItem ) );
+.LINE 271
+
+	LD	IY,(IX+%FFFFFFFD)
+	PEA	IY+%13
+	CALL	_uxListRemove
+	POP	BC
+;  272	                    }
+;  273	                }
+L_34:
+.LINE 273
+
+;  274	                portENABLE_INTERRUPTS();
+.LINE 274
+
+	 ei
+;  275	
+;  276	                prvAddCoRoutineToReadyQueue( pxCRCB );
+.LINE 276
+
+	LD	IY,(IX+%FFFFFFFD)
+	LD	BC,(IY+%23)
+	LD	HL,(_uxTopCoRoutineReadyPriority)
+	OR	A,A
+	SBC	HL,BC
+	JR	NC,L_36
+	LD	IY,(IX+%FFFFFFFD)
+	LD	BC,(IY+%23)
+	LD	(_uxTopCoRoutineReadyPriority),BC
+L_36:
+	LD	IY,(IX+%FFFFFFFD)
+	PEA	IY+%3
+	LD	HL,(IY+%23)
+	ADD	HL,HL
+	ADD	HL,HL
+	ADD	HL,HL
+	ADD	HL,HL
+	LD	BC,_pxReadyCoRoutineLists
+	ADD	HL,BC
+	PUSH	HL
+	CALL	_vListInsertEnd
+	POP	BC
+	POP	BC
+;  277	            }
+.LINE 277
+
+	JR	L_37
+;  278	        }
+L_42:
+.LINE 278
+
+;  279	
+;  280	        xLastTickCount = xCoRoutineTickCount;
+.LINE 280
+
+	LD	BC,(_xCoRoutineTickCount)
+	LD	A,(_xCoRoutineTickCount+3)
+	LD	(_xLastTickCount),BC
+	LD	(_xLastTickCount+3),A
+;  281	    }
+.LINE 281
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _prvCheckDelayedList ***************************
+;Name                         Addr/Register   Size   Type
+;_pxReadyCoRoutineLists              STATIC     32   variable
+;_vListInsertEnd                     IMPORT  -----   function
+;_uxTopCoRoutineReadyPriority        STATIC      3   variable
+;_uxListRemove                       IMPORT  -----   function
+;_pxOverflowDelayedCoRoutineList      STATIC      3   variable
+;_pxDelayedCoRoutineList             STATIC      3   variable
+;_xCoRoutineTickCount                STATIC      4   variable
+;_xPassedTicks                       STATIC      4   variable
+;_xLastTickCount                     STATIC      4   variable
+;_xTaskGetTickCount                  IMPORT  -----   function
+;pxTemp                                IX-9      3   variable
+;temp27                                IX-6      3   variable
+;pxCRCB                                IX-3      3   variable
+
+
+; Stack Frame Size: 15 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "prvCheckDelayedList",281,"_prvCheckDelayedList"
+;  282	/*-----------------------------------------------------------*/
+;  283	
+;  284	    void vCoRoutineSchedule( void )
+;  285	    {
+_vCoRoutineSchedule:
+.DEFINE "_vCoRoutineSchedule"
+
+.VALUE _vCoRoutineSchedule
+
+.CLASS 2
+
+.TYPE 65
+
+.ENDEF
+
+.BEGFUNC "vCoRoutineSchedule",285,"_vCoRoutineSchedule"
+
+.LINE 285
+
+.DEFINE "pxConstList"
+
+.CLASS 65
+
+.VALUE -3
+
+.TAG "xLIST"
+
+.TYPE 40
+
+.ENDEF
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+	PUSH	BC
+	PUSH	BC
+;  286	        /* Only run a co-routine after prvInitialiseCoRoutineLists() has been
+;  287	         * called.  prvInitialiseCoRoutineLists() is called automatically when a
+;  288	         * co-routine is created. */
+;  289	        if( pxDelayedCoRoutineList != NULL )
+.LINE 289
+
+	LD	HL,(_pxDelayedCoRoutineList)
+	CALL	__icmpzero
+	JR	Z,L_56
+;  290	        {
+;  291	            /* See if any co-routines readied by events need moving to the ready lists. */
+;  292	            prvCheckPendingReadyList();
+.LINE 292
+
+	CALL	_prvCheckPendingReadyList
+;  293	
+;  294	            /* See if any delayed co-routines have timed out. */
+;  295	            prvCheckDelayedList();
+.LINE 295
+
+	CALL	_prvCheckDelayedList
+;  296	
+;  297	            /* Find the highest priority queue that contains ready co-routines. */
+;  298	            while( listLIST_IS_EMPTY( &( pxReadyCoRoutineLists[ uxTopCoRoutineReadyPriority ] ) ) )
+L_50:
+.LINE 298
+
+	LD	BC,(_uxTopCoRoutineReadyPriority)
+	LD	HL,BC
+	ADD	HL,HL
+	ADD	HL,HL
+	ADD	HL,HL
+	ADD	HL,HL
+	LD	BC,_pxReadyCoRoutineLists
+	ADD	HL,BC
+	LD	IY,HL
+	LD	HL,(IY+%0)
+	CALL	__icmpzero
+	JR	NZ,L_46
+	LD	BC,1
+	LD	(IX+%FFFFFFFA),BC
+	JR	L_47
+L_46:
+	LD	BC,0
+	LD	(IX+%FFFFFFFA),BC
+L_47:
+	LD	HL,(IX+%FFFFFFFA)
+	CALL	__icmpzero
+	JR	Z,L_54
+;  299	            {
+;  300	                if( uxTopCoRoutineReadyPriority == 0 )
+.LINE 300
+
+	LD	HL,(_uxTopCoRoutineReadyPriority)
+	CALL	__icmpzero
+	JR	Z,L_56
+;  301	                {
+;  302	                    /* No more co-routines to check. */
+;  303	                    return;
+.LINE 303
+
+;  304	                }
+.LINE 304
+
+;  305	
+;  306	                --uxTopCoRoutineReadyPriority;
+.LINE 306
+
+	LD	IY,(_uxTopCoRoutineReadyPriority)
+	LEA	BC,IY+%FFFFFFFF
+	LD	(_uxTopCoRoutineReadyPriority),BC
+;  307	            }
+.LINE 307
+
+	JR	L_50
+L_54:
+;  308	
+;  309	            /* listGET_OWNER_OF_NEXT_ENTRY walks through the list, so the co-routines
+;  310	             * of the same priority get an equal share of the processor time. */
+;  311	            listGET_OWNER_OF_NEXT_ENTRY( pxCurrentCoRoutine, &( pxReadyCoRoutineLists[ uxTopCoRoutineReadyPriority ] ) );
+.LINE 311
+
+	LD	HL,(_uxTopCoRoutineReadyPriority)
+	ADD	HL,HL
+	ADD	HL,HL
+	ADD	HL,HL
+	ADD	HL,HL
+	LD	BC,_pxReadyCoRoutineLists
+	ADD	HL,BC
+	LD	(IX+%FFFFFFFD),HL
+	LD	IY,(IX+%FFFFFFFD)
+	LD	IY,(IY+%3)
+	LD	BC,(IY+%4)
+	LD	IY,(IX+%FFFFFFFD)
+	LD	(IY+%3),BC
+	LD	BC,(IY+%3)
+	LEA	HL,IY+%6
+	OR	A,A
+	SBC	HL,BC
+	JR	NZ,L_53
+	LD	IY,(IX+%FFFFFFFD)
+	LD	IY,(IY+%3)
+	LD	BC,(IY+%4)
+	LD	IY,(IX+%FFFFFFFD)
+	LD	(IY+%3),BC
+L_53:
+	LD	IY,(IX+%FFFFFFFD)
+	LD	IY,(IY+%3)
+	LD	BC,(IY+%A)
+	LD	(_pxCurrentCoRoutine),BC
+;  312	
+;  313	            /* Call the co-routine. */
+;  314	            ( pxCurrentCoRoutine->pxCoRoutineFunction )( pxCurrentCoRoutine, pxCurrentCoRoutine->uxIndex );
+.LINE 314
+
+	LD	IY,(_pxCurrentCoRoutine)
+	LD	DE,(IY+%0)
+	LD	IY,(_pxCurrentCoRoutine)
+	LD	BC,(IY+%26)
+	PUSH	BC
+	LD	BC,(_pxCurrentCoRoutine)
+	PUSH	BC
+	LD	IY,DE
+	CALL	__indcall
+	POP	BC
+	POP	BC
+;  315	        }
+;  316	    }
+L_56:
+.LINE 316
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _vCoRoutineSchedule ***************************
+;Name                         Addr/Register   Size   Type
+;_pxCurrentCoRoutine                 STATIC      3   variable
+;_uxTopCoRoutineReadyPriority        STATIC      3   variable
+;_pxReadyCoRoutineLists              STATIC     32   variable
+;_prvCheckDelayedList                IMPORT  -----   function
+;_prvCheckPendingReadyList           IMPORT  -----   function
+;_pxDelayedCoRoutineList             STATIC      3   variable
+;temp44                                IX-6      3   variable
+;pxConstList                           IX-3      3   variable
+
+
+; Stack Frame Size: 12 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "vCoRoutineSchedule",316,"_vCoRoutineSchedule"
+;  317	/*-----------------------------------------------------------*/
+;  318	
+;  319	    static void prvInitialiseCoRoutineLists( void )
+;  320	    {
+_prvInitialiseCoRoutineLists:
+.DEFINE "_prvInitialiseCoRoutineLists"
+
+.VALUE _prvInitialiseCoRoutineLists
+
+.CLASS 2
+
+.TYPE 65
+
+.ENDEF
+
+.BEGFUNC "prvInitialiseCoRoutineLists",320,"_prvInitialiseCoRoutineLists"
+
+.LINE 320
+
+.DEFINE "uxPriority"
+
+.CLASS 65
+
+.VALUE -3
+
+.TYPE 14
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+	PUSH	BC
+.ENDEF
+
+	JR	L_58
+;  321	        UBaseType_t uxPriority;
+;  322	
+;  323	        for( uxPriority = 0; uxPriority < configMAX_CO_ROUTINE_PRIORITIES; uxPriority++ )
+L_59:
+.LINE 323
+
+	LD	BC,2
+	LD	HL,(IX+%FFFFFFFD)
+	OR	A,A
+	SBC	HL,BC
+	JR	C,L_61
+	JR	L_62
+L_58:
+	LD	BC,0
+	LD	(IX+%FFFFFFFD),BC
+	JR	L_59
+L_61:
+;  324	        {
+;  325	            vListInitialise( ( List_t * ) &( pxReadyCoRoutineLists[ uxPriority ] ) );
+.LINE 325
+
+	LD	HL,(IX+%FFFFFFFD)
+	ADD	HL,HL
+	ADD	HL,HL
+	ADD	HL,HL
+	ADD	HL,HL
+	LD	BC,_pxReadyCoRoutineLists
+	ADD	HL,BC
+	PUSH	HL
+	CALL	_vListInitialise
+	POP	BC
+	LD	BC,(IX+%FFFFFFFD)
+	INC	BC
+	LD	(IX+%FFFFFFFD),BC
+;  326	        }
+.LINE 326
+
+	JR	L_59
+L_62:
+;  327	
+;  328	        vListInitialise( ( List_t * ) &xDelayedCoRoutineList1 );
+.LINE 328
+
+	LD	BC,_xDelayedCoRoutineList1
+	PUSH	BC
+	CALL	_vListInitialise
+	POP	BC
+;  329	        vListInitialise( ( List_t * ) &xDelayedCoRoutineList2 );
+.LINE 329
+
+	LD	BC,_xDelayedCoRoutineList2
+	PUSH	BC
+	CALL	_vListInitialise
+	POP	BC
+;  330	        vListInitialise( ( List_t * ) &xPendingReadyCoRoutineList );
+.LINE 330
+
+	LD	BC,_xPendingReadyCoRoutineList
+	PUSH	BC
+	CALL	_vListInitialise
+	POP	BC
+;  331	
+;  332	        /* Start with pxDelayedCoRoutineList using list1 and the
+;  333	         * pxOverflowDelayedCoRoutineList using list2. */
+;  334	        pxDelayedCoRoutineList = &xDelayedCoRoutineList1;
+.LINE 334
+
+	LD	BC,_xDelayedCoRoutineList1
+	LD	(_pxDelayedCoRoutineList),BC
+;  335	        pxOverflowDelayedCoRoutineList = &xDelayedCoRoutineList2;
+.LINE 335
+
+	LD	BC,_xDelayedCoRoutineList2
+	LD	(_pxOverflowDelayedCoRoutineList),BC
+;  336	    }
+.LINE 336
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _prvInitialiseCoRoutineLists ***************************
+;Name                         Addr/Register   Size   Type
+;_pxOverflowDelayedCoRoutineList      STATIC      3   variable
+;_pxDelayedCoRoutineList             STATIC      3   variable
+;_xPendingReadyCoRoutineList         STATIC     16   variable
+;_xDelayedCoRoutineList2             STATIC     16   variable
+;_xDelayedCoRoutineList1             STATIC     16   variable
+;_pxReadyCoRoutineLists              STATIC     32   variable
+;_vListInitialise                    IMPORT  -----   function
+;uxPriority                            IX-3      3   variable
+
+
+; Stack Frame Size: 9 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "prvInitialiseCoRoutineLists",336,"_prvInitialiseCoRoutineLists"
+;  337	/*-----------------------------------------------------------*/
+;  338	
+;  339	    BaseType_t xCoRoutineRemoveFromEventList( const List_t * pxEventList )
+;  340	    {
+_xCoRoutineRemoveFromEventList:
+.DEFINE "_xCoRoutineRemoveFromEventList"
+
+.VALUE _xCoRoutineRemoveFromEventList
+
+.CLASS 2
+
+.TYPE 68
+
+.ENDEF
+
+.BEGFUNC "xCoRoutineRemoveFromEventList",340,"_xCoRoutineRemoveFromEventList"
+
+.LINE 340
+
+.DEFINE "pxEventList"
+
+.CLASS 65
+
+.VALUE 6
+
+.TAG "xLIST"
+
+.TYPE 200
+
+.ENDEF
+
+.DEFINE "pxUnblockedCRCB"
+
+.CLASS 65
+
+.VALUE -3
+
+.TAG "corCoRoutineControlBlock"
+
+.TYPE 40
+
+.ENDEF
+
+.DEFINE "xReturn"
+
+.CLASS 65
+
+.VALUE -6
+
+.TYPE 4
+
+.ENDEF
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+	PUSH	BC
+	PUSH	BC
+;  341	        CRCB_t * pxUnblockedCRCB;
+;  342	        BaseType_t xReturn;
+;  343	
+;  344	        /* This function is called from within an interrupt.  It can only access
+;  345	         * event lists and the pending ready list.  This function assumes that a
+;  346	         * check has already been made to ensure pxEventList is not empty. */
+;  347	        pxUnblockedCRCB = ( CRCB_t * ) listGET_OWNER_OF_HEAD_ENTRY( pxEventList );
+.LINE 347
+
+	LD	IY,(IX+%6)
+	LD	IY,(IY+%A)
+	LD	BC,(IY+%A)
+	LD	(IX+%FFFFFFFD),BC
+;  348	        ( void ) uxListRemove( &( pxUnblockedCRCB->xEventListItem ) );
+.LINE 348
+
+	LD	IY,(IX+%FFFFFFFD)
+	PEA	IY+%13
+	CALL	_uxListRemove
+	POP	BC
+;  349	        vListInsertEnd( ( List_t * ) &( xPendingReadyCoRoutineList ), &( pxUnblockedCRCB->xEventListItem ) );
+.LINE 349
+
+	LD	IY,(IX+%FFFFFFFD)
+	PEA	IY+%13
+	LD	BC,_xPendingReadyCoRoutineList
+	PUSH	BC
+	CALL	_vListInsertEnd
+	POP	BC
+	POP	BC
+;  350	
+;  351	        if( pxUnblockedCRCB->uxPriority >= pxCurrentCoRoutine->uxPriority )
+.LINE 351
+
+	LD	IY,(_pxCurrentCoRoutine)
+	LD	BC,(IY+%23)
+	LD	IY,(IX+%FFFFFFFD)
+	LD	HL,(IY+%23)
+	OR	A,A
+	SBC	HL,BC
+	JR	C,L_65
+;  352	        {
+;  353	            xReturn = pdTRUE;
+.LINE 353
+
+	LD	BC,1
+	LD	(IX+%FFFFFFFA),BC
+;  354	        }
+;  355	        else
+.LINE 355
+
+	JR	L_66
+L_65:
+;  356	        {
+;  357	            xReturn = pdFALSE;
+.LINE 357
+
+	LD	BC,0
+	LD	(IX+%FFFFFFFA),BC
+;  358	        }
+L_66:
+.LINE 358
+
+;  359	
+;  360	        return xReturn;
+.LINE 360
+
+	LD	HL,(IX+%FFFFFFFA)
+;  361	    }
+.LINE 361
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _xCoRoutineRemoveFromEventList ***************************
+;Name                         Addr/Register   Size   Type
+;_pxCurrentCoRoutine                 STATIC      3   variable
+;_xPendingReadyCoRoutineList         STATIC     16   variable
+;_vListInsertEnd                     IMPORT  -----   function
+;_uxListRemove                       IMPORT  -----   function
+;xReturn                               IX-6      3   variable
+;pxUnblockedCRCB                       IX-3      3   variable
+;pxEventList                           IX+6      3   parameter
+
+
+; Stack Frame Size: 15 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "xCoRoutineRemoveFromEventList",361,"_xCoRoutineRemoveFromEventList"
+	XREF _xTaskGetTickCount:ROM
+	XREF _uxListRemove:ROM
+	XREF _vListInsertEnd:ROM
+	XREF _vListInsert:ROM
+	XREF _vListInitialiseItem:ROM
+	XREF _vListInitialise:ROM
+	XREF _pvPortMalloc:ROM
+	XREF __indcall:ROM
+	XREF __lcmpu:ROM
+	XREF __ladd:ROM
+	XREF __lsub:ROM
+	XREF __icmpzero:ROM
+	XREF __lcmpzero:ROM
+	XREF __ladd_b:ROM
+	XDEF _xCoRoutineRemoveFromEventList
+	XDEF _prvInitialiseCoRoutineLists
+	XDEF _vCoRoutineSchedule
+	XDEF _prvCheckDelayedList
+	XDEF _prvCheckPendingReadyList
+	XDEF _vCoRoutineAddToDelayedList
+	XDEF _xCoRoutineCreate
+	XDEF _xPassedTicks
+	XDEF _xLastTickCount
+	XDEF _xCoRoutineTickCount
+	XDEF _uxTopCoRoutineReadyPriority
+	XDEF _pxCurrentCoRoutine
+	XDEF _xPendingReadyCoRoutineList
+	XDEF _pxOverflowDelayedCoRoutineList
+	XDEF _pxDelayedCoRoutineList
+	XDEF _xDelayedCoRoutineList2
+	XDEF _xDelayedCoRoutineList1
+	XDEF _pxReadyCoRoutineLists
+	END

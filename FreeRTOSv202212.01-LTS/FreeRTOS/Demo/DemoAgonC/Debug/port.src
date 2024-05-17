@@ -1,0 +1,2749 @@
+; Zilog eZ80 ANSI C Compiler Release 3.4
+; -noglobalopt -nolocalcse -optsize -nomodsect -reduceopt
+; -nopadbranch -debug -peephole -const=ROM 
+	FILE	"..\..\..\Source\portable\ThirdParty\Community-Supported-Ports\ZDSII\eZ80AgonLight\port.c"
+	.assume ADL=1
+.DEBUG "C"
+	SEGMENT CODE
+.BEGREC "NONAME0",6
+.DEFINE "quot"
+.VALUE 0
+.CLASS 8
+.TYPE 4
+.ENDEF
+.DEFINE "rem"
+.VALUE 3
+.CLASS 8
+.TYPE 4
+.ENDEF
+.ENDREC "NONAME0"
+.BEGREC "NONAME1",8
+.DEFINE "quot"
+.VALUE 0
+.CLASS 8
+.TYPE 5
+.ENDEF
+.DEFINE "rem"
+.VALUE 4
+.CLASS 8
+.TYPE 5
+.ENDEF
+.ENDREC "NONAME1"
+.BEGREC "header",6
+.DEFINE "s"
+.VALUE 0
+.CLASS 11
+.TAG "NONAME2"
+.TYPE 8
+.ENDEF
+.DEFINE "x"
+.VALUE 0
+.CLASS 11
+.TYPE 2
+.ENDEF
+.ENDREC "header"
+.BEGREC "NONAME2",6
+.DEFINE "ptr"
+.VALUE 0
+.CLASS 8
+.TAG "header"
+.TYPE 40
+.ENDEF
+.DEFINE "size"
+.VALUE 3
+.CLASS 8
+.TYPE 14
+.ENDEF
+.ENDREC "NONAME2"
+.BEGREC "fmt_type",19
+.DEFINE "status"
+.VALUE 0
+.CLASS 8
+.TYPE 12
+.ENDEF
+.DEFINE "flags"
+.VALUE 1
+.CLASS 8
+.TYPE 12
+.ENDEF
+.DEFINE "size"
+.VALUE 2
+.CLASS 8
+.TYPE 2
+.ENDEF
+.DEFINE "chr"
+.VALUE 3
+.CLASS 8
+.TYPE 2
+.ENDEF
+.DEFINE "type"
+.VALUE 4
+.CLASS 8
+.TYPE 2
+.ENDEF
+.DEFINE "field_width"
+.VALUE 5
+.CLASS 8
+.TYPE 2
+.ENDEF
+.DEFINE "precision"
+.VALUE 6
+.CLASS 8
+.TYPE 2
+.ENDEF
+.DEFINE "set_begin"
+.VALUE 7
+.CLASS 8
+.TYPE 34
+.ENDEF
+.DEFINE "set_end"
+.VALUE 10
+.CLASS 8
+.TYPE 34
+.ENDEF
+.DEFINE "pad_whole"
+.VALUE 13
+.CLASS 8
+.TYPE 12
+.ENDEF
+.DEFINE "pad_pre_fract"
+.VALUE 14
+.CLASS 8
+.TYPE 12
+.ENDEF
+.DEFINE "pad_post_fract"
+.VALUE 15
+.CLASS 8
+.TYPE 12
+.ENDEF
+.DEFINE "pad_at"
+.VALUE 16
+.CLASS 8
+.TYPE 34
+.ENDEF
+.ENDREC "fmt_type"
+.BEGREC "flt_info",12
+.DEFINE "flags"
+.VALUE 0
+.CLASS 8
+.TYPE 12
+.ENDEF
+.DEFINE "exp"
+.VALUE 1
+.CLASS 8
+.TYPE 2
+.ENDEF
+.DEFINE "digits"
+.VALUE 2
+.CLASS 8
+.DIM 10
+.TYPE 108
+.ENDEF
+.ENDREC "flt_info"
+.BEGREC "HeapRegion",6
+.DEFINE "pucStartAddress"
+.VALUE 0
+.CLASS 8
+.TYPE 44
+.ENDEF
+.DEFINE "xSizeInBytes"
+.VALUE 3
+.CLASS 8
+.TYPE 14
+.ENDEF
+.ENDREC "HeapRegion"
+.BEGREC "xHeapStats",21
+.DEFINE "xAvailableHeapSpaceInBytes"
+.VALUE 0
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "xSizeOfLargestFreeBlockInBytes"
+.VALUE 3
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "xSizeOfSmallestFreeBlockInBytes"
+.VALUE 6
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "xNumberOfFreeBlocks"
+.VALUE 9
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "xMinimumEverFreeBytesRemaining"
+.VALUE 12
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "xNumberOfSuccessfulAllocations"
+.VALUE 15
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "xNumberOfSuccessfulFrees"
+.VALUE 18
+.CLASS 8
+.TYPE 14
+.ENDEF
+.ENDREC "xHeapStats"
+.BEGREC "xSTATIC_LIST_ITEM",16
+.DEFINE "xDummy2"
+.VALUE 0
+.CLASS 8
+.TYPE 15
+.ENDEF
+.DEFINE "pvDummy3"
+.VALUE 4
+.CLASS 8
+.DIM 4
+.TYPE 353
+.ENDEF
+.ENDREC "xSTATIC_LIST_ITEM"
+.BEGREC "xSTATIC_MINI_LIST_ITEM",10
+.DEFINE "xDummy2"
+.VALUE 0
+.CLASS 8
+.TYPE 15
+.ENDEF
+.DEFINE "pvDummy3"
+.VALUE 4
+.CLASS 8
+.DIM 2
+.TYPE 353
+.ENDEF
+.ENDREC "xSTATIC_MINI_LIST_ITEM"
+.BEGREC "xSTATIC_LIST",16
+.DEFINE "uxDummy2"
+.VALUE 0
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "pvDummy3"
+.VALUE 3
+.CLASS 8
+.TYPE 33
+.ENDEF
+.DEFINE "xDummy4"
+.VALUE 6
+.CLASS 8
+.TAG "xSTATIC_MINI_LIST_ITEM"
+.TYPE 8
+.ENDEF
+.ENDREC "xSTATIC_LIST"
+.BEGREC "xSTATIC_TCB",69
+.DEFINE "pxDummy1"
+.VALUE 0
+.CLASS 8
+.TYPE 33
+.ENDEF
+.DEFINE "xDummy3"
+.VALUE 3
+.CLASS 8
+.DIM 2
+.TAG "xSTATIC_LIST_ITEM"
+.TYPE 104
+.ENDEF
+.DEFINE "uxDummy5"
+.VALUE 35
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "pxDummy6"
+.VALUE 38
+.CLASS 8
+.TYPE 33
+.ENDEF
+.DEFINE "ucDummy7"
+.VALUE 41
+.CLASS 8
+.DIM 16
+.TYPE 108
+.ENDEF
+.DEFINE "uxDummy12"
+.VALUE 57
+.CLASS 8
+.DIM 2
+.TYPE 110
+.ENDEF
+.DEFINE "ulDummy18"
+.VALUE 63
+.CLASS 8
+.DIM 1
+.TYPE 111
+.ENDEF
+.DEFINE "ucDummy19"
+.VALUE 67
+.CLASS 8
+.DIM 1
+.TYPE 108
+.ENDEF
+.DEFINE "ucDummy21"
+.VALUE 68
+.CLASS 8
+.TYPE 12
+.ENDEF
+.ENDREC "xSTATIC_TCB"
+.BEGREC "xSTATIC_QUEUE",55
+.DEFINE "pvDummy1"
+.VALUE 0
+.CLASS 8
+.DIM 3
+.TYPE 353
+.ENDEF
+.DEFINE "u"
+.VALUE 9
+.CLASS 8
+.TAG "NONAME3"
+.TYPE 8
+.ENDEF
+.DEFINE "xDummy3"
+.VALUE 12
+.CLASS 8
+.DIM 2
+.TAG "xSTATIC_LIST"
+.TYPE 104
+.ENDEF
+.DEFINE "uxDummy4"
+.VALUE 44
+.CLASS 8
+.DIM 3
+.TYPE 110
+.ENDEF
+.DEFINE "ucDummy5"
+.VALUE 53
+.CLASS 8
+.DIM 2
+.TYPE 108
+.ENDEF
+.ENDREC "xSTATIC_QUEUE"
+.BEGREC "NONAME3",3
+.DEFINE "pvDummy2"
+.VALUE 0
+.CLASS 11
+.TYPE 33
+.ENDEF
+.DEFINE "uxDummy2"
+.VALUE 0
+.CLASS 11
+.TYPE 14
+.ENDEF
+.ENDREC "NONAME3"
+.BEGREC "xSTATIC_EVENT_GROUP",20
+.DEFINE "xDummy1"
+.VALUE 0
+.CLASS 8
+.TYPE 15
+.ENDEF
+.DEFINE "xDummy2"
+.VALUE 4
+.CLASS 8
+.TAG "xSTATIC_LIST"
+.TYPE 8
+.ENDEF
+.ENDREC "xSTATIC_EVENT_GROUP"
+.BEGREC "xSTATIC_TIMER",30
+.DEFINE "pvDummy1"
+.VALUE 0
+.CLASS 8
+.TYPE 33
+.ENDEF
+.DEFINE "xDummy2"
+.VALUE 3
+.CLASS 8
+.TAG "xSTATIC_LIST_ITEM"
+.TYPE 8
+.ENDEF
+.DEFINE "xDummy3"
+.VALUE 19
+.CLASS 8
+.TYPE 15
+.ENDEF
+.DEFINE "pvDummy5"
+.VALUE 23
+.CLASS 8
+.TYPE 33
+.ENDEF
+.DEFINE "pvDummy6"
+.VALUE 26
+.CLASS 8
+.TYPE 545
+.ENDEF
+.DEFINE "ucDummy8"
+.VALUE 29
+.CLASS 8
+.TYPE 12
+.ENDEF
+.ENDREC "xSTATIC_TIMER"
+.BEGREC "xSTATIC_STREAM_BUFFER",22
+.DEFINE "uxDummy1"
+.VALUE 0
+.CLASS 8
+.DIM 4
+.TYPE 110
+.ENDEF
+.DEFINE "pvDummy2"
+.VALUE 12
+.CLASS 8
+.DIM 3
+.TYPE 353
+.ENDEF
+.DEFINE "ucDummy3"
+.VALUE 21
+.CLASS 8
+.TYPE 12
+.ENDEF
+.ENDREC "xSTATIC_STREAM_BUFFER"
+.BEGREC "xLIST_ITEM",16
+.DEFINE "xItemValue"
+.VALUE 0
+.CLASS 8
+.TYPE 15
+.ENDEF
+.DEFINE "pxNext"
+.VALUE 4
+.CLASS 8
+.TAG "xLIST_ITEM"
+.TYPE 40
+.ENDEF
+.DEFINE "pxPrevious"
+.VALUE 7
+.CLASS 8
+.TAG "xLIST_ITEM"
+.TYPE 40
+.ENDEF
+.DEFINE "pvOwner"
+.VALUE 10
+.CLASS 8
+.TYPE 33
+.ENDEF
+.DEFINE "pvContainer"
+.VALUE 13
+.CLASS 8
+.TAG "xLIST"
+.TYPE 40
+.ENDEF
+.ENDREC "xLIST_ITEM"
+.BEGREC "xMINI_LIST_ITEM",10
+.DEFINE "xItemValue"
+.VALUE 0
+.CLASS 8
+.TYPE 15
+.ENDEF
+.DEFINE "pxNext"
+.VALUE 4
+.CLASS 8
+.TAG "xLIST_ITEM"
+.TYPE 40
+.ENDEF
+.DEFINE "pxPrevious"
+.VALUE 7
+.CLASS 8
+.TAG "xLIST_ITEM"
+.TYPE 40
+.ENDEF
+.ENDREC "xMINI_LIST_ITEM"
+.BEGREC "xLIST",16
+.DEFINE "uxNumberOfItems"
+.VALUE 0
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "pxIndex"
+.VALUE 3
+.CLASS 8
+.TAG "xLIST_ITEM"
+.TYPE 40
+.ENDEF
+.DEFINE "xListEnd"
+.VALUE 6
+.CLASS 8
+.TAG "xMINI_LIST_ITEM"
+.TYPE 8
+.ENDEF
+.ENDREC "xLIST"
+.BEGREC "xTIME_OUT",7
+.DEFINE "xOverflowCount"
+.VALUE 0
+.CLASS 8
+.TYPE 4
+.ENDEF
+.DEFINE "xTimeOnEntering"
+.VALUE 3
+.CLASS 8
+.TYPE 15
+.ENDEF
+.ENDREC "xTIME_OUT"
+.BEGREC "xMEMORY_REGION",11
+.DEFINE "pvBaseAddress"
+.VALUE 0
+.CLASS 8
+.TYPE 33
+.ENDEF
+.DEFINE "ulLengthInBytes"
+.VALUE 3
+.CLASS 8
+.TYPE 15
+.ENDEF
+.DEFINE "ulParameters"
+.VALUE 7
+.CLASS 8
+.TYPE 15
+.ENDEF
+.ENDREC "xMEMORY_REGION"
+.BEGREC "xTASK_PARAMETERS",29
+.DEFINE "pvTaskCode"
+.VALUE 0
+.CLASS 8
+.TYPE 545
+.ENDEF
+.DEFINE "pcName"
+.VALUE 3
+.CLASS 8
+.TYPE 194
+.ENDEF
+.DEFINE "usStackDepth"
+.VALUE 6
+.CLASS 8
+.TYPE 4
+.ENDEF
+.DEFINE "pvParameters"
+.VALUE 9
+.CLASS 8
+.TYPE 33
+.ENDEF
+.DEFINE "uxPriority"
+.VALUE 12
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "puxStackBuffer"
+.VALUE 15
+.CLASS 8
+.TYPE 46
+.ENDEF
+.DEFINE "xRegions"
+.VALUE 18
+.CLASS 8
+.DIM 1
+.TAG "xMEMORY_REGION"
+.TYPE 104
+.ENDEF
+.ENDREC "xTASK_PARAMETERS"
+.BEGREC "xTASK_STATUS",28
+.DEFINE "xHandle"
+.VALUE 0
+.CLASS 8
+.TAG "~tag"
+.TYPE 40
+.ENDEF
+.DEFINE "pcTaskName"
+.VALUE 3
+.CLASS 8
+.TYPE 194
+.ENDEF
+.DEFINE "xTaskNumber"
+.VALUE 6
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "eCurrentState"
+.VALUE 9
+.CLASS 8
+.TYPE 4
+.ENDEF
+.DEFINE "uxCurrentPriority"
+.VALUE 12
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "uxBasePriority"
+.VALUE 15
+.CLASS 8
+.TYPE 14
+.ENDEF
+.DEFINE "ulRunTimeCounter"
+.VALUE 18
+.CLASS 8
+.TYPE 15
+.ENDEF
+.DEFINE "pxStackBase"
+.VALUE 22
+.CLASS 8
+.TYPE 46
+.ENDEF
+.DEFINE "usStackHighWaterMark"
+.VALUE 25
+.CLASS 8
+.TYPE 4
+.ENDEF
+.ENDREC "xTASK_STATUS"
+	SEGMENT DATA
+_portMOSMutex:
+	DW24	0
+.DEFINE "portMOSMutex"
+.ALIAS "_portMOSMutex"
+.CLASS 69
+.VALUE _portMOSMutex
+.TAG "~tag"
+.TYPE 40
+.ENDEF
+_portPrevprev:
+	DW24	0
+.DEFINE "portPrevprev"
+.ALIAS "_portPrevprev"
+.CLASS 69
+.VALUE _portPrevprev
+.TYPE 545
+.ENDEF
+_portTmrUsed:
+	DW	65535
+	DB	255
+.DEFINE "portTmrUsed"
+.ALIAS "_portTmrUsed"
+.CLASS 69
+.VALUE _portTmrUsed
+.TYPE 4
+.ENDEF
+;    1	/*
+;    2	 * FreeRTOS Kernel V10.5.1
+;    3	 * Copyright (C) 2024 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
+;    4	 *
+;    5	 * SPDX-License-Identifier: MIT
+;    6	 *
+;    7	 * Permission is hereby granted, free of charge, to any person obtaining a copy of
+;    8	 * this software and associated documentation files (the "Software"), to deal in
+;    9	 * the Software without restriction, including without limitation the rights to
+;   10	 * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+;   11	 * the Software, and to permit persons to whom the Software is furnished to do so,
+;   12	 * subject to the following conditions:
+;   13	 *
+;   14	 * The above copyright notice and this permission notice shall be included in all
+;   15	 * copies or substantial portions of the Software.
+;   16	 *
+;   17	 * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+;   18	 * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+;   19	 * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+;   20	 * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+;   21	 * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+;   22	 * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+;   23	 *
+;   24	 * https://www.FreeRTOS.org
+;   25	 * https://github.com/FreeRTOS
+;   26	 *
+;   27	 *  Please ensure to read the configuration and relevant port sections of the
+;   28	 *  online documentation.
+;   29	 *
+;   30	 *  http://www.FreeRTOS.org - Documentation, latest information, license and
+;   31	 *  contact details.
+;   32	 *
+;   33	 * port.c for Agon Light
+;   34	 *
+;   35	 * Evolved from the earlier eZ80 port by Marcos A. Pereira around 2008. 
+;   36	 * This was updated by Jean-Michel Roux prior to 2010. (I think Roux modified 
+;   37	 * portENTER/EXIT_CRITICAL( ) and portSAVE_CONTEXT( ) to test the PIT state, 
+;   38	 * specifically for the eZ80F91. That needed removal for the eZ80F92.)
+;   39	 * Ported to Agon Light by Julian Rose in 2024, with copyright made over to 
+;   40	 * Amazon Web Services above for FreeRTOS version 10.5.
+;   41	 *
+;   42	 * Port specific definitions.  
+;   43	 * Target:  Agon Light (eZ80)
+;   44	 * Compiler: Zilog eZ80 ANSI C Compiler Version 3.4 (19101101) 
+;   45	 *           ZDSII in ADL mode
+;   46	 *
+;   47	 * The functions in this file configure the FreeRTOS portable code
+;   48	 * for Agon Light (and comptaibles) and the ZDSII compiler
+;   49	 * Zilog eZ80 ANSI C Compiler Version 3.4 (19101101).
+;   50	 *
+;   51	 * These functions should not normally be application-user altered.
+;   52	*/
+;   53	
+;   54	#include <ez80.h>
+;   55	/* Assigns a service routine to an interrupt vector */
+;   56	void *_set_vector_mos( unsigned int, void ( * )( void ));
+;   57	
+;   58	#include <stdlib.h>
+;   59	#if defined( _DEBUG )
+;   60	#	include <stdio.h>
+;   61	#endif
+;   62	
+;   63	#include "FreeRTOS.h"
+;   64	#include "task.h"
+;   65	#include "semphr.h"
+;   66	#include "portmacro.h"
+;   67	
+;   68	
+;   69	/*-----------------------------------------------------------*/
+;   70	
+;   71	/* We require the address of the (tasks.c) pxCurrentTCB variable, 
+;   72	   but don't need to know its type. */
+;   73	typedef void tskTCB;
+;   74	extern volatile tskTCB * volatile pxCurrentTCB;
+;   75	
+;   76	/* we use a mutex to implement critical regions */
+;   77	static SemaphoreHandle_t portMOSMutex = NULL;
+;   78	
+;   79	/* we keep track of our installed ISR, to remove it in case of exit */
+;   80	static void( *portPrevprev )( void ) = NULL;
+;   81	static int portTmrUsed = -1;
+	SEGMENT CODE
+;   82	
+;   83	
+;   84	/*-- Private functions --------------------------------------*/
+;   85	static BaseType_t prvSetupTimerInterrupt( void );
+;   86	static void portTaskExit( void );
+;   87	static void portTeardownTimerInterrupt( void );
+;   88	
+;   89	
+;   90	/*-- Function definitions -----------------------------------*/
+;   91	/*
+;   92	 * Macro to save all the general purpose registers, 
+;   93	 *  then save the stack pointer into the TCB.
+;   94	 */
+;   95	#define portSAVE_CONTEXT( )                 \
+;   96	    asm( "\t xref _pxCurrentTCB         " );\
+;   97	    asm( "\t di                         " );\
+;   98	    asm( "\t push af                    " );\
+;   99	    asm( "\t push bc                    " );\
+;  100	    asm( "\t push de                    " );\
+;  101	    asm( "\t push hl                    " );\
+;  102	    asm( "\t push iy                    " );\
+;  103	    asm( "\t ex   af,   af'             " );\
+;  104	    asm( "\t exx                        " );\
+;  105	    asm( "\t push af                    " );\
+;  106	    asm( "\t push bc                    " );\
+;  107	    asm( "\t push de                    " );\
+;  108	    asm( "\t push hl                    " );\
+;  109	    asm( "\t ld   ix,   0               " );\
+;  110	    asm( "\t add  ix,   sp              " );\
+;  111	    asm( "\t ld   hl,   (_pxCurrentTCB) " );\
+;  112	    asm( "\t ld   (hl), ix              " );
+;  113	
+;  114	/*
+;  115	 * Macro to restore the stack pointer from the new TCB,
+;  116	 *  then restore all the general purpose registers, 
+;  117	 *  Exact opposite of SAVE CONTEXT.
+;  118	 */
+;  119	#define portRESTORE_CONTEXT( )           \
+;  120		asm( "\t xref _pxCurrentTCB      " );\
+;  121		asm( "\t ld  hl, (_pxCurrentTCB) " );\
+;  122		asm( "\t ld  hl, (hl)            " );\
+;  123		asm( "\t ld  sp, hl              " );\
+;  124		asm( "\t pop hl                  " );\
+;  125		asm( "\t pop de                  " );\
+;  126		asm( "\t pop bc                  " );\
+;  127		asm( "\t pop af                  " );\
+;  128		asm( "\t exx                     " );\
+;  129		asm( "\t ex  af, af'             " );\
+;  130		asm( "\t pop iy                  " );\
+;  131		asm( "\t pop hl                  " );\
+;  132		asm( "\t pop de                  " );\
+;  133		asm( "\t pop bc                  " );\
+;  134		asm( "\t pop af                  " );
+;  135	/*-----------------------------------------------------------*/
+;  136	
+;  137	/* Create critical region mutex to guard MOS accesses
+;  138	 * We don't use portENTER_CRITICAL and thereby disable interrupts,
+;  139	 * because the eZ80 talks to the ESP32 via a serial link and this
+;  140	 * may use interrupts. Instead we use a semaphore.
+;  141	 * And this is only necessary if configUSE_PREEMPTION is enabled,
+;  142	 * otherwise tasks will not swap each other out during MOS calls.
+;  143	*/
+;  144	static BaseType_t portCreateMOSMutex( )
+;  145	{
+_portCreateMOSMutex:
+.DEFINE "_portCreateMOSMutex"
+
+.VALUE _portCreateMOSMutex
+
+.CLASS 3
+
+.TYPE 68
+
+.ENDEF
+
+.BEGFUNC "portCreateMOSMutex",145,"_portCreateMOSMutex"
+
+.LINE 145
+
+.DEFINE "r"
+
+.CLASS 65
+
+.VALUE -3
+
+.TYPE 4
+
+.ENDEF
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+	PUSH	BC
+;  146		BaseType_t r = pdPASS;
+.LINE 146
+
+	LD	BC,1
+	LD	(IX+%FFFFFFFD),BC
+;  147		
+;  148	#	if defined( _DEBUG )&& 0
+;  149			( void )printf( "%s : %d\r\n", "port.c", __LINE__ );
+;  150	#	endif
+;  151	
+;  152	#	if( 1 == configUSE_PREEMPTION )	
+;  153		{
+;  154			portMOSMutex = xSemaphoreCreateMutex( );
+;  155			if( NULL == portMOSMutex )
+;  156			{
+;  157	#			if defined( _DEBUG )
+;  158					( void )printf( "%s : %d\r\n", "port.c", __LINE__ );
+;  159	#			endif
+;  160				r = pdFAIL;
+;  161			}
+;  162			else
+;  163			{
+;  164				/* make the semaphore initially available */
+;  165				xSemaphoreGive( portMOSMutex );
+;  166			}
+;  167		}
+;  168	#	endif /* configUSE_PREEMPTION */
+;  169	
+;  170		return( r );
+.LINE 170
+
+	LD	HL,(IX+%FFFFFFFD)
+;  171	}
+.LINE 171
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _portCreateMOSMutex ***************************
+;Name                         Addr/Register   Size   Type
+;r                                     IX-3      3   variable
+
+
+; Stack Frame Size: 9 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "portCreateMOSMutex",171,"_portCreateMOSMutex"
+;  172	
+;  173	/* Enter critical region for MOS
+;  174	 *   We use a dedicated semaphore for MOS critical regions.
+;  175	 *   Only necessary if configUSE_PREEMPTION is enabled, otherwise access to
+;  176	 *   MOS will not be interrupted by another task.
+;  177	 *   Note: Setting timeout to portMAX_DELAY does not suspend the calling task 
+;  178	 *   as described in https://www.freertos.org/a00122.html in FreeRTOS version 
+;  179	 *   10.5.1 . So we test the semaphore with time 0 and suspend ourselves if 
+;  180	 *   we fail to take it.
+;  181	*/
+;  182	void portEnterMOS( void )
+;  183	{
+_portEnterMOS:
+.DEFINE "_portEnterMOS"
+
+.VALUE _portEnterMOS
+
+.CLASS 2
+
+.TYPE 65
+
+.ENDEF
+
+.BEGFUNC "portEnterMOS",183,"_portEnterMOS"
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+;  184	#	if defined( _DEBUG )&& 0
+;  185			( void )printf( "%s : %d\r\n", "port.c", __LINE__ );
+;  186	#	endif
+;  187	
+;  188	#	if( 1 == configUSE_PREEMPTION )
+;  189		{
+;  190			/* suspend until semaphore can be taken */
+;  191			while( pdTRUE != xSemaphoreTake( portMOSMutex, 0 ))
+;  192			{
+;  193				/* Some other task has the mutex.
+;  194				   If we use vTaskSuspend then the tick ISR will have
+;  195				   to call vTaskResume. Easier to use the delayed list.
+;  196				   Accessing MOS, after all, is not a real-time (fast)
+;  197				   operation.
+;  198				*/
+;  199				vTaskDelay( 1 );
+;  200			}
+;  201		}
+;  202	#	endif /* configUSE_PREEMPTION */
+;  203	
+;  204	#	if defined( _DEBUG )&& 0
+;  205			( void )printf( "%s : %d\r\n", "port.c", __LINE__ );
+;  206	#	endif
+;  207	}
+.LINE 207
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _portEnterMOS ***************************
+;Name                         Addr/Register   Size   Type
+
+
+; Stack Frame Size: 6 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "portEnterMOS",207,"_portEnterMOS"
+;  208	
+;  209	
+;  210	/* Exit critical region for MOS
+;  211	*/
+;  212	void portExitMOS( void )
+;  213	{
+_portExitMOS:
+.DEFINE "_portExitMOS"
+
+.VALUE _portExitMOS
+
+.CLASS 2
+
+.TYPE 65
+
+.ENDEF
+
+.BEGFUNC "portExitMOS",213,"_portExitMOS"
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+;  214	#	if defined( _DEBUG )&& 0
+;  215			( void )printf( "%s : %d\r\n", "port.c", __LINE__ );
+;  216	#	endif
+;  217		
+;  218	#	if( 1 == configUSE_PREEMPTION )
+;  219		{
+;  220			xSemaphoreGive( portMOSMutex );
+;  221		}
+;  222	#	endif /* configUSE_PREEMPTION */
+;  223		
+;  224	#	if defined( _DEBUG )&& 0
+;  225			( void )printf( "%s : %d\r\n", "port.c", __LINE__ );
+;  226	#	endif
+;  227	}
+.LINE 227
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _portExitMOS ***************************
+;Name                         Addr/Register   Size   Type
+
+
+; Stack Frame Size: 6 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "portExitMOS",227,"_portExitMOS"
+;  228	/*-----------------------------------------------------------*/
+;  229	
+;  230	/* Initialse the stack for a task
+;  231	*/
+;  232	portSTACK_TYPE *pxPortInitialiseStack( 
+;  233		portSTACK_TYPE *pxTopOfStack, 
+;  234		pdTASK_CODE pxCode, 
+;  235		void *pvParameters 
+;  236		)
+;  237	{
+_pxPortInitialiseStack:
+.DEFINE "_pxPortInitialiseStack"
+
+.VALUE _pxPortInitialiseStack
+
+.CLASS 2
+
+.TYPE 334
+
+.ENDEF
+
+.BEGFUNC "pxPortInitialiseStack",237,"_pxPortInitialiseStack"
+
+.LINE 237
+
+.DEFINE "pxTopOfStack"
+
+.CLASS 65
+
+.VALUE 6
+
+.TYPE 46
+
+.ENDEF
+
+.DEFINE "pxCode"
+
+.CLASS 65
+
+.VALUE 9
+
+.TYPE 545
+
+.ENDEF
+
+.DEFINE "pvParameters"
+
+.CLASS 65
+
+.VALUE 12
+
+.TYPE 33
+
+.ENDEF
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+	LEA	HL,IX+%FFFFFFDC
+	LD	SP,HL
+;  238	#	if defined( _DEBUG )&& 0
+;  239			( void )printf( "%s : %d\r\n", "port.c", __LINE__ );
+;  240	#	endif
+;  241		
+;  242	    /* Place the parameter on the stack in the expected location. */
+;  243	    *pxTopOfStack-- =( portSTACK_TYPE )pvParameters;
+.LINE 243
+
+	LD	BC,(IX+%6)
+	LD	(IX+%FFFFFFFD),BC
+	LD	HL,BC
+	LD	BC,(IX+%C)
+	LD	(HL),BC
+	LD	IY,(IX+%6)
+	LEA	IY,IY+%FFFFFFFD
+	LD	(IX+%6),IY
+;  244	
+;  245	    /* Place the task return address on stack. Not used*/
+;  246	    *pxTopOfStack-- =( portSTACK_TYPE )&portTaskExit;
+.LINE 246
+
+	LD	BC,(IX+%6)
+	LD	(IX+%FFFFFFFA),BC
+	LD	HL,BC
+	LD	BC,_portTaskExit
+	LD	(HL),BC
+	LD	IY,(IX+%6)
+	LEA	IY,IY+%FFFFFFFD
+	LD	(IX+%6),IY
+;  247	
+;  248	    /* The start of the task code will be popped off the stack last, so place
+;  249	    it on first. */
+;  250	    *pxTopOfStack-- =( portSTACK_TYPE )pxCode;
+.LINE 250
+
+	LD	BC,(IX+%6)
+	LD	(IX+%FFFFFFF7),BC
+	LD	HL,BC
+	LD	BC,(IX+%9)
+	LD	(HL),BC
+	LD	IY,(IX+%6)
+	LEA	IY,IY+%FFFFFFFD
+	LD	(IX+%6),IY
+;  251	
+;  252	    /* ZDS II Stack Frame saved by the compiler (IX Register). */
+;  253	    *pxTopOfStack =( portSTACK_TYPE )pxTopOfStack--;  /* IX  */
+.LINE 253
+
+	LD	BC,(IX+%6)
+	LD	(IX+%FFFFFFF4),BC
+	LD	HL,(IX+%6)
+	LD	BC,(IX+%FFFFFFF4)
+	LD	(HL),BC
+	LD	IY,(IX+%6)
+	LEA	IY,IY+%FFFFFFFD
+	LD	(IX+%6),IY
+;  254	
+;  255	    /* Now load the registers to create a dummy frame
+;  256		   (refer to portSAVE_CONTEXT). */
+;  257	    *pxTopOfStack-- =( portSTACK_TYPE )0xAFAFAF;  /* AF  */
+.LINE 257
+
+	LD	BC,(IX+%6)
+	LD	(IX+%FFFFFFF1),BC
+	LD	HL,BC
+	LD	BC,11513775
+	LD	(HL),BC
+	LD	IY,(IX+%6)
+	LEA	IY,IY+%FFFFFFFD
+	LD	(IX+%6),IY
+;  258	    *pxTopOfStack-- =( portSTACK_TYPE )0xBCBCBC;  /* BC  */
+.LINE 258
+
+	LD	BC,(IX+%6)
+	LD	(IX+%FFFFFFEE),BC
+	LD	HL,BC
+	LD	BC,12369084
+	LD	(HL),BC
+	LD	IY,(IX+%6)
+	LEA	IY,IY+%FFFFFFFD
+	LD	(IX+%6),IY
+;  259	    *pxTopOfStack-- =( portSTACK_TYPE )0xDEDEDE;  /* DE  */
+.LINE 259
+
+	LD	BC,(IX+%6)
+	LD	(IX+%FFFFFFEB),BC
+	LD	HL,BC
+	LD	BC,14606046
+	LD	(HL),BC
+	LD	IY,(IX+%6)
+	LEA	IY,IY+%FFFFFFFD
+	LD	(IX+%6),IY
+;  260	    *pxTopOfStack-- =( portSTACK_TYPE )0xEFEFEF;  /* HL  */
+.LINE 260
+
+	LD	BC,(IX+%6)
+	LD	(IX+%FFFFFFE8),BC
+	LD	HL,BC
+	LD	BC,15724527
+	LD	(HL),BC
+	LD	IY,(IX+%6)
+	LEA	IY,IY+%FFFFFFFD
+	LD	(IX+%6),IY
+;  261	    *pxTopOfStack-- =( portSTACK_TYPE )0x222222;  /* IY  */
+.LINE 261
+
+	LD	BC,(IX+%6)
+	LD	(IX+%FFFFFFE5),BC
+	LD	HL,BC
+	LD	BC,2236962
+	LD	(HL),BC
+	LD	IY,(IX+%6)
+	LEA	IY,IY+%FFFFFFFD
+	LD	(IX+%6),IY
+;  262	    *pxTopOfStack-- =( portSTACK_TYPE )0xFAFAFA;  /* AF' */
+.LINE 262
+
+	LD	BC,(IX+%6)
+	LD	(IX+%FFFFFFE2),BC
+	LD	HL,BC
+	LD	BC,16448250
+	LD	(HL),BC
+	LD	IY,(IX+%6)
+	LEA	IY,IY+%FFFFFFFD
+	LD	(IX+%6),IY
+;  263	    *pxTopOfStack-- =( portSTACK_TYPE )0xCBCBCB;  /* BC' */
+.LINE 263
+
+	LD	BC,(IX+%6)
+	LD	(IX+%FFFFFFDF),BC
+	LD	HL,BC
+	LD	BC,13355979
+	LD	(HL),BC
+	LD	IY,(IX+%6)
+	LEA	IY,IY+%FFFFFFFD
+	LD	(IX+%6),IY
+;  264	    *pxTopOfStack-- =( portSTACK_TYPE )0xEDEDED;  /* DE' */
+.LINE 264
+
+	LD	BC,(IX+%6)
+	LD	(IX+%FFFFFFDC),BC
+	LD	HL,BC
+	LD	BC,15592941
+	LD	(HL),BC
+	LD	IY,(IX+%6)
+	LEA	IY,IY+%FFFFFFFD
+	LD	(IX+%6),IY
+;  265	    *pxTopOfStack   =( portSTACK_TYPE )0xFEFEFE;  /* HL' */
+.LINE 265
+
+	LD	HL,(IX+%6)
+	LD	BC,16711422
+	LD	(HL),BC
+;  266	
+;  267	    return( pxTopOfStack );
+.LINE 267
+
+	LD	HL,(IX+%6)
+;  268	}
+.LINE 268
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _pxPortInitialiseStack ***************************
+;Name                         Addr/Register   Size   Type
+;_portTaskExit                       STATIC  -----   function
+;pvParameters                         IX+12      3   parameter
+;pxCode                                IX+9      3   parameter
+;pxTopOfStack                          IX+6      3   parameter
+
+
+; Stack Frame Size: 51 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "pxPortInitialiseStack",268,"_pxPortInitialiseStack"
+;  269	/*-----------------------------------------------------------*/
+;  270	
+;  271	/* Start the FreeRTOS scheduler
+;  272	 *    on success this routine will never return, rather tasks will run
+;  273	 *    return pdTRUE if we fell out of the scheduler
+;  274	 *    return pdFALSE if we failed to allocate resources
+;  275	*/
+;  276	portBASE_TYPE xPortStartScheduler( void )
+;  277	{
+_xPortStartScheduler:
+.DEFINE "_xPortStartScheduler"
+
+.VALUE _xPortStartScheduler
+
+.CLASS 2
+
+.TYPE 68
+
+.ENDEF
+
+.BEGFUNC "xPortStartScheduler",277,"_xPortStartScheduler"
+
+.LINE 277
+
+.DEFINE "ret"
+
+.CLASS 65
+
+.VALUE -3
+
+.TYPE 4
+
+.ENDEF
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+	PUSH	BC
+;  278		portBASE_TYPE ret = pdFALSE;
+.LINE 278
+
+	LD	BC,0
+	LD	(IX+%FFFFFFFD),BC
+;  279	
+;  280	    /* Setup the hardware to generate the tick. */
+;  281	#	if defined( _DEBUG )&& 0
+;  282			( void )printf( "%s : %d\r\n", "port.c", __LINE__ );
+;  283	#	endif
+;  284	
+;  285	    if( pdPASS == prvSetupTimerInterrupt( ))
+.LINE 285
+
+	CALL	_prvSetupTimerInterrupt
+	LD	BC,1
+	OR	A,A
+	SBC	HL,BC
+	JR	NZ,L_19
+;  286		{
+;  287	#		if defined( _DEBUG )&& 0
+;  288				( void )printf( "%s : %d\r\n", "port.c", __LINE__ );
+;  289	#		endif
+;  290	
+;  291			if( pdPASS == portCreateMOSMutex( ))
+.LINE 291
+
+	CALL	_portCreateMOSMutex
+	LD	BC,1
+	OR	A,A
+	SBC	HL,BC
+	JR	NZ,L_17
+;  292			{
+;  293	#			if defined( _DEBUG )&& 0
+;  294					( void )printf( "%s : %d\r\n", "port.c", __LINE__ );
+;  295	#			endif
+;  296	
+;  297				/* start running the tasks */
+;  298				portRESTORE_CONTEXT( );
+.LINE 298
+
+	 xref _pxCurrentTCB      
+	 ld  hl, (_pxCurrentTCB) 
+	 ld  hl, (hl)            
+	 ld  sp, hl              
+	 pop hl                  
+	 pop de                  
+	 pop bc                  
+	 pop af                  
+	 exx                     
+	 ex  af, af'             
+	 pop iy                  
+	 pop hl                  
+	 pop de                  
+	 pop bc                  
+	 pop af                  
+;  299	
+;  300				asm( "\t pop    ix    ; postlog         " );
+.LINE 300
+
+	 pop    ix    ; postlog         
+;  301				asm( "\t ei           ; enable interrupts to start tick ISR " );
+.LINE 301
+
+	 ei           ; enable interrupts to start tick ISR 
+;  302				asm( "\t ret          ; ret into Task   " );
+.LINE 302
+
+	 ret          ; ret into Task   
+;  303				asm( "                ; postlog below not followed " );
+.LINE 303
+
+                ; postlog below not followed 
+;  304				/* exit from portRESTORE_CONTEXT should be into one of the Tasks */
+;  305	
+;  306				/* we shouldn't get here: something has gone wrong */
+;  307	#			if defined( _DEBUG )
+;  308					( void )printf( "%s : %d : fell out of scheduler\r\n", 
+;  309									"port.c", __LINE__ );
+.LINE 309
+
+	LD	BC,309
+	PUSH	BC
+	LD	BC,L__6
+	PUSH	BC
+	LD	BC,L__7
+	PUSH	BC
+	CALL	_printf
+	POP	BC
+	POP	BC
+	POP	BC
+;  310	#			endif
+;  311				ret = pdTRUE;
+.LINE 311
+
+	LD	BC,1
+	LD	(IX+%FFFFFFFD),BC
+;  312			}
+;  313			else
+.LINE 313
+
+	JR	L_20
+L_17:
+;  314			{
+;  315	#			if defined( _DEBUG )
+;  316				{
+;  317					( void )printf( "%s : %d : %s\r\n", 
+;  318									"port.c", 
+;  319									__LINE__,
+;  320									"Failed to allocate MOS semaphore" );
+.LINE 320
+
+	LD	BC,L__8
+	PUSH	BC
+	LD	BC,319
+	PUSH	BC
+	LD	BC,L__9
+	PUSH	BC
+	LD	BC,L__10
+	PUSH	BC
+	CALL	_printf
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+;  321				}
+;  322	#			endif
+;  323			}
+;  324		}
+;  325		else
+.LINE 325
+
+	JR	L_20
+L_19:
+;  326		{
+;  327	#		if defined( _DEBUG )
+;  328			{
+;  329				( void )printf( "%s : %d : %s\r\n", 
+;  330								"port.c", 
+;  331								__LINE__,
+;  332								"Failed to allocate timer device" );
+.LINE 332
+
+	LD	BC,L__11
+	PUSH	BC
+	LD	BC,331
+	PUSH	BC
+	LD	BC,L__12
+	PUSH	BC
+	LD	BC,L__13
+	PUSH	BC
+	CALL	_printf
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+;  333			}
+;  334	#		endif
+;  335		}
+L_20:
+.LINE 335
+
+;  336		
+;  337		return( ret );
+.LINE 337
+
+	LD	HL,(IX+%FFFFFFFD)
+;  338	}
+.LINE 338
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _xPortStartScheduler ***************************
+;Name                         Addr/Register   Size   Type
+;_printf                             IMPORT  -----   function
+;_prvSetupTimerInterrupt             STATIC  -----   function
+;ret                                   IX-3      3   variable
+
+
+; Stack Frame Size: 9 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "xPortStartScheduler",338,"_xPortStartScheduler"
+	SEGMENT STRSECT
+L__6:
+	DB	"port.c"
+	DB	0
+L__7:
+	DB	"%s : %d : fell out of scheduler"
+	DB	13,10,0
+L__8:
+	DB	"Failed to allocate MOS semaphore"
+	DB	0
+L__9:
+	DB	"port.c"
+	DB	0
+L__10:
+	DB	"%s : %d : %s"
+	DB	13,10,0
+L__11:
+	DB	"Failed to allocate timer device"
+	DB	0
+L__12:
+	DB	"port.c"
+	DB	0
+L__13:
+	DB	"%s : %d : %s"
+	DB	13,10,0
+	SEGMENT CODE
+;  339	/*-----------------------------------------------------------*/
+;  340	
+;  341	
+;  342	void vPortEndScheduler( void )
+;  343	{
+_vPortEndScheduler:
+.DEFINE "_vPortEndScheduler"
+
+.VALUE _vPortEndScheduler
+
+.CLASS 2
+
+.TYPE 65
+
+.ENDEF
+
+.BEGFUNC "vPortEndScheduler",343,"_vPortEndScheduler"
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+;  344	    /* It is unlikely that the eZ80 port will require this function as there
+;  345	    is nothing to return to.  If this is required - stop the tick ISR then
+;  346	    return back to main. */
+;  347		portTeardownTimerInterrupt( );
+.LINE 347
+
+	CALL	_portTeardownTimerInterrupt
+;  348	}
+.LINE 348
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _vPortEndScheduler ***************************
+;Name                         Addr/Register   Size   Type
+;_portTeardownTimerInterrupt         STATIC  -----   function
+
+
+; Stack Frame Size: 6 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "vPortEndScheduler",348,"_vPortEndScheduler"
+;  349	/*-----------------------------------------------------------*/
+;  350	
+;  351	/*
+;  352	 * Manual context switch.  
+;  353	 *      Save the current task context
+;  354	 *      Decide which is the new task to run
+;  355	 *      Restore the new task context
+;  356	 */
+;  357	void vPortYield( void )
+;  358	{
+_vPortYield:
+.DEFINE "_vPortYield"
+
+.VALUE _vPortYield
+
+.CLASS 2
+
+.TYPE 65
+
+.ENDEF
+
+.BEGFUNC "vPortYield",358,"_vPortYield"
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+	PUSH	BC
+;  359		/* push BC 	is inserted by "Zilog eZ80 ANSI C Compiler Version 3.4 (19101101)"
+;  360		   following the standard prolog. But it is neither popped in the postlog, nor 
+;  361		   by the caller on return from vPortYield */
+;  362		asm( "\t pop    bc   ; remove pushed BC from the stack" );
+.LINE 362
+
+	 pop    bc   ; remove pushed BC from the stack
+;  363	
+;  364		portSAVE_CONTEXT( );
+.LINE 364
+
+	 xref _pxCurrentTCB         
+	 di                         
+	 push af                    
+	 push bc                    
+	 push de                    
+	 push hl                    
+	 push iy                    
+	 ex   af,   af'             
+	 exx                        
+	 push af                    
+	 push bc                    
+	 push de                    
+	 push hl                    
+	 ld   ix,   0               
+	 add  ix,   sp              
+	 ld   hl,   (_pxCurrentTCB) 
+	 ld   (hl), ix              
+;  365	    vTaskSwitchContext( );
+.LINE 365
+
+	LD	(IX+%FFFFFFFD),HL
+	CALL	_vTaskSwitchContext
+	LD	HL,(IX+%FFFFFFFD)
+;  366		portRESTORE_CONTEXT( );
+.LINE 366
+
+	 xref _pxCurrentTCB      
+	 ld  hl, (_pxCurrentTCB) 
+	 ld  hl, (hl)            
+	 ld  sp, hl              
+	 pop hl                  
+	 pop de                  
+	 pop bc                  
+	 pop af                  
+	 exx                     
+	 ex  af, af'             
+	 pop iy                  
+	 pop hl                  
+	 pop de                  
+	 pop bc                  
+	 pop af                  
+;  367	
+;  368		asm( "\t pop    ix    ; postlog         " );
+.LINE 368
+
+	 pop    ix    ; postlog         
+;  369	    asm( "\t ei           ; re-enable interrupts " );
+.LINE 369
+
+	 ei           ; re-enable interrupts 
+;  370		asm( "\t ret          ; ret from here   " );
+.LINE 370
+
+	 ret          ; ret from here   
+;  371		asm( "                ; compiler-inserted postlog below not followed " );
+.LINE 371
+
+                ; compiler-inserted postlog below not followed 
+;  372	}
+.LINE 372
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _vPortYield ***************************
+;Name                         Addr/Register   Size   Type
+;_vTaskSwitchContext                 IMPORT  -----   function
+
+
+; Stack Frame Size: 9 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "vPortYield",372,"_vPortYield"
+;  373	/*-----------------------------------------------------------*/
+;  374	
+;  375	/*
+;  376	 * Context switch function used by the tick.  This must be identical to
+;  377	 * vPortYield() from the call to vTaskSwitchContext() onwards.  The only
+;  378	 * difference from vPortYield() is the tick count is incremented as the
+;  379	 * call comes from the tick ISR.
+;  380	 */
+;  381	void vPortYieldFromTick( void )
+;  382	{
+_vPortYieldFromTick:
+.DEFINE "_vPortYieldFromTick"
+
+.VALUE _vPortYieldFromTick
+
+.CLASS 2
+
+.TYPE 65
+
+.ENDEF
+
+.BEGFUNC "vPortYieldFromTick",382,"_vPortYieldFromTick"
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+	PUSH	BC
+;  383	#	if defined( _DEBUG )&& 0
+;  384			( void )printf( "%s : %d : vPortYieldFromTick\r\n", "port.c", __LINE__ );
+;  385	#	endif
+;  386		/* push BC 	is inserted by "Zilog eZ80 ANSI C Compiler Version 3.4 (19101101)"
+;  387		   following the standard prolog. But it is neither popped in the postlog, nor 
+;  388		   by the caller on return from vPortYield */
+;  389		asm( "\t pop    bc   ; remove pushed BC from the stack" );
+.LINE 389
+
+	 pop    bc   ; remove pushed BC from the stack
+;  390	
+;  391		portSAVE_CONTEXT( );
+.LINE 391
+
+	 xref _pxCurrentTCB         
+	 di                         
+	 push af                    
+	 push bc                    
+	 push de                    
+	 push hl                    
+	 push iy                    
+	 ex   af,   af'             
+	 exx                        
+	 push af                    
+	 push bc                    
+	 push de                    
+	 push hl                    
+	 ld   ix,   0               
+	 add  ix,   sp              
+	 ld   hl,   (_pxCurrentTCB) 
+	 ld   (hl), ix              
+;  392		if( pdFALSE != xTaskIncrementTick( ))
+.LINE 392
+
+	CALL	_xTaskIncrementTick
+	CALL	__icmpzero
+	JR	Z,L_25
+;  393		{
+;  394			/* A context switch is required. */
+;  395	        vTaskMissedYield( );
+.LINE 395
+
+	LD	(IX+%FFFFFFFD),HL
+	CALL	_vTaskMissedYield
+	LD	HL,(IX+%FFFFFFFD)
+;  396		}
+L_25:
+.LINE 396
+
+;  397	    vTaskSwitchContext( );
+.LINE 397
+
+	LD	(IX+%FFFFFFFD),HL
+	CALL	_vTaskSwitchContext
+	LD	HL,(IX+%FFFFFFFD)
+;  398	
+;  399	#	if defined( _DEBUG )&& 0
+;  400			( void )printf( "%s : %d : back from vTaskSwitchContext\r\n", "port.c", __LINE__ );
+;  401	#	endif
+;  402	
+;  403		portRESTORE_CONTEXT( );
+.LINE 403
+
+	 xref _pxCurrentTCB      
+	 ld  hl, (_pxCurrentTCB) 
+	 ld  hl, (hl)            
+	 ld  sp, hl              
+	 pop hl                  
+	 pop de                  
+	 pop bc                  
+	 pop af                  
+	 exx                     
+	 ex  af, af'             
+	 pop iy                  
+	 pop hl                  
+	 pop de                  
+	 pop bc                  
+	 pop af                  
+;  404	
+;  405		asm( "\t pop    ix    ; postlog         " );
+.LINE 405
+
+	 pop    ix    ; postlog         
+;  406	    asm( "\t ei           ; enable interrupts to start tick ISR " );
+.LINE 406
+
+	 ei           ; enable interrupts to start tick ISR 
+;  407		asm( "\t ret          ; ret from here   " );
+.LINE 407
+
+	 ret          ; ret from here   
+;  408		asm( "                ; postlog below not followed " );
+.LINE 408
+
+                ; postlog below not followed 
+;  409	}
+.LINE 409
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _vPortYieldFromTick ***************************
+;Name                         Addr/Register   Size   Type
+;_vTaskSwitchContext                 IMPORT  -----   function
+;_vTaskMissedYield                   IMPORT  -----   function
+;_xTaskIncrementTick                 IMPORT  -----   function
+
+
+; Stack Frame Size: 9 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "vPortYieldFromTick",409,"_vPortYieldFromTick"
+;  410	/*-----------------------------------------------------------*/
+;  411	
+;  412	/* timer_isr is an ISR bound to a PRT countdown expiry event.
+;  413	   It is invoked following an interrupt from the PRT to the eZ80 CPU;
+;  414	   when the CPU will save the current IP and set IP (jump) to the address of
+;  415	   this routine. */
+;  416	void timer_isr( void )
+;  417	{
+_timer_isr:
+.DEFINE "_timer_isr"
+
+.VALUE _timer_isr
+
+.CLASS 2
+
+.TYPE 65
+
+.ENDEF
+
+.BEGFUNC "timer_isr",417,"_timer_isr"
+
+.LINE 417
+
+.DEFINE "ctl"
+
+.CLASS 65
+
+.VALUE -1
+
+.TYPE 12
+
+.ENDEF
+
+.DEFINE "tmr_ctl"
+
+.CLASS 65
+
+.VALUE -4
+
+.TYPE 140
+
+.ENDEF
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+	PUSH	BC
+	DEC	SP
+;  418		volatile unsigned char __INTIO *tmr_ctl;
+;  419	    unsigned char ctl;
+;  420	
+;  421		tmr_ctl =( volatile unsigned char __INTIO* )( 0x80 +( portTmrUsed * 3 ));
+.LINE 421
+
+	LD	HL,(_portTmrUsed)
+	LD	BC,HL
+	ADD	HL,HL
+	ADD	HL,BC
+	LD	BC,128
+	ADD	HL,BC
+	LD	(IX+%FFFFFFFC),HL
+;  422		ctl = *tmr_ctl;  /* clear bit 7 PRT_IRQ, by reading CTL */
+.LINE 422
+
+	LD	BC,(IX+%FFFFFFFC)
+	IN	A,(BC)
+	LD	(IX+%FFFFFFFF),A
+;  423	#	if defined( _DEBUG )&& 0
+;  424			( void )printf( "\r\n%s : %d : timer_isr ctl = 0x%x\r\n", 
+;  425								"port.c", __LINE__, ctl );
+;  426			ctl = *tmr_ctl;
+;  427			( void )printf( "%s : %d : timer_isr ctl = 0x%x\r\n", 
+;  428								"port.c", __LINE__, ctl );
+;  429	#	endif
+;  430	
+;  431	    /* now we're done with tmr_ctl and ctl,
+;  432		   pop the ix and bc registers from the stack which were pushed by 
+;  433		   Zilog eZ80 ANSI C Compiler Version 3.4 (19101101) as part of the prologue. */
+;  434	    asm ("\t inc sp      ; postlog   SP adjust after prolog");
+.LINE 434
+
+	 inc sp      ; postlog   SP adjust after prolog
+;  435	    asm ("\t pop bc      ; postlog   BC pushed after prolog");
+.LINE 435
+
+	 pop bc      ; postlog   BC pushed after prolog
+;  436	    asm ("\t pop ix      ; postlog   retrieve IX pushed in prolog");
+.LINE 436
+
+	 pop ix      ; postlog   retrieve IX pushed in prolog
+;  437	
+;  438	#if configUSE_PREEMPTION == 1
+;  439	    /*
+;  440	     * Tick ISR for preemptive scheduler.  
+;  441		 * We need to check if the current task is accessing the non-reentrant MOS.
+;  442		 * If MOS is in use, then indicate that a context switch might be needed.
+;  443		 * The tick count is incremented after the context is saved.
+;  444	     */
+;  445		if( pdTRUE == xSemaphoreTakeFromISR( portMOSMutex, NULL ))
+;  446		{
+;  447			xSemaphoreGiveFromISR( portMOSMutex, NULL );
+;  448	
+;  449			/* not blocked on MOS, so do the usual task yield from tick 
+;  450			   xTaskIncrementTick is done in this function */
+;  451			vPortYieldFromTick( );
+;  452		}
+;  453		else
+;  454		{
+;  455			/* blocked on MOS */
+;  456			if( pdFALSE != xTaskIncrementTick( ))
+;  457			{
+;  458				/* A context switch is required. */
+;  459				vTaskMissedYield( );
+;  460			}
+;  461		}
+;  462	#else
+;  463	    /*
+;  464	     * Tick ISR for the cooperative scheduler.  All this does is increment the
+;  465	     * tick count.  We don't need to switch context, this can only be done by
+;  466	     * manual calls to taskYIELD();
+;  467	     */
+;  468	    if( pdFALSE != xTaskIncrementTick( ))
+.LINE 468
+
+	CALL	_xTaskIncrementTick
+	CALL	__icmpzero
+	JR	Z,L_28
+;  469		{
+;  470			/* A context switch is required. */
+;  471			vTaskMissedYield( );
+.LINE 471
+
+	CALL	_vTaskMissedYield
+;  472		}
+L_28:
+.LINE 472
+
+;  473	#endif
+;  474	
+;  475		asm( "               ; like github.com/breakintoprogram/agon-mos/blob/main/src_startup/vectors16.asm" );
+.LINE 475
+
+               ; like github.com/breakintoprogram/agon-mos/blob/main/src_startup/vectors16.asm
+;  476		asm( "               ;   __default_mi_handler" );
+.LINE 476
+
+               ;   __default_mi_handler
+;  477		asm( "\t ei          ; re-enable interrupts " );
+.LINE 477
+
+	 ei          ; re-enable interrupts 
+;  478	    asm( "\t reti.l      ; need reti.l, not just reti");
+.LINE 478
+
+	 reti.l      ; need reti.l, not just reti
+;  479	}
+.LINE 479
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _timer_isr ***************************
+;Name                         Addr/Register   Size   Type
+;_vTaskMissedYield                   IMPORT  -----   function
+;_xTaskIncrementTick                 IMPORT  -----   function
+;_portTmrUsed                        STATIC      3   variable
+;tmr_ctl                               IX-4      3   variable
+;ctl                                   IX-1      1   variable
+
+
+; Stack Frame Size: 10 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "timer_isr",479,"_timer_isr"
+;  480	/*-----------------------------------------------------------*/
+;  481	
+;  482	/*
+;  483	 * Setup timer.
+;  484	 *   Bind an EZ80F92 TMR as the Periodic Interval Timer function. Any of 
+;  485	 *   PRT0..PRT3 can be assigned; PRT4..PRT5 cannot be used for PIT.
+;  486	 *   Algorithm: loop over PRT0..PRT3 to find the first believed free device: 
+;  487	 *   if the previous device and this device are bound to the same handler 
+;  488	 *   (guess it's the MOS default handler, __default_mi_handler),then assign 
+;  489	 *   this one; typically PRT1.
+;  490	 *   Program the selected PRT as a continuous PIT at the configurable Hz.
+;  491	 *   Refer to eZ80F92 Product Specification (PS015317-0120) section on
+;  492	 *   Programmable Reload Timers. 
+;  493	 *   Return: pdPASS if we allocated a PRT, else pdFAIL.
+;  494	 */
+;  495	static BaseType_t prvSetupTimerInterrupt( void )
+;  496	{
+_prvSetupTimerInterrupt:
+.DEFINE "_prvSetupTimerInterrupt"
+
+.VALUE _prvSetupTimerInterrupt
+
+.CLASS 3
+
+.TYPE 68
+
+.ENDEF
+
+.BEGFUNC "prvSetupTimerInterrupt",496,"_prvSetupTimerInterrupt"
+
+.LINE 496
+
+.DEFINE "i"
+
+.CLASS 65
+
+.VALUE -3
+
+.TYPE 4
+
+.ENDEF
+
+.DEFINE "prev"
+
+.CLASS 65
+
+.VALUE -6
+
+.TYPE 545
+
+.ENDEF
+
+.DEFINE "iss"
+
+.CLASS 65
+
+.VALUE -7
+
+.TYPE 12
+
+.ENDEF
+
+.DEFINE "reload"
+
+.CLASS 65
+
+.VALUE -10
+
+.TYPE 14
+
+.ENDEF
+
+.DEFINE "r"
+
+.CLASS 65
+
+.VALUE -13
+
+.TYPE 4
+
+.ENDEF
+
+.DEFINE "tmr_ctl"
+
+.CLASS 65
+
+.VALUE -16
+
+.TYPE 140
+
+.ENDEF
+
+.DEFINE "tmr_rrh"
+
+.CLASS 65
+
+.VALUE -19
+
+.TYPE 140
+
+.ENDEF
+
+.DEFINE "tmr_rrl"
+
+.CLASS 65
+
+.VALUE -22
+
+.TYPE 140
+
+.ENDEF
+
+.DEFINE "ctl"
+
+.CLASS 65
+
+.VALUE -25
+
+.TYPE 14
+
+.ENDEF
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+	LEA	HL,IX+%FFFFFFE7
+	LD	SP,HL
+;  497		BaseType_t r = pdPASS;
+.LINE 497
+
+	LD	BC,1
+	LD	(IX+%FFFFFFF3),BC
+;  498	    unsigned char iss;
+;  499		unsigned int ctl;
+;  500		void( *prev )( void ) = NULL;
+.LINE 500
+
+	LD	BC,0
+	LD	(IX+%FFFFFFFA),BC
+	JR	L_37
+;  501		volatile unsigned char __INTIO *tmr_ctl;
+;  502		volatile unsigned char __INTIO *tmr_rrh;
+;  503		volatile unsigned char __INTIO *tmr_rrl;
+;  504		unsigned int reload;
+;  505		int i;
+;  506	
+;  507	#	if defined( _DEBUG )&& 0
+;  508			( void )printf( "%s : %d\r\n", "port.c", __LINE__ );
+;  509	#	endif
+;  510	
+;  511		/* Search for and assign from the available timers in PRT0..PRT4 */
+;  512		for( i = 0; i < 4; i++ )
+L_38:
+.LINE 512
+
+	LD	BC,4
+	LD	HL,(IX+%FFFFFFFD)
+	OR	A,A
+	SBC	HL,BC
+	CALL	__setflag
+	JP	M,L_40
+	JR	L_43
+L_37:
+	LD	BC,0
+	LD	(IX+%FFFFFFFD),BC
+	JR	L_38
+L_40:
+;  513		{
+;  514			/* set Timer interrupt vector (PRT0_IVECT) through MOS */
+;  515			prev = _set_vector_mos(( PRT0_IVECT +( i * 2 )), timer_isr );
+.LINE 515
+
+	LD	BC,_timer_isr
+	PUSH	BC
+	LD	HL,(IX+%FFFFFFFD)
+	ADD	HL,HL
+	LD	IY,HL
+	LEA	BC,IY+%A
+	PUSH	BC
+	CALL	__set_vector_mos
+	POP	BC
+	POP	BC
+	LD	(IX+%FFFFFFFA),HL
+;  516	#		if defined( _DEBUG )&& 0
+;  517				( void )printf( "%s : %d : i = %d : prev = %p\r\n", 
+;  518								"port.c", __LINE__, i, prev );
+;  519	#		endif
+;  520			if( NULL != prev )
+.LINE 520
+
+	LD	HL,(IX+%FFFFFFFA)
+	CALL	__icmpzero
+	JR	Z,L_36
+;  521			{
+;  522				/* some ISR was already bound to this PRT */
+;  523				if( timer_isr == prev )
+.LINE 523
+
+	LD	BC,_timer_isr
+	LD	HL,(IX+%FFFFFFFA)
+	OR	A,A
+	SBC	HL,BC
+	JR	NZ,L_34
+;  524				{
+;  525					/* OMG it's us; we were already installed before, 
+;  526					   so if we survived a device reset then continue */
+;  527					portTmrUsed = i;
+.LINE 527
+
+	LD	BC,(IX+%FFFFFFFD)
+	LD	(_portTmrUsed),BC
+;  528					break;
+.LINE 528
+
+	JR	L_43
+;  529				}
+;  530				else
+L_34:
+.LINE 530
+
+;  531				{
+;  532					/* something else is already bound to this vector */
+;  533					if( portPrevprev == prev )
+.LINE 533
+
+	LD	BC,(IX+%FFFFFFFA)
+	LD	HL,(_portPrevprev)
+	OR	A,A
+	SBC	HL,BC
+	JR	NZ,L_32
+;  534					{
+;  535						/* the previous device and this device are both bound to the
+;  536						   same vector; guess it's __default_mi_handler, so assign 
+;  537						   this device */
+;  538						portTmrUsed = i;
+.LINE 538
+
+	LD	BC,(IX+%FFFFFFFD)
+	LD	(_portTmrUsed),BC
+;  539						break;
+.LINE 539
+
+	JR	L_43
+;  540					}
+L_32:
+.LINE 540
+
+;  541					
+;  542					/* don't know if it is the default handler, so restore the
+;  543	                   previous owner and try the next vector */
+;  544					_set_vector_mos(( PRT0_IVECT +( i * 2 )), prev );
+.LINE 544
+
+	LD	BC,(IX+%FFFFFFFA)
+	PUSH	BC
+	LD	HL,(IX+%FFFFFFFD)
+	ADD	HL,HL
+	LD	IY,HL
+	LEA	BC,IY+%A
+	PUSH	BC
+	CALL	__set_vector_mos
+	POP	BC
+	POP	BC
+;  545					portPrevprev = prev;  /* remember it, it may be a default handler */
+.LINE 545
+
+	LD	BC,(IX+%FFFFFFFA)
+	LD	(_portPrevprev),BC
+;  546					continue;
+.LINE 546
+
+	JR	L_39
+;  547				}
+;  548			}
+;  549			else
+L_36:
+.LINE 549
+
+;  550			{
+;  551				/* no previous ISR setup, so use this PRT */
+;  552				portTmrUsed = i;
+.LINE 552
+
+	LD	BC,(IX+%FFFFFFFD)
+	LD	(_portTmrUsed),BC
+;  553				portPrevprev = NULL;
+.LINE 553
+
+	LD	BC,0
+	LD	(_portPrevprev),BC
+;  554				break;
+.LINE 554
+
+	JR	L_43
+;  555			}
+;  556		}
+L_39:
+.LINE 556
+
+	LD	BC,(IX+%FFFFFFFD)
+	INC	BC
+	LD	(IX+%FFFFFFFD),BC
+	JR	L_38
+L_43:
+;  557		
+;  558	
+;  559		if( 0 <= portTmrUsed )
+.LINE 559
+
+	LD	HL,(_portTmrUsed)
+	CALL	__icmpzero
+	CALL	__setflag
+	JP	M,L_42
+;  560		{
+;  561	#		if defined( _DEBUG )&& 0
+;  562				( void )printf( "%s : %d : vector 0x%x\r\n", "port.c", 
+;  563								__LINE__, ( PRT0_IVECT +( portTmrUsed * 2 )) );
+;  564	#		endif
+;  565	
+;  566			/* Timer Source Select;
+;  567			   input for the periodic timer (TMR0_IN) shall be the system clock 
+;  568			   (divided by the clock divider). Refer to eZ80F92 ProdSpec, section 
+;  569			   Programmable Reload Timers table 37 */
+;  570			iss = TMR_ISS;
+.LINE 570
+
+	IN0	A,(146)
+	LD	(IX+%FFFFFFF9),A
+;  571			iss &= ~( unsigned char )( PRT_ISS_SYSCLK <<( portTmrUsed * 2 ));
+.LINE 571
+
+	LD	HL,(_portTmrUsed)
+	ADD	HL,HL
+	LD	BC,HL
+	LD	HL,3
+	CALL	__ishl
+	LD	A,L
+	UEXT	HL
+	LD	L,A
+	CALL	__inot
+	LD	A,L
+	AND	A,(IX+%FFFFFFF9)
+	LD	(IX+%FFFFFFF9),A
+;  572	#		if defined( _DEBUG )&& 0
+;  573				( void )printf( "%s : %d : iss %d\r\n", "port.c", __LINE__, iss );
+;  574	#		endif
+;  575			TMR_ISS =( unsigned char )iss;
+.LINE 575
+
+	LD	A,(IX+%FFFFFFF9)
+	OUT0	(146),A
+;  576	
+;  577			/* program Timer i Reload Registers;
+;  578			   refer to eZ80F92 ProdSpec, section Programmable Reload Timers table 
+;  579			   35-36 */
+;  580			tmr_rrl =( volatile unsigned char __INTIO* )( 0x81 +( portTmrUsed * 3 ));
+.LINE 580
+
+	LD	HL,(_portTmrUsed)
+	LD	BC,HL
+	ADD	HL,HL
+	ADD	HL,BC
+	LD	BC,129
+	ADD	HL,BC
+	LD	(IX+%FFFFFFEA),HL
+;  581			tmr_rrh =( volatile unsigned char __INTIO* )( 0x82 +( portTmrUsed * 3 ));
+.LINE 581
+
+	LD	HL,(_portTmrUsed)
+	LD	BC,HL
+	ADD	HL,HL
+	ADD	HL,BC
+	LD	BC,130
+	ADD	HL,BC
+	LD	(IX+%FFFFFFED),HL
+;  582	#		if defined( _DEBUG )&& 0
+;  583				( void )printf( "%s : %d : tmr_rrl 0x%x : tmr_rrh 0x%x\r\n", 
+;  584								"port.c", __LINE__, tmr_rrl, tmr_rrh );
+;  585	#		endif
+;  586	
+;  587			/* RRH:RRL are each 8-bit registers nd onr 16-bit register as a pair.
+;  588			   Refer to eZ80F92 ProdSpec, section Setting Timer Duration.
+;  589			   TimerPeriod(s) =(( PRT_CLK_PRESCALER * reload )/ configCPU_CLOCK_HZ )
+;  590			      e.g. 0.1(s) =((       64          * 28800  )/     18432000 )       */
+;  591			reload =( configCPU_CLOCK_HZ / PRT_CLK_PRESCALER / configTICK_RATE_HZ );
+.LINE 591
+
+	LD	BC,28800
+	LD	(IX+%FFFFFFF6),BC
+;  592		    configASSERT(( reload & 0xffff )== reload );
+;  593			reload &= 0xffff;
+.LINE 593
+
+	LD	BC,(IX+%FFFFFFF6)
+	CALL	__stoiu
+	LD	(IX+%FFFFFFF6),HL
+;  594			*tmr_rrh =( unsigned char )( reload >> 8 );
+.LINE 594
+
+	LD	HL,(IX+%FFFFFFF6)
+	LD	A,%8
+	CALL	__ishru_b
+	LD	BC,(IX+%FFFFFFED)
+	OUT	(BC),L
+;  595			*tmr_rrl =( unsigned char )( reload & 0xFF );
+.LINE 595
+
+	LD	A,(IX+%FFFFFFF6)
+	LD	BC,(IX+%FFFFFFEA)
+	OUT	(BC),A
+;  596	
+;  597			tmr_ctl =( volatile unsigned char __INTIO* )( 0x80 +( portTmrUsed * 3 ));
+.LINE 597
+
+	LD	HL,(_portTmrUsed)
+	LD	BC,HL
+	ADD	HL,HL
+	ADD	HL,BC
+	LD	BC,128
+	ADD	HL,BC
+	LD	(IX+%FFFFFFF0),HL
+;  598			ctl = *tmr_ctl;  /* clear bit 7 PRT_IRQ, by reading CTL */
+.LINE 598
+
+	LD	BC,(IX+%FFFFFFF0)
+	IN	A,(BC)
+	UEXT	HL
+	LD	L,A
+	LD	(IX+%FFFFFFE7),HL
+;  599	
+;  600			/* program TMR0_CTL and enable the timer */
+;  601			*tmr_ctl =(	PRT_CTL_IRQ_EN |
+;  602						PRT_CTL_MODE_CONTINUOUS |
+;  603						PRT_CTL_DIV64  |           // cross-relate with PRT_CLK_PRESCALER
+;  604						PRT_CTL_RST_EN |
+;  605						PRT_CTL_ENABLE );
+.LINE 605
+
+	LD	BC,(IX+%FFFFFFF0)
+	LD	A,%5B
+	OUT	(BC),A
+;  606	
+;  607	#		if defined( _DEBUG )&& 0
+;  608				ctl = *tmr_ctl;   /* PRT_CTL_RST_EN will be cleared (undocumented but expected) */
+;  609				( void )printf( "%s : %d : ctl = 0x%x\r\n", "port.c", __LINE__, ctl );
+;  610	#		endif
+;  611		}
+;  612		else
+.LINE 612
+
+	JR	L_44
+L_42:
+;  613		{
+;  614			/* No free Timer available */
+;  615			r = pdFAIL;
+.LINE 615
+
+	LD	BC,0
+	LD	(IX+%FFFFFFF3),BC
+;  616	#		if defined( _DEBUG )
+;  617				( void )printf( "%s : %d : No timer available\r\n", "port.c", __LINE__ );
+.LINE 617
+
+	LD	BC,617
+	PUSH	BC
+	LD	BC,L__26
+	PUSH	BC
+	LD	BC,L__27
+	PUSH	BC
+	CALL	_printf
+	POP	BC
+	POP	BC
+	POP	BC
+;  618	#		endif
+;  619		}
+L_44:
+.LINE 619
+
+;  620		
+;  621		return( r );
+.LINE 621
+
+	LD	HL,(IX+%FFFFFFF3)
+;  622	}
+.LINE 622
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _prvSetupTimerInterrupt ***************************
+;Name                         Addr/Register   Size   Type
+;_printf                             IMPORT  -----   function
+;_portPrevprev                       STATIC      3   variable
+;_portTmrUsed                        STATIC      3   variable
+;__set_vector_mos                    IMPORT  -----   function
+;ctl                                  IX-25      3   variable
+;tmr_rrl                              IX-22      3   variable
+;tmr_rrh                              IX-19      3   variable
+;tmr_ctl                              IX-16      3   variable
+;r                                    IX-13      3   variable
+;reload                               IX-10      3   variable
+;iss                                   IX-7      1   variable
+;prev                                  IX-6      3   variable
+;i                                     IX-3      3   variable
+
+
+; Stack Frame Size: 31 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "prvSetupTimerInterrupt",622,"_prvSetupTimerInterrupt"
+	SEGMENT STRSECT
+L__26:
+	DB	"port.c"
+	DB	0
+L__27:
+	DB	"%s : %d : No timer available"
+	DB	13,10,0
+	SEGMENT CODE
+;  623	/*-----------------------------------------------------------*/
+;  624	
+;  625	/*
+;  626	 * Teardown timer.
+;  627	 *   If the application exits (shouldn't ever happen, but anyway...) then we
+;  628	 *   need to unbind the PRT ISR to prevent the system calling our ISR anymore.
+;  629	 */
+;  630	static void portTeardownTimerInterrupt( void )
+;  631	{
+_portTeardownTimerInterrupt:
+.DEFINE "_portTeardownTimerInterrupt"
+
+.VALUE _portTeardownTimerInterrupt
+
+.CLASS 3
+
+.TYPE 65
+
+.ENDEF
+
+.BEGFUNC "portTeardownTimerInterrupt",631,"_portTeardownTimerInterrupt"
+
+.LINE 631
+
+.DEFINE "tmr_ctl"
+
+.CLASS 65
+
+.VALUE -3
+
+.TYPE 140
+
+.ENDEF
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+	PUSH	BC
+;  632		volatile unsigned char __INTIO *tmr_ctl;
+;  633		
+;  634		if( 0 <= portTmrUsed )
+.LINE 634
+
+	LD	HL,(_portTmrUsed)
+	CALL	__icmpzero
+	CALL	__setflag
+	JP	M,L_48
+;  635		{
+;  636			tmr_ctl =( volatile unsigned char __INTIO* )( 0x80 +( portTmrUsed * 3 ));
+.LINE 636
+
+	LD	HL,(_portTmrUsed)
+	LD	BC,HL
+	ADD	HL,HL
+	ADD	HL,BC
+	LD	BC,128
+	ADD	HL,BC
+	LD	(IX+%FFFFFFFD),HL
+;  637	
+;  638			/* disable TMR_CTL */
+;  639			*tmr_ctl =( unsigned char )0;
+.LINE 639
+
+	LD	BC,(IX+%FFFFFFFD)
+	XOR	A,A
+	OUT	(BC),A
+;  640		}
+L_48:
+.LINE 640
+
+;  641		
+;  642		if( NULL != portPrevprev )
+.LINE 642
+
+	LD	HL,(_portPrevprev)
+	CALL	__icmpzero
+	JR	Z,L_49
+;  643		{
+;  644			_set_vector_mos(( PRT0_IVECT +( portTmrUsed * 2 )), portPrevprev );		
+.LINE 644
+
+	LD	BC,(_portPrevprev)
+	PUSH	BC
+	LD	BC,(_portTmrUsed)
+	LD	HL,BC
+	ADD	HL,HL
+	LD	IY,HL
+	LEA	BC,IY+%A
+	PUSH	BC
+	CALL	__set_vector_mos
+	POP	BC
+	POP	BC
+;  645		}
+L_49:
+.LINE 645
+
+;  646	
+;  647		portTmrUsed = -1;
+.LINE 647
+
+	LD	BC,16777215
+	LD	(_portTmrUsed),BC
+;  648		portPrevprev = NULL;
+.LINE 648
+
+	LD	BC,0
+	LD	(_portPrevprev),BC
+;  649	}
+.LINE 649
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _portTeardownTimerInterrupt ***************************
+;Name                         Addr/Register   Size   Type
+;__set_vector_mos                    IMPORT  -----   function
+;_portPrevprev                       STATIC      3   variable
+;_portTmrUsed                        STATIC      3   variable
+;tmr_ctl                               IX-3      3   variable
+
+
+; Stack Frame Size: 9 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "portTeardownTimerInterrupt",649,"_portTeardownTimerInterrupt"
+;  650	/*-----------------------------------------------------------*/
+;  651	
+;  652	void portAssert( char *file, unsigned int line )
+;  653	{
+_portAssert:
+.DEFINE "_portAssert"
+
+.VALUE _portAssert
+
+.CLASS 2
+
+.TYPE 65
+
+.ENDEF
+
+.BEGFUNC "portAssert",653,"_portAssert"
+
+.LINE 653
+
+.DEFINE "file"
+
+.CLASS 65
+
+.VALUE 6
+
+.TYPE 34
+
+.ENDEF
+
+.DEFINE "line"
+
+.CLASS 65
+
+.VALUE 9
+
+.TYPE 14
+
+.ENDEF
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+;  654	#	if defined( _DEBUG )
+;  655		{
+;  656			( void )printf( "Assertion at %s : %d\r\n", file, line );
+.LINE 656
+
+	LD	BC,(IX+%9)
+	PUSH	BC
+	LD	BC,(IX+%6)
+	PUSH	BC
+	LD	BC,L__32
+	PUSH	BC
+	CALL	_printf
+	POP	BC
+	POP	BC
+	POP	BC
+;  657		}
+;  658	#	endif
+;  659		for( ;; );
+L_51:
+.LINE 659
+
+	JR	L_51
+;  660	}
+.LINE 660
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _portAssert ***************************
+;Name                         Addr/Register   Size   Type
+;_printf                             IMPORT  -----   function
+;line                                  IX+9      3   parameter
+;file                                  IX+6      3   parameter
+
+
+; Stack Frame Size: 12 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "portAssert",660,"_portAssert"
+	SEGMENT STRSECT
+L__32:
+	DB	"Assertion at %s : %d"
+	DB	13,10,0
+	SEGMENT CODE
+;  661	/*-----------------------------------------------------------*/
+;  662	
+;  663	static void portTaskExit( void )
+;  664	{
+_portTaskExit:
+.DEFINE "_portTaskExit"
+
+.VALUE _portTaskExit
+
+.CLASS 3
+
+.TYPE 65
+
+.ENDEF
+
+.BEGFUNC "portTaskExit",664,"_portTaskExit"
+
+	PUSH	IX
+	LD	IX,0
+	ADD	IX,SP
+;  665	#	if defined( _DEBUG )
+;  666		{
+;  667			( void )printf( "%s : %d : portTaskExit\r\n", "port.c", __LINE__ );
+.LINE 667
+
+	LD	BC,667
+	PUSH	BC
+	LD	BC,L__34
+	PUSH	BC
+	LD	BC,L__35
+	PUSH	BC
+	CALL	_printf
+	POP	BC
+	POP	BC
+	POP	BC
+;  668		}
+;  669	#	endif
+;  670		for( ;; );
+L_54:
+.LINE 670
+
+	JR	L_54
+;  671	}
+.LINE 671
+
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _portTaskExit ***************************
+;Name                         Addr/Register   Size   Type
+;_printf                             IMPORT  -----   function
+
+
+; Stack Frame Size: 6 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+.ENDFUNC "portTaskExit",671,"_portTaskExit"
+	SEGMENT STRSECT
+L__34:
+	DB	"port.c"
+	DB	0
+L__35:
+	DB	"%s : %d : portTaskExit"
+	DB	13,10,0
+	XREF _vTaskMissedYield:ROM
+	XREF _vTaskSwitchContext:ROM
+	XREF _xTaskIncrementTick:ROM
+	XREF _printf:ROM
+	XREF __set_vector_mos:ROM
+	XREF __inot:ROM
+	XREF __ishl:ROM
+	XREF __stoiu:ROM
+	XREF __setflag:ROM
+	XREF __icmpzero:ROM
+	XREF __ishru_b:ROM
+	XDEF _portAssert
+	XDEF _timer_isr
+	XDEF _vPortYieldFromTick
+	XDEF _vPortYield
+	XDEF _vPortEndScheduler
+	XDEF _xPortStartScheduler
+	XDEF _pxPortInitialiseStack
+	XDEF _portExitMOS
+	XDEF _portEnterMOS
+	END
