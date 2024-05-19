@@ -50,9 +50,14 @@
 #define configCPU_CLOCK_HZ						(( unsigned portLONG )18432000 )
 #define configTICK_RATE_HZ						(( portTickType )10 )
 #define configUSE_16_BIT_TICKS					0
+#define configUSE_TIME_SLICING					1
 #define configIDLE_SHOULD_YIELD					1
+
+/* Stack */
 	// configSTACK_DEPTH_TYPE should be a port definition (do not change it from int)
 #define configSTACK_DEPTH_TYPE          		int
+#define configRECORD_STACK_HIGH_ADDRESS			0
+#define configCHECK_FOR_STACK_OVERFLOW			0
 
 /* Memory allocation */
 #define configSUPPORT_DYNAMIC_ALLOCATION		1
@@ -63,7 +68,6 @@
 /* Hooks */
 #define configUSE_IDLE_HOOK						1
 #define configUSE_TICK_HOOK						0
-#define configCHECK_FOR_STACK_OVERFLOW			0
 #define configUSE_MALLOC_FAILED_HOOK			0
 
 /* Software timer related definitions. */
@@ -73,16 +77,14 @@
 	// 0 is lowest (idle) priority, configMAX_PRIORITIES - 1 is highest priority
 #define configMAX_PRIORITIES					5
 #define configMINIMAL_STACK_SIZE				(( portSTACK_TYPE )512 )
-#define configRECORD_STACK_HIGH_ADDRESS			0
 #define configMAX_TASK_NAME_LEN					16
-#define configUSE_TIME_SLICING					1
 #define configUSE_TASK_NOTIFICATIONS			1
 #define configUSE_COUNTING_SEMAPHORES			0
 #define configUSE_QUEUE_SETS					0
 #define configUSE_MUTEXES						1
 
 /* Co-routine definitions. */
-#define configUSE_CO_ROUTINES 					1
+#define configUSE_CO_ROUTINES 					0
 #define configMAX_CO_ROUTINE_PRIORITIES 		2
 
 /* Run time and task stats gathering related definitions. */

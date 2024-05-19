@@ -21,10 +21,10 @@ This origin port was integrated with FreeRTOS version 2008xx (5.x).
 
 <h3>Contributors</h3>
 The Zilog eZ80 Acclaim! port based on FreeRTOS 5.x was created by Marcos A. 
-Pereira around 2008. This was updated by Jean-Michel Roux (date unknown, but 
-presumably sometime between 2008-2010). The Roux version was added to 
-interactive.freertos.org by Richard Barry in March, 2010. The initial port to 
-Agon Light based on FreeRTOS 10.5.1 was made by Julian Rose in May, 2024.
+Pereira from May 2005 (according to https://forums.freertos.org/t/ez80f91-zdsii-port/2864). 
+This was updated by Jean-Michel Roux (date unknown, but presumably sometime between 2008-2010). 
+The Roux version was added to interactive.freertos.org by Richard Barry in March, 2010. 
+The port to Agon Light and FreeRTOS 10.5.1 was made by Julian Rose in May, 2024.
 
 <h3>Porting guidelines</h3>
 http://www.realtimeengineers.com/Contributing-files-to-FreeRTOS.html
@@ -34,7 +34,7 @@ This includes assignment of copyright (to Amazon Web Services).
 Agon FreeRTOS project settings should locate the PATH to the include file 
 ./Source/portable/ThirdParty/Community-Supported-Ports/ZDS II/eZ80AgonLight/portmacro.h 
 Define ZDSII_EZ80_AGON in Project->settings->C->preprocessor->ProcessorDefinitions.
-This brings in portmacro.h through ./Source/include/portable.h/deprecated_defifnitions.h
+This brings in portmacro.h through ./Source/include/portable.h/deprecated_definitions.h
 
 <h3>Tasks</h3>
 In place of the kernel ./Source/tasks.c it is temporarily necessary to use
@@ -61,10 +61,22 @@ is bound by MOS in its vector table.
 
 <h3>portMOSMutex</h3>
 MOS is not re-entrant; which means that each application MOS call has to be 
-completed without interruption. Moreover, MOS (may) use interrupts to 
+completed before another can be made. Moreover, MOS (may) use interrupts to 
 communicate with the ESP32 Terminal Processor; so we cannot use the traditional 
 portENTER_CRITICAL to disable interrupts to guard application MOS calls. 
 So, this port provides portMOSMutex through application calls to portEnterMOS 
 to guarantee MOS function safety. Initially, applications call portEnterMOS;
 in future releases portEnterMOS will be moved within a library of MOS calls, 
 hiding it from applications.
+
+<h3>Startup</h3>
+Startup code is located in the file init.asm, essentially as per 
+Agon-Projects-main -> C -> Hello. This begins with the MOS header and C startup
+code.
+I modded it to initialise heap memory, but subsequently moved that back out.
+
+<h3>mosvec24</h3>
+This started life as the Zilog vectors24.asm file, but is much changed.
+It now contains the timer ISR code.
+It may be extended with other MOS functions - or a new file mosapi.asm might be
+added for that.

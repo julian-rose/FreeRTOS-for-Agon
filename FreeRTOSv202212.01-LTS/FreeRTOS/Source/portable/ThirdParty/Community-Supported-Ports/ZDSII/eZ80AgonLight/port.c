@@ -32,10 +32,8 @@
  *
  * port.c for Agon Light
  *
- * Evolved from the earlier eZ80 port by Marcos A. Pereira around 2008. 
- * This was updated by Jean-Michel Roux prior to 2010. (I think Roux modified 
- * portENTER/EXIT_CRITICAL( ) and portSAVE_CONTEXT( ) to test the PIT state, 
- * specifically for the eZ80F91. That needed removal for the eZ80F92.)
+ * Evolved from the earlier eZ80 port by Marcos A. Pereira began in May 2005. 
+ * This was updated by Jean-Michel Roux prior to 2010. 
  * Ported to Agon Light by Julian Rose in 2024, with copyright made over to 
  * Amazon Web Services above for FreeRTOS version 10.5.
  *
@@ -78,7 +76,7 @@ static SemaphoreHandle_t portMOSMutex = NULL;
 
 /* we keep track of our installed ISR, to remove it in case of exit */
 static void( *portPrevprev )( void ) = NULL;
-static int portTmrUsed = -1;
+static int portTmr = -1;
 
 
 /*-- Private functions --------------------------------------*/
@@ -91,6 +89,9 @@ static void portTeardownTimerInterrupt( void );
 /*
  * Macro to save all the general purpose registers, 
  *  then save the stack pointer into the TCB.
+ *    [jhr Think about "in 0 a,(80h)" for EZ80L92 from https://www.freertos.org/FreeRTOS_Support_Forum_Archive/March_2007/freertos_Bug_in_the_ez80_1687732.html
+ *    Along the lines of EZ80F91 port which did "in0 a,(62h)" to read the timer interrupt bit
+ *    Agon reads the timer separately in the ISR]
  */
 #define portSAVE_CONTEXT( )                 \
     asm( "\t xref _pxCurrentTCB         " );\
@@ -145,17 +146,15 @@ static BaseType_t portCreateMOSMutex( )
 {
 	BaseType_t r = pdPASS;
 	
-#	if defined( _DEBUG )&& 0
-		( void )printf( "%s : %d\r\n", "port.c", __LINE__ );
-#	endif
-
-#	if( 1 == configUSE_PREEMPTION )	
+//#	if( 1 == configUSE_PREEMPTION )	
 	{
 		portMOSMutex = xSemaphoreCreateMutex( );
 		if( NULL == portMOSMutex )
 		{
 #			if defined( _DEBUG )
+			{
 				( void )printf( "%s : %d\r\n", "port.c", __LINE__ );
+			}
 #			endif
 			r = pdFAIL;
 		}
@@ -165,7 +164,7 @@ static BaseType_t portCreateMOSMutex( )
 			xSemaphoreGive( portMOSMutex );
 		}
 	}
-#	endif /* configUSE_PREEMPTION */
+//#	endif /* configUSE_PREEMPTION */
 
 	return( r );
 }
@@ -185,7 +184,7 @@ void portEnterMOS( void )
 		( void )printf( "%s : %d\r\n", "port.c", __LINE__ );
 #	endif
 
-#	if( 1 == configUSE_PREEMPTION )
+//#	if( 1 == configUSE_PREEMPTION )
 	{
 		/* suspend until semaphore can be taken */
 		while( pdTRUE != xSemaphoreTake( portMOSMutex, 0 ))
@@ -193,13 +192,12 @@ void portEnterMOS( void )
 			/* Some other task has the mutex.
 			   If we use vTaskSuspend then the tick ISR will have
 			   to call vTaskResume. Easier to use the delayed list.
-			   Accessing MOS, after all, is not a real-time (fast)
-			   operation.
+			   Could be better using notifications?
 			*/
 			vTaskDelay( 1 );
 		}
 	}
-#	endif /* configUSE_PREEMPTION */
+//#	endif /* configUSE_PREEMPTION */
 
 #	if defined( _DEBUG )&& 0
 		( void )printf( "%s : %d\r\n", "port.c", __LINE__ );
@@ -215,11 +213,11 @@ void portExitMOS( void )
 		( void )printf( "%s : %d\r\n", "port.c", __LINE__ );
 #	endif
 	
-#	if( 1 == configUSE_PREEMPTION )
+//#	if( 1 == configUSE_PREEMPTION )
 	{
 		xSemaphoreGive( portMOSMutex );
 	}
-#	endif /* configUSE_PREEMPTION */
+//#	endif /* configUSE_PREEMPTION */
 	
 #	if defined( _DEBUG )&& 0
 		( void )printf( "%s : %d\r\n", "port.c", __LINE__ );
@@ -242,7 +240,7 @@ portSTACK_TYPE *pxPortInitialiseStack(
     /* Place the parameter on the stack in the expected location. */
     *pxTopOfStack-- =( portSTACK_TYPE )pvParameters;
 
-    /* Place the task return address on stack. Not used*/
+    /* Place the task return address on stack. Not normally used */
     *pxTopOfStack-- =( portSTACK_TYPE )&portTaskExit;
 
     /* The start of the task code will be popped off the stack last, so place
@@ -301,7 +299,7 @@ portBASE_TYPE xPortStartScheduler( void )
 			asm( "\t ei           ; enable interrupts to start tick ISR " );
 			asm( "\t ret          ; ret into Task   " );
 			asm( "                ; postlog below not followed " );
-			/* exit from portRESTORE_CONTEXT should be into one of the Tasks */
+			/* ret from portRESTORE_CONTEXT should be into one of the Tasks */
 
 			/* we shouldn't get here: something has gone wrong */
 #			if defined( _DEBUG )
@@ -418,7 +416,7 @@ void timer_isr( void )
 	volatile unsigned char __INTIO *tmr_ctl;
     unsigned char ctl;
 
-	tmr_ctl =( volatile unsigned char __INTIO* )( 0x80 +( portTmrUsed * 3 ));
+	tmr_ctl =( volatile unsigned char __INTIO* )( 0x80 +( portTmr * 3 ));
 	ctl = *tmr_ctl;  /* clear bit 7 PRT_IRQ, by reading CTL */
 #	if defined( _DEBUG )&& 0
 		( void )printf( "\r\n%s : %d : timer_isr ctl = 0x%x\r\n", 
@@ -428,7 +426,7 @@ void timer_isr( void )
 							"port.c", __LINE__, ctl );
 #	endif
 
-    /* now we're done with tmr_ctl and ctl,
+    /* now we're done with tmr_ctl and ctl variables,
 	   pop the ix and bc registers from the stack which were pushed by 
 	   Zilog eZ80 ANSI C Compiler Version 3.4 (19101101) as part of the prologue. */
     asm ("\t inc sp      ; postlog   SP adjust after prolog");
@@ -524,7 +522,7 @@ static BaseType_t prvSetupTimerInterrupt( void )
 			{
 				/* OMG it's us; we were already installed before, 
 				   so if we survived a device reset then continue */
-				portTmrUsed = i;
+				portTmr = i;
 				break;
 			}
 			else
@@ -535,7 +533,7 @@ static BaseType_t prvSetupTimerInterrupt( void )
 					/* the previous device and this device are both bound to the
 					   same vector; guess it's __default_mi_handler, so assign 
 					   this device */
-					portTmrUsed = i;
+					portTmr = i;
 					break;
 				}
 				
@@ -549,18 +547,18 @@ static BaseType_t prvSetupTimerInterrupt( void )
 		else
 		{
 			/* no previous ISR setup, so use this PRT */
-			portTmrUsed = i;
+			portTmr = i;
 			portPrevprev = NULL;
 			break;
 		}
 	}
 	
 
-	if( 0 <= portTmrUsed )
+	if( 0 <= portTmr )
 	{
 #		if defined( _DEBUG )&& 0
 			( void )printf( "%s : %d : vector 0x%x\r\n", "port.c", 
-							__LINE__, ( PRT0_IVECT +( portTmrUsed * 2 )) );
+							__LINE__, ( PRT0_IVECT +( portTmr * 2 )) );
 #		endif
 
 		/* Timer Source Select;
@@ -568,7 +566,7 @@ static BaseType_t prvSetupTimerInterrupt( void )
 		   (divided by the clock divider). Refer to eZ80F92 ProdSpec, section 
 		   Programmable Reload Timers table 37 */
 		iss = TMR_ISS;
-		iss &= ~( unsigned char )( PRT_ISS_SYSCLK <<( portTmrUsed * 2 ));
+		iss &= ~( unsigned char )( PRT_ISS_SYSCLK <<( portTmr * 2 ));
 #		if defined( _DEBUG )&& 0
 			( void )printf( "%s : %d : iss %d\r\n", "port.c", __LINE__, iss );
 #		endif
@@ -577,8 +575,8 @@ static BaseType_t prvSetupTimerInterrupt( void )
 		/* program Timer i Reload Registers;
 		   refer to eZ80F92 ProdSpec, section Programmable Reload Timers table 
 		   35-36 */
-		tmr_rrl =( volatile unsigned char __INTIO* )( 0x81 +( portTmrUsed * 3 ));
-		tmr_rrh =( volatile unsigned char __INTIO* )( 0x82 +( portTmrUsed * 3 ));
+		tmr_rrl =( volatile unsigned char __INTIO* )( 0x81 +( portTmr * 3 ));
+		tmr_rrh =( volatile unsigned char __INTIO* )( 0x82 +( portTmr * 3 ));
 #		if defined( _DEBUG )&& 0
 			( void )printf( "%s : %d : tmr_rrl 0x%x : tmr_rrh 0x%x\r\n", 
 							"port.c", __LINE__, tmr_rrl, tmr_rrh );
@@ -594,7 +592,7 @@ static BaseType_t prvSetupTimerInterrupt( void )
 		*tmr_rrh =( unsigned char )( reload >> 8 );
 		*tmr_rrl =( unsigned char )( reload & 0xFF );
 
-		tmr_ctl =( volatile unsigned char __INTIO* )( 0x80 +( portTmrUsed * 3 ));
+		tmr_ctl =( volatile unsigned char __INTIO* )( 0x80 +( portTmr * 3 ));
 		ctl = *tmr_ctl;  /* clear bit 7 PRT_IRQ, by reading CTL */
 
 		/* program TMR0_CTL and enable the timer */
@@ -631,9 +629,9 @@ static void portTeardownTimerInterrupt( void )
 {
 	volatile unsigned char __INTIO *tmr_ctl;
 	
-	if( 0 <= portTmrUsed )
+	if( 0 <= portTmr )
 	{
-		tmr_ctl =( volatile unsigned char __INTIO* )( 0x80 +( portTmrUsed * 3 ));
+		tmr_ctl =( volatile unsigned char __INTIO* )( 0x80 +( portTmr * 3 ));
 
 		/* disable TMR_CTL */
 		*tmr_ctl =( unsigned char )0;
@@ -641,10 +639,10 @@ static void portTeardownTimerInterrupt( void )
 	
 	if( NULL != portPrevprev )
 	{
-		_set_vector_mos(( PRT0_IVECT +( portTmrUsed * 2 )), portPrevprev );		
+		_set_vector_mos(( PRT0_IVECT +( portTmr * 2 )), portPrevprev );		
 	}
 
-	portTmrUsed = -1;
+	portTmr = -1;
 	portPrevprev = NULL;
 }
 /*-----------------------------------------------------------*/

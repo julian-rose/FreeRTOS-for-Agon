@@ -2063,7 +2063,7 @@ void vTaskStartScheduler( void )
                                portPRIVILEGE_BIT,  /* In effect ( tskIDLE_PRIORITY | portPRIVILEGE_BIT ), but tskIDLE_PRIORITY is zero. */
                                &xIdleTaskHandle ); /*lint !e961 MISRA exception, justified as it is not a redundant explicit cast to all supported compilers. */
 
-#		if defined( _DEBUG )&& 0
+#		if defined( _DEBUG )
 		{
 			if( pdPASS != xReturn )
 			{

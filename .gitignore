@@ -1,0 +1,9 @@
+.vscode
+*.sys
+*.lst
+*.bak
+*.lod
+*.obj
+*.wsp
+Debug/
+Release/
