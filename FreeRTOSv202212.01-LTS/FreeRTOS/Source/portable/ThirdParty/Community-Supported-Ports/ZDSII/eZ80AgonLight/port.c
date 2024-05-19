@@ -146,7 +146,7 @@ static BaseType_t portCreateMOSMutex( )
 {
 	BaseType_t r = pdPASS;
 	
-//#	if( 1 == configUSE_PREEMPTION )	
+#	if( 1 == configUSE_PREEMPTION )	
 	{
 		portMOSMutex = xSemaphoreCreateMutex( );
 		if( NULL == portMOSMutex )
@@ -164,7 +164,7 @@ static BaseType_t portCreateMOSMutex( )
 			xSemaphoreGive( portMOSMutex );
 		}
 	}
-//#	endif /* configUSE_PREEMPTION */
+#	endif /* configUSE_PREEMPTION */
 
 	return( r );
 }
@@ -184,7 +184,7 @@ void portEnterMOS( void )
 		( void )printf( "%s : %d\r\n", "port.c", __LINE__ );
 #	endif
 
-//#	if( 1 == configUSE_PREEMPTION )
+#	if( 1 == configUSE_PREEMPTION )
 	{
 		/* suspend until semaphore can be taken */
 		while( pdTRUE != xSemaphoreTake( portMOSMutex, 0 ))
@@ -197,7 +197,7 @@ void portEnterMOS( void )
 			vTaskDelay( 1 );
 		}
 	}
-//#	endif /* configUSE_PREEMPTION */
+#	endif /* configUSE_PREEMPTION */
 
 #	if defined( _DEBUG )&& 0
 		( void )printf( "%s : %d\r\n", "port.c", __LINE__ );
@@ -213,11 +213,11 @@ void portExitMOS( void )
 		( void )printf( "%s : %d\r\n", "port.c", __LINE__ );
 #	endif
 	
-//#	if( 1 == configUSE_PREEMPTION )
+#	if( 1 == configUSE_PREEMPTION )
 	{
 		xSemaphoreGive( portMOSMutex );
 	}
-//#	endif /* configUSE_PREEMPTION */
+#	endif /* configUSE_PREEMPTION */
 	
 #	if defined( _DEBUG )&& 0
 		( void )printf( "%s : %d\r\n", "port.c", __LINE__ );
@@ -413,25 +413,27 @@ void vPortYieldFromTick( void )
    this routine. */
 void timer_isr( void )
 {
-	volatile unsigned char __INTIO *tmr_ctl;
+	volatile unsigned char __INTIO * const tmr_ctl =
+		( volatile unsigned char __INTIO* )( 0x80 +( portTmr * 3 ));
     unsigned char ctl;
 
-	tmr_ctl =( volatile unsigned char __INTIO* )( 0x80 +( portTmr * 3 ));
 	ctl = *tmr_ctl;  /* clear bit 7 PRT_IRQ, by reading CTL */
 #	if defined( _DEBUG )&& 0
+	{
 		( void )printf( "\r\n%s : %d : timer_isr ctl = 0x%x\r\n", 
 							"port.c", __LINE__, ctl );
 		ctl = *tmr_ctl;
 		( void )printf( "%s : %d : timer_isr ctl = 0x%x\r\n", 
 							"port.c", __LINE__, ctl );
+	}
 #	endif
 
-    /* now we're done with tmr_ctl and ctl variables,
-	   pop the ix and bc registers from the stack which were pushed by 
-	   Zilog eZ80 ANSI C Compiler Version 3.4 (19101101) as part of the prologue. */
-    asm ("\t inc sp      ; postlog   SP adjust after prolog");
-    asm ("\t pop bc      ; postlog   BC pushed after prolog");
-    asm ("\t pop ix      ; postlog   retrieve IX pushed in prolog");
+    /* now we're done with local tmr_ctl and ctl variables,
+	   pop the bc register from the stack which was pushed by 
+	   Zilog eZ80 ANSI C Compiler Version 3.4 (19101101) as part of the 
+	   prologue. */
+    asm( "\t inc sp      ; postlog   SP adjust after prolog");
+    asm( "\t pop bc      ; postlog   BC pushed after prolog");
 
 #if configUSE_PREEMPTION == 1
     /*
@@ -455,21 +457,24 @@ void timer_isr( void )
 		{
 			/* A context switch is required. */
 			vTaskMissedYield( );
+			asm( "\t ld sp, ix      ; postlog   restore stack pointer");
 		}
 	}
-#else
+#else /* configUSE_PREEMPTION == 1 */
     /*
-     * Tick ISR for the cooperative scheduler.  All this does is increment the
-     * tick count.  We don't need to switch context, this can only be done by
-     * manual calls to taskYIELD();
+     * Tick ISR for the cooperative scheduler.  
+	 * This increments the tick count only. We don't switch context because
+	 * this is controlled by application task calls to taskYIELD();
      */
     if( pdFALSE != xTaskIncrementTick( ))
 	{
 		/* A context switch is required. */
 		vTaskMissedYield( );
+		asm( "\t ld sp, ix      ; postlog   restore stack pointer");
 	}
-#endif
+#endif /* configUSE_PREEMPTION == 1 */
 
+    asm( "\t pop ix      ; postlog   retrieve IX pushed in prolog");
 	asm( "               ; like github.com/breakintoprogram/agon-mos/blob/main/src_startup/vectors16.asm" );
 	asm( "               ;   __default_mi_handler" );
 	asm( "\t ei          ; re-enable interrupts " );

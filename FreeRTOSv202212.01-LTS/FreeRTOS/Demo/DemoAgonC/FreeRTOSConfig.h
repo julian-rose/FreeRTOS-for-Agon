@@ -58,6 +58,7 @@
 #define configSTACK_DEPTH_TYPE          		int
 #define configRECORD_STACK_HIGH_ADDRESS			0
 #define configCHECK_FOR_STACK_OVERFLOW			0
+#define configMINIMAL_STACK_SIZE				(( portSTACK_TYPE )512 )
 
 /* Memory allocation */
 #define configSUPPORT_DYNAMIC_ALLOCATION		1
@@ -70,34 +71,33 @@
 #define configUSE_TICK_HOOK						0
 #define configUSE_MALLOC_FAILED_HOOK			0
 
-/* Software timer related definitions. */
+/* Software timers */
 #define configUSE_TIMERS						0
 
-/* Tasking configuration */
+/* Tasks */
 	// 0 is lowest (idle) priority, configMAX_PRIORITIES - 1 is highest priority
 #define configMAX_PRIORITIES					5
-#define configMINIMAL_STACK_SIZE				(( portSTACK_TYPE )512 )
 #define configMAX_TASK_NAME_LEN					16
 #define configUSE_TASK_NOTIFICATIONS			1
 #define configUSE_COUNTING_SEMAPHORES			0
 #define configUSE_QUEUE_SETS					0
 #define configUSE_MUTEXES						1
 
-/* Co-routine definitions. */
+/* Co-routines */
 #define configUSE_CO_ROUTINES 					0
 #define configMAX_CO_ROUTINE_PRIORITIES 		2
 
-/* Run time and task stats gathering related definitions. */
+/* Run time and task stats gathering */
 #define configGENERATE_RUN_TIME_STATS			0
 #if defined( _DEBUG )
-#	define configUSE_TRACE_FACILITY				0  //1
+#	define configUSE_TRACE_FACILITY				0
 #else
 #	define configUSE_TRACE_FACILITY				0
 #endif
 
-/* Define to trap errors during development. */
+/* Assert */
 #if defined( _DEBUG )&&( 0 )
-#	define configASSERT( x )					if(( x )== 0 ) portAssert( __FILE__, __LINE__ )
+#	define configASSERT( x )					if( 0==( x )) portAssert( __FILE__, __LINE__ )
 #endif
 
 /* Extra functions

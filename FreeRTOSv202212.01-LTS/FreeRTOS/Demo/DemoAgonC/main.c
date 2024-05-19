@@ -43,6 +43,18 @@
 extern unsigned int _heaptop;  // defined in the linker directive file
 extern unsigned int _heapbot;  //   "
 
+
+	/* Fudge factor to delay rate of putch's
+	   Without slowing down the rate of putchars we get lockups or system 
+	   resets. It doesn't appear to be a corrupt stack - but check further. As 
+	   putch invokes MOS soft reset instructions on the eZ80, I doubt it's MOS. 
+	   Is it the ESP32 VDP Terminal Processor not keeping up?? 
+	   With FUDGE < 200 we see occasional corruption in the output - what looks 
+	   like letter 'Y' is displayed. If we see these are we at risk of a system 
+	   reset?? */
+#define FUDGE	250
+
+
 static unsigned int idlecnt = 0;
 
 
@@ -99,24 +111,26 @@ void Task1( void *pvParameters )
 {
     int ticks =( int )pvParameters;
 	int cnt = 0;
-	char ch = 'A';
+	char ch = '-';
+	int i;
 
 	( void )printf( "\r\nStarting Task1\r\n" );
     while( 1 )
     {
-		portEnterMOS( );
-        putchar( ch );
-		portExitMOS( );
-
-		if( 0 ==( cnt++ % 64 ))
+		if( 0 ==( cnt++ % 80 ))
 		{
-			if( 'A' == ch )
-				ch = 'a';
+			if( '\\' == ch )
+				ch = '-';
 			else
-				ch = 'A';
+				ch = '\\';
 			
 			portYIELD( );
 		}
+
+		for( i = 0; FUDGE > i; i++ );  // slow the rate of putchars
+		portEnterMOS( );
+        putchar( ch );
+		portExitMOS( );
     }
 }
 
@@ -125,24 +139,26 @@ void Task2( void *pvParameters )
 {
     int ticks =( int )pvParameters;
 	int cnt = 0;
-	char ch = 'B';
+	char ch = '|';
+	int i;
 
 	( void )printf( "\r\nStarting Task2\r\n" );
     while( 1 )
     {
-		portEnterMOS( );
-        putchar( ch );
-		portExitMOS( );
-
-		if( 0 ==( cnt++ % 128 ))
+		if( 0 ==( cnt++ % 80 ))
 		{
-			if( 'B' == ch )
-				ch = 'b';
+			if( '/' == ch )
+				ch = '|';
 			else
-				ch = 'B';
+				ch = '/';
 			
 			portYIELD( );
 		}
+
+		for( i = 0; FUDGE > i; i++ );  // slow the rate of putchars
+		portEnterMOS( );
+        putchar( ch );
+		portExitMOS( );
     }
 }
 

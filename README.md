@@ -43,10 +43,10 @@ them from the MOS prompt.
 <p>
 DemoAgonP uses pre-emptive multi-tasking. Two tasks run without knowledge of 
 each other, each making MOS calls. The CPU (and MOS) is shared between them. 
-Although they have no knowledge of each other, a second task will be blocked 
-in making a MOS call until a first completes a MOS call.
-These example tasks also make time delay calls, such that task1 runs once per
-second, and task runs 3.3 times per second, to better demonstrate the
+Although they have no knowledge of each other, MOS in non-reentrant so that a 
+second task will be blocked in making a MOS call until a first completes a MOS 
+call. These example tasks also make time delay calls, such that task1 runs once 
+per second, and task runs 3.3 times per second, to better demonstrate the
 pre-emptive execution model.
 
 <p>

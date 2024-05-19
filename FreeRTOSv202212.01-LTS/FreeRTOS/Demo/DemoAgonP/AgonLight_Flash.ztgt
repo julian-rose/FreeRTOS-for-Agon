@@ -24,28 +24,28 @@
    <Memory>
       <ChipSelects>
          <CS0>
-            <busMode>1</busMode>
+            <busMode>0</busMode>
             <controlRegister>8</controlRegister>
-            <lower>2</lower>
-            <upper>9</upper>
+            <lower>4</lower>
+            <upper>B</upper>
          </CS0>
          <CS1>
             <busMode>02</busMode>
             <controlRegister>28</controlRegister>
-            <lower>C0</lower>
-            <upper>C7</upper>
+            <lower>10</lower>
+            <upper>10</upper>
          </CS1>
          <CS2>
             <busMode>81</busMode>
             <controlRegister>28</controlRegister>
-            <lower>80</lower>
-            <upper>BF</upper>
+            <lower>20</lower>
+            <upper>2F</upper>
          </CS2>
          <CS3>
             <busMode>02</busMode>
             <controlRegister>00</controlRegister>
-            <lower>00</lower>
-            <upper>00</upper>
+            <lower>30</lower>
+            <upper>30</upper>
          </CS3>
       </ChipSelects>
       <Internal>
