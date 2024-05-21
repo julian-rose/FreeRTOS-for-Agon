@@ -7,16 +7,16 @@ using the Zilog ZDSII toolset. This port is integrated with FreeRTOS version
 We set out for stability in porting to the newer FreeRTOS kernel, rather than go 
 for latest and greatest.
 
-The Agon Light port of FreeRTOS runs on top of MOS and willon have access to 
-its services, and hence through to the on-board (ESP32) Terminal Processor 
-services. In its initial incarnation only putch and MOS function 0x14 
+The Agon Light port of FreeRTOS runs on top of MOS in ADL mode and willon have 
+access to its services, and hence through to the on-board (ESP32) VDP Terminal 
+Processor services. In its initial incarnation only putch and MOS function 0x14 
 mos_setintvector are supported. Others will follow...
 
 <h3>Origin</h3>
 The origin of the EZ80 port dates from 2010 and is found here: 
 https://interactive.freertos.org/hc/en-us/community/posts/210028706-eZ80-using-ZDSII-4-11
-Refer also to: https://www.freertos.org/portez80.html  But the source code is 
-no longer there, and the comment about "#if (...)" is resolved in 20221201-LTS. 
+Refer also to: https://www.freertos.org/portez80.html but the source code is 
+no longer hosted there, and the comment about "#if (...)" is resolved in 20221201-LTS. 
 This origin port was integrated with FreeRTOS version 2008xx (5.x).
 
 <h3>Contributors</h3>
@@ -28,7 +28,9 @@ The port to Agon Light and FreeRTOS 10.5.1 was made by Julian Rose in May, 2024.
 
 <h3>Porting guidelines</h3>
 http://www.realtimeengineers.com/Contributing-files-to-FreeRTOS.html
-This includes assignment of copyright (to Amazon Web Services).
+Although we expect to always be a thrid party contrinution, nonetheless we 
+follow the modern convention. This includes assignment of copyright (to 
+Amazon Web Services - where Richard Barry now works).
 
 <h3>Locating portmacro.h</h3>
 Agon FreeRTOS project settings should locate the PATH to the include file 
@@ -38,12 +40,12 @@ This brings in portmacro.h through ./Source/include/portable.h/deprecated_defini
 
 <h3>Tasks</h3>
 In place of the kernel ./Source/tasks.c it is temporarily necessary to use
-./Source/portable/Community-Supported-Ports/ZDSII/eZ80AgonLight/tasks.c 
-The ZDSII compiler generates error "P3: Internal Error(0x83BAF1)" casting away 
-global variables. The workaround in the port tasks.c is to preprocess out the 
-offending statements at the end of function vTaskStartScheduler. A bug report 
-is made to Zilog and will wait on their fix to revert back to the proper 
-FreeRTOS tasks.c source.
+./Source/portable/Community-Supported-Ports/ZDSII/eZ80AgonLight/tasks.c  The 
+ZDSII compiler generates error "P3: Internal Error(0x83BAF1)" casting away 
+global variables. The workaround in the ./Source/portable tasks.c is to 
+preprocess out the offending statements at the end of function 
+vTaskStartScheduler. A bug report is made to Zilog and will wait on their 
+fix to revert back to the proper ./Source/tasks.c 
 
 <h3>Heap Memory</h3>
 Each port may choose one from five supplied alternative implementations of heap 
@@ -71,9 +73,8 @@ hiding it from applications.
 
 <h3>Startup</h3>
 Startup code is located in the file init.asm, essentially as per 
-Agon-Projects-main -> C -> Hello. This begins with the MOS header and C startup
-code.
-I modded it to initialise heap memory, but subsequently moved that back out.
+Agon-Projects-main -> C -> Hello. This begins with the MOS standard header 
+and C application startup code.
 
 <h3>mosvec24</h3>
 This started life as the Zilog vectors24.asm file, but is much changed.

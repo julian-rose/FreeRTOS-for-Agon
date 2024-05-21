@@ -407,10 +407,14 @@ void vPortYieldFromTick( void )
 }
 /*-----------------------------------------------------------*/
 
-/* timer_isr is an ISR bound to a PRT countdown expiry event.
-   It is invoked following an interrupt from the PRT to the eZ80 CPU;
-   when the CPU will save the current IP and set IP (jump) to the address of
-   this routine. */
+/* timer_isr is an ISR bound to a PRT countdown expiry event, 
+   via the MOS interrupt vector table.
+   MOS runs in mixed mode (MADL=1), so all ISRs begin in ADL mode.
+   timer_isr is invoked following an interrupt from that PRT 
+   (on-chip vectored peripheral) to the eZ80 CPU.
+   Refer to UM007715 Interrupts in Mixed Memory Mode Applications, 
+   Table 25 ADL=1 MADL=1 (same as per IM 2 table 24).
+   An ISR will run on the stack of the current program (task). */
 void timer_isr( void )
 {
 	volatile unsigned char __INTIO * const tmr_ctl =
@@ -477,19 +481,27 @@ void timer_isr( void )
     asm( "\t pop ix      ; postlog   retrieve IX pushed in prolog");
 	asm( "               ; like github.com/breakintoprogram/agon-mos/blob/main/src_startup/vectors16.asm" );
 	asm( "               ;   __default_mi_handler" );
-	asm( "\t ei          ; re-enable interrupts " );
-    asm( "\t reti.l      ; need reti.l, not just reti");
+	asm( "\t ei          ; re-enable interrupts (on completion of following ret)" );
+    asm( "\t reti.l      ; need reti.L as per UM007715 table 25 for IM 2 ADL=1 MADL=1");
+
+		/* following postlog is not followed */
 }
 /*-----------------------------------------------------------*/
 
 /*
  * Setup timer.
- *   Bind an EZ80F92 TMR as the Periodic Interval Timer function. Any of 
- *   PRT0..PRT3 can be assigned; PRT4..PRT5 cannot be used for PIT.
- *   Algorithm: loop over PRT0..PRT3 to find the first believed free device: 
- *   if the previous device and this device are bound to the same handler 
- *   (guess it's the MOS default handler, __default_mi_handler),then assign 
- *   this one; typically PRT1.
+ *   Bind an EZ80F92 TMR as the Periodic Interval Timer function. 
+ *   Any of PRT0..PRT3 can be assigned; PRT4..PRT5 cannot be used for PIT.
+ *   MOS uses PRT0 to initialise UART0; and at runtime in the i2s driver 
+ *   (for read and write), and the SD-card driver.
+ *
+ *   Algorithm (long): loop over PRT1..PRT3 to find the first believed free 
+ *   device: if the previous device and this device are bound to the same 
+ *   handler (guess it's the MOS default handler, __default_mi_handler),then 
+ *   assign this one; typically PRT2.
+ *
+ *   Algorithm (short): assign PRT1 to FreeRTOS PIT
+ *
  *   Program the selected PRT as a continuous PIT at the configurable Hz.
  *   Refer to eZ80F92 Product Specification (PS015317-0120) section on
  *   Programmable Reload Timers. 
@@ -511,10 +523,11 @@ static BaseType_t prvSetupTimerInterrupt( void )
 		( void )printf( "%s : %d\r\n", "port.c", __LINE__ );
 #	endif
 
-	/* Search for and assign from the available timers in PRT0..PRT4 */
-	for( i = 0; i < 4; i++ )
+#	if 0  /* Algorithm (long) */
+	/* Search for and assign from the available timers in PRT1..PRT3 */
+	for( i = 1; i < 4; i++ )
 	{
-		/* set Timer interrupt vector (PRT0_IVECT) through MOS */
+		/* set Timer interrupt vector (PRTn_IVECT) through MOS */
 		prev = _set_vector_mos(( PRT0_IVECT +( i * 2 )), timer_isr );
 #		if defined( _DEBUG )&& 0
 			( void )printf( "%s : %d : i = %d : prev = %p\r\n", 
@@ -557,13 +570,29 @@ static BaseType_t prvSetupTimerInterrupt( void )
 			break;
 		}
 	}
-	
+#	else  /* Algorithm (short) */
+	{
+		/* Assign PRT1 for FreeRTOS */
+		portTmr = 1;
+		portPrevprev = _set_vector_mos(( PRT0_IVECT +( portTmr * 2 )), timer_isr );
+		
+		/* Applications are free to use PRT2 or PRT3 */
+	}
+#	endif /* Algorithm */
 
 	if( 0 <= portTmr )
 	{
+#		if defined( _DEBUG )
+		{
+			( void )printf( "Assigned Timer %d to FreeRTOS tick\r\n", portTmr );
+		}
+#		endif
+
 #		if defined( _DEBUG )&& 0
+		{
 			( void )printf( "%s : %d : vector 0x%x\r\n", "port.c", 
 							__LINE__, ( PRT0_IVECT +( portTmr * 2 )) );
+		}
 #		endif
 
 		/* Timer Source Select;
@@ -573,7 +602,9 @@ static BaseType_t prvSetupTimerInterrupt( void )
 		iss = TMR_ISS;
 		iss &= ~( unsigned char )( PRT_ISS_SYSCLK <<( portTmr * 2 ));
 #		if defined( _DEBUG )&& 0
+		{
 			( void )printf( "%s : %d : iss %d\r\n", "port.c", __LINE__, iss );
+		}
 #		endif
 		TMR_ISS =( unsigned char )iss;
 
@@ -583,8 +614,10 @@ static BaseType_t prvSetupTimerInterrupt( void )
 		tmr_rrl =( volatile unsigned char __INTIO* )( 0x81 +( portTmr * 3 ));
 		tmr_rrh =( volatile unsigned char __INTIO* )( 0x82 +( portTmr * 3 ));
 #		if defined( _DEBUG )&& 0
+		{
 			( void )printf( "%s : %d : tmr_rrl 0x%x : tmr_rrh 0x%x\r\n", 
 							"port.c", __LINE__, tmr_rrl, tmr_rrh );
+		}
 #		endif
 
 		/* RRH:RRL are each 8-bit registers nd onr 16-bit register as a pair.
@@ -608,8 +641,10 @@ static BaseType_t prvSetupTimerInterrupt( void )
 					PRT_CTL_ENABLE );
 
 #		if defined( _DEBUG )&& 0
+		{
 			ctl = *tmr_ctl;   /* PRT_CTL_RST_EN will be cleared (undocumented but expected) */
 			( void )printf( "%s : %d : ctl = 0x%x\r\n", "port.c", __LINE__, ctl );
+		}
 #		endif
 	}
 	else
@@ -617,7 +652,9 @@ static BaseType_t prvSetupTimerInterrupt( void )
 		/* No free Timer available */
 		r = pdFAIL;
 #		if defined( _DEBUG )
+		{
 			( void )printf( "%s : %d : No timer available\r\n", "port.c", __LINE__ );
+		}
 #		endif
 	}
 	

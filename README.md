@@ -6,14 +6,10 @@ The concept is very much FreeRTOS over MOS, reflected in the project name.
 FreeRTOS provides concurrency and time, and MOS provides the system services.
 
 <p>
-This port integrates FreeRTOS version 20221201-LTS (10.5.1) with the 
-Zilog ZDSII eZ80Acclaim! version 5.3.5 (Build 23020901) toolset.
-Refer to the README for the detailed description of the Agon port in 
+This port to Agon Light integrates FreeRTOS version 20221201-LTS (10.5.1) with 
+the Zilog ZDSII eZ80Acclaim! version 5.3.5 (Build 23020901) toolset.
+For a detailed decription, refer to the README in 
 ./FreeRTOSv202212.01-LTS/FreeRTOS/Source/portable/Community-Supported-Ports/ZDSII/eZ80AgonLight/
-
-<p>
-The choice of FreeRTOS version 20221201-LTS prioritised stability over latest 
-and greatest.
 
 <h3>What is FreeRTOS?</h3>
 Put succinctly, FreeRTOS allows an application to be divided into a number of
@@ -21,12 +17,16 @@ concurrent tasks. The core of FreeRTOS (and indeed any RTOS) is its kernel;
 refer to https://www.freertos.org/RTOS.html. 
 And to https://www.freertos.org/features.html for the API.
 
+<p>
+The choice of FreeRTOS version 20221201-LTS prioritised stability over latest 
+and greatest.
+
 <h3>What is Agon?</h3>
 Agon Light™ is a fully open-source 8-bit microcomputer and microcontroller in 
 one small, low-cost board. Refer to https://github.com/TheByteAttic/AgonLight.
-It uses two processor sub-systems: the eZ80 main processor which runs MOS (and
-where FreeRTOS application programs will run); the ESP32 terminal processor,
-which primarily performs I/O functions.
+It embeds two processor sub-systems: the eZ80 main processor which runs MOS 
+(and where FreeRTOS programs will run); and the ESP32 terminal processor, which 
+primarily performs I/O functions.
 
 <h3>What is MOS?</h3>
 MOS is the Machine Operating System for Agon Light and compatibles.
@@ -59,14 +59,15 @@ speed of FreeRTOS / MOS on Agon.
 
 <h2>Build</h2>
 To build this project you will need to install the Zilog II eZ80Acclaim! toolkit
-on your development machine. In addition to the GUI, compiler, assembler and 
-linker tools, this provides header and library files used by FreeRTOS for Agon.
+on your PC-host development machine. In addition to the GUI, compiler, assembler 
+and linker tools, this provides header and library files used by FreeRTOS for 
+Agon.
 
 <p>
-The port has been developed using using ZDS II - eZ80Acclaim! 5.3.5 (Build 23020901) 
-with Compiler Version 3.4 (19101101). Other versions of these tools should be 
-okay; though the state of maintenance may result in errors different to those 
-encountered and worked around.
+The port has been developed using using ZDS II - eZ80Acclaim! 5.3.5 (Build 
+23020901) with Compiler Version 3.4 (19101101). Other recent versions of these 
+tools should be okay; though the state of maintenance may result in errors 
+different to those encountered and worked around.
 
 <h3>hex2bin</h3>
 On compilation success, the output will be a ".hex" file. This needs to be
@@ -100,12 +101,27 @@ and MOS function 14 setIntVector [through mosvec24.asm under portable], needed
 to attach the tick ISR.
 
 <p>
-A list of ToDos and improvements include providing support for other MOS 
-functions; and I daresay a number of bug fixes... to catch those elusive resets
-I now need to buy that $100 ZUSBASC0200ZADG debug device, at
+A list of ToDos and improvements include:
+<ul>
+  <li>mos_api:   provide a library for the MOS functions</li>
+  <li>vdp-api:   provide a library for the VDP functions</li>
+  <li>posix.4:   provide a real-time library inspired by posix-4</li>
+  <li>safer:     a version with Z80-mode tasks with the ADL-mode kernel</li>
+</ul>
+
+<h3>Debugging</h3>
+To catch those elusive resets (refer to UM007715 Illegal Instruction Traps)
+in case of stack corruption or other bugs,
+I am now waiting delivery of a $100 ZUSBASC0200ZADG debug device from
 https://www.mouser.com/datasheet/2/240/Littelfuse_ZUSBASC0200ZACG_Data_Sheet-3078266.pdf
+
+<p>
+You will need version 5.3.5 in order to use the ZUSBASC0200ZADG Acclaim! smart 
+cable hardware debugger. Though, in general, you will not need this to build 
+applications. I got FreeRTOS running without one, and gave my brain a workout 
+in doing so. 
 
 <p>
 Rather than putdown the somewhat buggy Zilog tools, I would like to see them 
 rescued from the current maintenance contract and made Open Source. What is 
-there is fundamentally good - and would be better off in more caring hands.
+there is fundamentally good - and would be better off in more careful hands.

@@ -32,6 +32,8 @@
  *
  *  Demo application for EZ80 Agon Light
 */
+#pragma asm "\tDEFINE TASKS, SPACE = RAM, ALIGN = 10000h"
+
 
 #include <stdio.h>
 
@@ -46,17 +48,23 @@ extern unsigned int _heapbot;  //   "
 
 	/* Fudge factor to delay rate of putch's
 	   Without slowing down the rate of putchars we get lockups or system 
-	   resets. It doesn't appear to be a corrupt stack - but check further. As 
-	   putch invokes MOS soft reset instructions on the eZ80, I doubt it's MOS. 
-	   Is it the ESP32 VDP Terminal Processor not keeping up?? 
-	   With FUDGE < 200 we see occasional corruption in the output - what looks 
-	   like letter 'Y' is displayed. If we see these are we at risk of a system 
-	   reset?? */
+	   resets. It doesn't appear to be a corrupt stack - but check further. 
+	   
+	   As putch invokes soft reset into MOS which blocks, we only return to 
+	   the app after the character has been transimitted over UART0 to VDP.
+	   Is it the ESP32 VDP Terminal Processor not keeping up; running out of
+	   buffer space?? 
+		  UART0 initialised in github.com/breakintoprogram/agon-mos/blob/main/main.c
+	      to either 1152000 or if that fails then downto 384000 bps. UART0 CTS 
+		  flow control in github.com/breakintoprogram/agon-mos/blob/main/src/serial.asm
+  	      384000 / 8 (+2 stop bits) = 38,400 Bps.
+	   With FUDGE < 200 we see corruption in the output - looks like letter 'Y' 
+	   is displayed. If we see these are we at risk of a system reset??
+	   Use a FUDGE factor + margin delay, such that no corruption is seen */
 #define FUDGE	250
 
 
 static unsigned int idlecnt = 0;
-
 
 void Task1( void *pvParameters );
 void Task2( void *pvParameters );
@@ -77,7 +85,7 @@ int main( void )
 	}
 #	endif
 
-    /* Create the sample tasks. */
+    /* Create the tasks */
     r = xTaskCreate( Task1, "Task1", configMINIMAL_STACK_SIZE, (void *)10, tskIDLE_PRIORITY + 2, NULL );
 	if( pdPASS != r )
 	{
@@ -107,18 +115,21 @@ int main( void )
 }
 
 
+#pragma asm "\tSEGMENT TASKS"
 void Task1( void *pvParameters )
 {
-    int ticks =( int )pvParameters;
-	int cnt = 0;
+    unsigned int const p =( unsigned int )pvParameters;
+	unsigned short int cnt = 0;
 	char ch = '-';
 	int i;
 
-	( void )printf( "\r\nStarting Task1\r\n" );
+	( void )printf( "\r\nStarting %s\r\n", pcTaskGetName( NULL ));
     while( 1 )
     {
 		if( 0 ==( cnt++ % 80 ))
 		{
+			cnt = 1;
+
 			if( '\\' == ch )
 				ch = '-';
 			else
@@ -132,21 +143,26 @@ void Task1( void *pvParameters )
         putchar( ch );
 		portExitMOS( );
     }
+	
+	( void )p;
 }
 
 
+#pragma asm "\tSEGMENT TASKS"
 void Task2( void *pvParameters )
 {
-    int ticks =( int )pvParameters;
-	int cnt = 0;
+    unsigned int const p =( unsigned int )pvParameters;
+	unsigned short cnt = 0;
 	char ch = '|';
 	int i;
 
-	( void )printf( "\r\nStarting Task2\r\n" );
+	( void )printf( "\r\nStarting %s\r\n", pcTaskGetName( NULL ));
     while( 1 )
     {
 		if( 0 ==( cnt++ % 80 ))
 		{
+			cnt = 1;
+
 			if( '/' == ch )
 				ch = '|';
 			else
@@ -160,6 +176,8 @@ void Task2( void *pvParameters )
         putchar( ch );
 		portExitMOS( );
     }
+	
+	( void )p;
 }
 
 

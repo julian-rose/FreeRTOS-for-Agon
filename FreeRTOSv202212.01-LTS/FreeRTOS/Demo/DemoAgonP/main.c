@@ -32,6 +32,8 @@
  *
  *  Demo application for EZ80 Agon Light
 */
+#pragma asm "\tDEFINE TASKS, SPACE = RAM, ALIGN = 10000h"
+
 
 #include <stdio.h>
 
@@ -95,55 +97,59 @@ int main( void )
 }
 
 
+#pragma asm "\tSEGMENT TASKS"
 void Task1( void *pvParameters )
 {
-    int ticks =( int )pvParameters;
+    unsigned int const ticks =( unsigned int )pvParameters;
 	int cnt = 0;
-	char ch = 'A';
+	char ch = '|';
 
-	( void )printf( "\r\nStarting Task1 : delay ticks = %d\r\n", ticks );
+	( void )printf( "\r\nStarting %s : delay ticks = %d\r\n", 
+					pcTaskGetName( NULL ), ticks );
     while( 1 )
     {
+		if( 0 ==( cnt++ % 80 ))
+		{
+			if( '|' == ch )
+				ch = '-';
+			else
+				ch = '|';
+		}
+		
 		portEnterMOS( );
         putchar( ch );
 		portExitMOS( );
 
-        vTaskDelay( ticks );
-		
-		if( 0 ==( cnt++ % 64 ))
-		{
-			if( 'A' == ch )
-				ch = 'a';
-			else
-				ch = 'A';
-		}
+        vTaskDelay( ticks );		
     }
 }
 
 
+#pragma asm "\tSEGMENT TASKS"
 void Task2( void *pvParameters )
 {
-    int ticks =( int )pvParameters;
+    unsigned int const ticks =( unsigned int )pvParameters;
 	int cnt = 0;
-	char ch = 'B';
+	char ch = '/';
 
-	( void )printf( "\r\nStarting Task2 : delay ticks = %d\r\n", ticks );
+	( void )printf( "\r\nStarting %s : delay ticks = %d\r\n", 
+					pcTaskGetName( NULL ), ticks );
     while( 1 )
     {
+		if( 0 ==( cnt++ % 80 ))
+		{
+			if( '/' == ch )
+				ch = '\\';
+			else
+				ch = '/';
+		}
+
 		portEnterMOS( );
         putchar( ch );
 		portExitMOS( );
 
         vTaskDelay( ticks );
-		
-		if( 0 ==( cnt++ % 128 ))
-		{
-			if( 'B' == ch )
-				ch = 'b';
-			else
-				ch = 'B';
-		}
-    }
+	}
 }
 
 
