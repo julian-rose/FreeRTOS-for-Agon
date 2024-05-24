@@ -1,7 +1,3 @@
-;* mosvec24.asm
-;*
-;*  derived from vectors24.asm Copyright (c) 2007-2008 Zilog, Inc.
-;*
 ;* FreeRTOS Kernel V10.5.1
 ;* Copyright (C) 2024 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
 ;*
@@ -33,25 +29,26 @@
 ;*  http://www.FreeRTOS.org - Documentation, latest information, license and
 ;*  contact details.
 ;*
-;*     Modified for the Agon Light port
-;*      from .\ZDSII_eZ80Acclaim!_5.3.5\src\rtl\common\vectors24.asm
-;*      refer to eZ80F92 Product Specification "PS015317-0120"
+;*  mosvec24.asm
+;*
+;*  derived from vectors24.asm Copyright (c) 2007-2008 Zilog, Inc.
+;*  Modified for the Agon Light port
+;*    from .\ZDSII_eZ80Acclaim!_5.3.5\src\rtl\common\vectors24.asm
+;*    refer to eZ80F92 Product Specification "PS015317-0120"
 ;*
 ;*****************************************************************************
 include "mos_api.inc"
 
 ;*        xref __init                   ; performed by MOS
 ;*        xdef _reset                   ; performed by MOS
-;*        xdef __default_nmi_handler
-;*        xdef __default_mi_handler
+;*        xdef __default_nmi_handler    ; MOS src_startup/vectors16.asm
+;*        xdef __default_mi_handler     ; MOS src_startup/vectors16.asm
+
         xdef __nvectors
 ;*        xdef _init_default_vectors    ; deprectaed in favour of MOS vectors
 ;*        xdef __init_default_vectors
-;*        xdef _set_vector
-;*        xdef __set_vector
 ;*        xdef __vector_table
-		xdef _set_vector_mos            ; new for MOS
-		xdef __set_vector_mos
+		xdef _mos_setintvector
 
 
 NVECTORS EQU 102      ; number of potential interrupt vectors (00h to 66h)
@@ -64,70 +61,24 @@ NVECTORS EQU 102      ; number of potential interrupt vectors (00h to 66h)
 ;*  The Absolute locations 00h, 08h, 10h, 18h, 20h, 28h, 30h, 38h, and 66h 
 ;*  are reserved for hardware reset, NMI, and the RST instruction.
 ;*  These absolute vectors are contained in the Agon MOS software 
-;*  and leave them unchanged in FreeRTOS
-;*  1. disable interrupts
-;*  2. clear mixed memory mode (MADL) flag
-;*  3. jump to initialization procedure with jp.lil to set ADL
-;*        define .RESET, space = ROM
-;*        segment .RESET
-;* _reset:
-;* _rst0:
-;*     di
-;*     rsmix
-;*     jp.lil __init
-;* _rst8:
-;*     di
-;*     rsmix
-;*     jp.lil __init
-;* _rst10:
-;*     di
-;*     rsmix
-;*     jp.lil __init
-;* _rst18:
-;*     di
-;*     rsmix
-;*     jp.lil __init
-;* _rst20:
-;*     di
-;*     rsmix
-;*     jp.lil __init
-;* _rst28:
-;*     di
-;*     rsmix
-;*     jp.lil __init
-;* _rst30:
-;*     di
-;*     rsmix
-;*     jp.lil __init
-;* _rst38:
-;*     di
-;*     rsmix
-;*     jp.lil __init
-;*         ds %26
-;* _nmi:
-;*     di
-;*     rsmix
-;*     jp.lil __default_nmi_handler
-
+;*  defined in MOS src_startup/vectors16.asm
 
 
 ;*		we place interrupt handling code in linked section CODE
         segment CODE
         .assume ADL = 1
 
+
 ;*****************************************************************************
 ;*  Default Non-Maskable Interrupt handler
 ;*
-;__default_nmi_handler:
-;    retn
+;* defined in MOS src_startup/vectors16.asm::__default_nmi_handler
 
 
 ;*****************************************************************************
 ;*  Default Maskable Interrupt handler
 ;*
-;__default_mi_handler:
-;    ei
-;    reti
+;* defined in MOS src_startup/vectors16.asm::__default_mi_handler
 
 
 ;*****************************************************************************
@@ -140,34 +91,11 @@ NVECTORS EQU 102      ; number of potential interrupt vectors (00h to 66h)
 ;*
 ;*  The interrupt vectors are contained in the Agon MOS software 
 ;*  and we leave them unchanged in FreeRTOS
-;*
-;* __init_default_vectors:
-;* _init_default_vectors:
-;*     push af
-;*     di                         ; disable interrupts while loading table
-;* 
-;*     ld hl, __vector_table
-;*     ld b, NVECTORS-1
-;*     ld iy, __default_mi_handler
-;* $load_hndlr:
-;*     ld (hl), iy                ; load default handler
-;*     inc hl                     ;
-;*     inc hl                     ; move to next location
-;*     inc hl                     ;
-;*     inc hl                     ;
-;*    djnz $load_hndlr
-;* 
-;*     im 2                       ; interrupt mode 2
-;*     ld hl, __vector_table >> 8 & 0ffffh
-;*     ld i, hl                   ; load interrupt vector base
-;* 
-;*     pop af
-;*     ei                         ; it is safe to enable interrupts now
-;*     ret
+;*   MOS src_startup/vectors16.asm::_init_default_vectors
 
 
 ;*****************************************************************************
-;*  void _set_vector( unsigned short vector, void( *handler )( void ) );
+;*  int _set_vector( unsigned short vector, void( *handler )( void ) );
 ;*
 ;*  installs a user interrupt handler in the vector table
 ;*
@@ -197,12 +125,12 @@ NVECTORS EQU 102      ; number of potential interrupt vectors (00h to 66h)
 
 
 ;*****************************************************************************
-;* void _set_vector_mos( unsigned short vector, void( *handler )( void ));
+;* void *mos_setintvector( unsigned short vector, void( *handler )( void ));
 ;*
 ;*  (IX+9)  handler - address of user interrupt handler
 ;*  (IX+6)  vector  - interrupt vector
 ;*
-;* Purpose: install a user interrupt handler in the MOS vector table
+;* Purpose: install a user interrupt handler in the MOS interrupt vector table
 ;*
 ;* Method:
 ;*   https://agonconsole8.github.io/agon-docs/MOS-API/#0x14-mos_setintvector
@@ -210,10 +138,15 @@ NVECTORS EQU 102      ; number of potential interrupt vectors (00h to 66h)
 ;*   Invoke a MOS function call, through RST 8, passing in function number:
 ;*     0x14: mos_setintvector 
 ;*     Set an interrupt vector (Requires MOS 1.03 or above)
-;*       Implemented in mos.c by a call to vectors16.asm::set_vector, 
-;*   	 https://github.com/breakintoprogram/agon-mos/blob/main/src_startup/vectors16.asm
-;*       which installs a user interrupt handler in the 2nd interrupt 
-;*       vector jump table
+;*     Implemented in MOS:
+;*       vectors16.asm::_rst_08_handler -> call mos_api
+;*       mos_api.asm::mos_api -> switch-like call to mos_api_setintvector
+;*       mos_api.asm::mos_api_setintvector call to _mos_SETINTVECTOR
+;*       mos.c::_mos_SETINTVECTOR call to set_vector 
+;*       vectors16.asm::set_vector, 
+;*         https://github.com/breakintoprogram/agon-mos/blob/main/src_startup/vectors16.asm
+;*         which installs a user interrupt handler in the 2nd interrupt 
+;*         vector jump table
 ;* 
 ;* Parameters:
 ;*     E: Interrupt vector number to set
@@ -222,8 +155,7 @@ NVECTORS EQU 102      ; number of potential interrupt vectors (00h to 66h)
 ;* Returns:
 ;*     HL(U): Address of the previous interrupt vector (24-bit pointer)
 ;* 
-__set_vector_mos:
-_set_vector_mos:
+_mos_setintvector:
     push ix                    ; Standard prologue
     ld ix, 0
     add ix, sp
@@ -233,8 +165,7 @@ _set_vector_mos:
     ld de, (ix+6)              ; load vector number, first function call parameter
 	ld hl, 0
     ld hl, (ix+9)              ; load pointer to handler
-        
-	MOSCALL mos_setintvector   ; add new interrupt vector in MOS IVECT table
+	MOSCALL mos_setintvector   ; function number defined in mos_api.inc
 							   ; returns old handler in HLU
 
     pop af                     ; Standard epilogue

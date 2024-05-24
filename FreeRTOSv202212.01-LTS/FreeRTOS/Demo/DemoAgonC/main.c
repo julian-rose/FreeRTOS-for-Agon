@@ -34,34 +34,16 @@
 */
 #pragma asm "\tDEFINE TASKS, SPACE = RAM, ALIGN = 10000h"
 
-
 #include <stdio.h>
 
 #include "FreeRTOS.h"
 #include "task.h"
 #include "croutine.h"
+#include "mosapi.h"
 
 
 extern unsigned int _heaptop;  // defined in the linker directive file
 extern unsigned int _heapbot;  //   "
-
-
-	/* Fudge factor to delay rate of putch's
-	   Without slowing down the rate of putchars we get lockups or system 
-	   resets. It doesn't appear to be a corrupt stack - but check further. 
-	   
-	   As putch invokes soft reset into MOS which blocks, we only return to 
-	   the app after the character has been transimitted over UART0 to VDP.
-	   Is it the ESP32 VDP Terminal Processor not keeping up; running out of
-	   buffer space?? 
-		  UART0 initialised in github.com/breakintoprogram/agon-mos/blob/main/main.c
-	      to either 1152000 or if that fails then downto 384000 bps. UART0 CTS 
-		  flow control in github.com/breakintoprogram/agon-mos/blob/main/src/serial.asm
-  	      384000 / 8 (+2 stop bits) = 38,400 Bps.
-	   With FUDGE < 200 we see corruption in the output - looks like letter 'Y' 
-	   is displayed. If we see these are we at risk of a system reset??
-	   Use a FUDGE factor + margin delay, such that no corruption is seen */
-#define FUDGE	250
 
 
 static unsigned int idlecnt = 0;
@@ -119,29 +101,34 @@ int main( void )
 void Task1( void *pvParameters )
 {
     unsigned int const p =( unsigned int )pvParameters;
-	unsigned short int cnt = 0;
 	char ch = '-';
 	int i;
 
 	( void )printf( "\r\nStarting %s\r\n", pcTaskGetName( NULL ));
     while( 1 )
     {
-		if( 0 ==( cnt++ % 80 ))
-		{
-			cnt = 1;
+		/* The ZDSII math library is non-reentrant. Should've read the manual. 
+		   You will get random resets if you do a loop using '%'.
+		if( 0 ==( i++ % 80 ))
+		   Math library functions must be called within crit_enter and crit_exit */
 
-			if( '\\' == ch )
-				ch = '-';
-			else
-				ch = '\\';
-			
-			portYIELD( );
+		for( i = 0; 80 > i; i++ )
+		{
+			portEnterMOS( );
+			putchar( ch );
+			portExitMOS( );			
 		}
 
-		for( i = 0; FUDGE > i; i++ );  // slow the rate of putchars
-		portEnterMOS( );
-        putchar( ch );
-		portExitMOS( );
+		portYIELD( );
+
+		if( '\\' == ch )
+		{
+			ch = '-';
+		}
+		else
+		{
+			ch = '\\';
+		}
     }
 	
 	( void )p;
@@ -152,30 +139,31 @@ void Task1( void *pvParameters )
 void Task2( void *pvParameters )
 {
     unsigned int const p =( unsigned int )pvParameters;
-	unsigned short cnt = 0;
 	char ch = '|';
 	int i;
 
 	( void )printf( "\r\nStarting %s\r\n", pcTaskGetName( NULL ));
-    while( 1 )
-    {
-		if( 0 ==( cnt++ % 80 ))
+
+	while( 1 )
+	{
+		for( i = 0; 80 > i; i++ )
 		{
-			cnt = 1;
-
-			if( '/' == ch )
-				ch = '|';
-			else
-				ch = '/';
-			
-			portYIELD( );
+			portEnterMOS( );
+			putchar( ch );
+			portExitMOS( );			
 		}
-
-		for( i = 0; FUDGE > i; i++ );  // slow the rate of putchars
-		portEnterMOS( );
-        putchar( ch );
-		portExitMOS( );
-    }
+		
+		portYIELD( );
+		
+		if( '/' == ch )
+		{
+			ch = '|';
+		}
+		else
+		{
+			ch = '/';
+		}
+	}
 	
 	( void )p;
 }

@@ -43,7 +43,7 @@
  *           ZDSII in ADL mode
  *
  * The settings in this file configure the FreeRTOS portable code
- * for Agon Light (and comptaibles) and the ZDSII compiler
+ * for Agon Light (and compatibles) and the ZDSII compiler
  * Zilog eZ80 ANSI C Compiler Version 3.4 (19101101).
  *
  * These settings should not normally be application-user altered.

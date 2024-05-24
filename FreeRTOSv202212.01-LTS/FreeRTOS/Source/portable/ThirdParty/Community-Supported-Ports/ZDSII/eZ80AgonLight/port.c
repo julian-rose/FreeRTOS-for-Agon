@@ -50,8 +50,6 @@
 */
 
 #include <ez80.h>
-/* Assigns a service routine to an interrupt vector */
-void *_set_vector_mos( unsigned int, void ( * )( void ));
 
 #include <stdlib.h>
 #if defined( _DEBUG )
@@ -62,6 +60,7 @@ void *_set_vector_mos( unsigned int, void ( * )( void ));
 #include "task.h"
 #include "semphr.h"
 #include "portmacro.h"
+#include "mosapi.h"
 
 
 /*-----------------------------------------------------------*/
@@ -186,15 +185,18 @@ void portEnterMOS( void )
 
 #	if( 1 == configUSE_PREEMPTION )
 	{
-		/* suspend until semaphore can be taken */
-		while( pdTRUE != xSemaphoreTake( portMOSMutex, 0 ))
+		if(( NULL != portMOSMutex )&&( taskSCHEDULER_RUNNING == xTaskGetSchedulerState( )))
 		{
-			/* Some other task has the mutex.
-			   If we use vTaskSuspend then the tick ISR will have
-			   to call vTaskResume. Easier to use the delayed list.
-			   Could be better using notifications?
-			*/
-			vTaskDelay( 1 );
+			/* suspend until semaphore can be taken */
+			while( pdTRUE != xSemaphoreTake( portMOSMutex, 0 ))
+			{
+				/* Some other task has the mutex.
+					If we use vTaskSuspend then the tick ISR will have
+					to call vTaskResume. Easier to use the delayed list.
+					Could be better using notifications?
+					*/
+				vTaskDelay( 1 );
+			}
 		}
 	}
 #	endif /* configUSE_PREEMPTION */
@@ -215,7 +217,10 @@ void portExitMOS( void )
 	
 #	if( 1 == configUSE_PREEMPTION )
 	{
-		xSemaphoreGive( portMOSMutex );
+		if(( NULL != portMOSMutex )&&( taskSCHEDULER_RUNNING == xTaskGetSchedulerState( )))
+		{
+			xSemaphoreGive( portMOSMutex );
+		}
 	}
 #	endif /* configUSE_PREEMPTION */
 	
@@ -528,7 +533,7 @@ static BaseType_t prvSetupTimerInterrupt( void )
 	for( i = 1; i < 4; i++ )
 	{
 		/* set Timer interrupt vector (PRTn_IVECT) through MOS */
-		prev = _set_vector_mos(( PRT0_IVECT +( i * 2 )), timer_isr );
+		prev = mos_setintvector(( PRT0_IVECT +( i * 2 )), timer_isr );
 #		if defined( _DEBUG )&& 0
 			( void )printf( "%s : %d : i = %d : prev = %p\r\n", 
 							"port.c", __LINE__, i, prev );
@@ -557,7 +562,7 @@ static BaseType_t prvSetupTimerInterrupt( void )
 				
 				/* don't know if it is the default handler, so restore the
                    previous owner and try the next vector */
-				_set_vector_mos(( PRT0_IVECT +( i * 2 )), prev );
+				mos_setintvector(( PRT0_IVECT +( i * 2 )), prev );
 				portPrevprev = prev;  /* remember it, it may be a default handler */
 				continue;
 			}
@@ -574,7 +579,7 @@ static BaseType_t prvSetupTimerInterrupt( void )
 	{
 		/* Assign PRT1 for FreeRTOS */
 		portTmr = 1;
-		portPrevprev = _set_vector_mos(( PRT0_IVECT +( portTmr * 2 )), timer_isr );
+		portPrevprev = mos_setintvector(( PRT0_IVECT +( portTmr * 2 )), timer_isr );
 		
 		/* Applications are free to use PRT2 or PRT3 */
 	}
@@ -681,7 +686,7 @@ static void portTeardownTimerInterrupt( void )
 	
 	if( NULL != portPrevprev )
 	{
-		_set_vector_mos(( PRT0_IVECT +( portTmr * 2 )), portPrevprev );		
+		mos_setintvector(( PRT0_IVECT +( portTmr * 2 )), portPrevprev );		
 	}
 
 	portTmr = -1;

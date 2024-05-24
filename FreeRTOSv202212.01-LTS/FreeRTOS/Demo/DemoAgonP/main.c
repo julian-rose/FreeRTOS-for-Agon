@@ -39,7 +39,6 @@
 
 #include "FreeRTOS.h"
 #include "task.h"
-#include "croutine.h"
 
 
 extern unsigned int _heaptop;  // defined in the linker directive file
@@ -60,7 +59,6 @@ int main( void )
 
 #	if defined( _DEBUG )
 	{
-		( void )printf( "main %d\r\n", __LINE__ );
 		( void )printf( "&_heaptop = 0x%p\r\n", &_heaptop );
 		( void )printf( "&_heapbot = 0x%p\r\n", &_heapbot );
 		( void )printf( "Heap size 0x%x\r\n", configTOTAL_HEAP_SIZE );
@@ -101,26 +99,38 @@ int main( void )
 void Task1( void *pvParameters )
 {
     unsigned int const ticks =( unsigned int )pvParameters;
-	int cnt = 0;
 	char ch = '|';
+	int i;
 
 	( void )printf( "\r\nStarting %s : delay ticks = %d\r\n", 
 					pcTaskGetName( NULL ), ticks );
+
     while( 1 )
     {
-		if( 0 ==( cnt++ % 80 ))
-		{
-			if( '|' == ch )
-				ch = '-';
-			else
-				ch = '|';
-		}
-		
-		portEnterMOS( );
-        putchar( ch );
-		portExitMOS( );
+		/* The ZDSII math library is non-reentrant. Should've read the manual. 
+		   You will get random resets if you do a loop using unguarded '%'.
+		if( 0 ==( i++ % 80 ))
+		   Math library functions must be called within crit_enter and crit_exit */
 
-        vTaskDelay( ticks );		
+		for( i = 0; 80 > i; i++ )
+		{
+			/* when calling standard C library functions that will access MOS,
+			   need to perform MOS enter / exit critical region */
+			portEnterMOS( );
+			putchar( ch );
+			portExitMOS( );
+			
+			vTaskDelay( ticks );
+		}
+
+		if( '|' == ch )
+		{
+			ch = '-';
+		}
+		else
+		{
+			ch = '|';
+		}
     }
 }
 
@@ -129,26 +139,33 @@ void Task1( void *pvParameters )
 void Task2( void *pvParameters )
 {
     unsigned int const ticks =( unsigned int )pvParameters;
-	int cnt = 0;
 	char ch = '/';
+	int i;
 
 	( void )printf( "\r\nStarting %s : delay ticks = %d\r\n", 
 					pcTaskGetName( NULL ), ticks );
+
     while( 1 )
     {
-		if( 0 ==( cnt++ % 80 ))
+		for( i = 0; 80 > i; i++ )
 		{
-			if( '/' == ch )
-				ch = '\\';
-			else
-				ch = '/';
+			/* when calling standard C library functions that will access MOS,
+			   need to perform MOS enter / exit critical region */
+			portEnterMOS( );
+			putchar( ch );
+			portExitMOS( );
+			
+			vTaskDelay( ticks );
 		}
 
-		portEnterMOS( );
-        putchar( ch );
-		portExitMOS( );
-
-        vTaskDelay( ticks );
+		if( '/' == ch )
+		{
+			ch = '\\';
+		}
+		else
+		{
+			ch = '/';
+		}
 	}
 }
 

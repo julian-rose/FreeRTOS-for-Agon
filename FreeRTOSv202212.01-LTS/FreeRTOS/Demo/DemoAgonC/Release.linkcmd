@@ -65,6 +65,7 @@ DEFINE __heapbot =( highaddr of RAM + 1 )- $030000
 "DemoAgonC"= \
  ".\init.obj", \
  ".\mosvec24.obj", \
+ ".\mosapi24.obj", \
  ".\FPDUMY.obj", \
  ".\main.obj", \
  ".\croutine.obj", \

@@ -54,6 +54,11 @@ compiler-provided malloc() and free() implementation.
 Heap memory space is configured using two variables, _heaptop and _heapbot,
 defined in the linker directive file. 
 
+<h3>Real-Time</h3>
+MOS uses the Real-Time Clocl capability of the VDP. (eZ80 pin RTC_VDD is tied 
+to GND on both Agon Light and Light2 boards.) The RTC time of day clock will 
+need to be set on each invocation. 
+
 <h3>Interrupts</h3>
 FreeRTOS requires at least a Periodic Interval Timer (PIT) or tick. (Actually,
 it doesn't if you prefer to use co-operative task yielding; you may remove 
@@ -71,13 +76,22 @@ to guarantee MOS function safety. Initially, applications call portEnterMOS;
 in future releases portEnterMOS will be moved within a library of MOS calls, 
 hiding it from applications.
 
+<h3>Shared Libraries</h3>
+We note here the Zilog ZDSII MAth Library is non-reentrant. If more than one 
+task uses the Math library, then access needs to be guarded as per a critical 
+region. It is possible other shared libraries need to be likewise access with 
+mutual exclusion.
+
 <h3>Startup</h3>
-Startup code is located in the file init.asm, essentially as per 
+Startup code is located in the file init.asm, based on 
 Agon-Projects-main -> C -> Hello. This begins with the MOS standard header 
-and C application startup code.
+and C application startup code. This code is located in ./Source/mos/init.asm
 
 <h3>mosvec24</h3>
 This started life as the Zilog vectors24.asm file, but is much changed.
-It now contains the timer ISR code.
-It may be extended with other MOS functions - or a new file mosapi.asm might be
-added for that.
+It now contains the timer ISR code. This file is located in the 
+./Source/portable/ThirdParty/Community-Supported-Ports/ZDS II/eZ80AgonLight/
+folder, because it is used by the portable code.
+
+<h3>mosapi.asm</h3>
+Other MOS functions are located in the ./Source/mos/mosapi.asm file.

@@ -39,8 +39,8 @@ and ./FreeRTOSv202212.01-LTS/FreeRTOS/Demo/DemoAgonP/. These are MOS application
 programs, so that you can download the files .../DemoAgonC/Debug/DemoAgonC.bin 
 and .../DemoAgonP/Debug/DemoAgonP.bin, copy them to your SD card, load, and run 
 them from the MOS prompt.
-
 <p>
+
 DemoAgonP uses pre-emptive multi-tasking. Two tasks run without knowledge of 
 each other, each making MOS calls. The CPU (and MOS) is shared between them. 
 Although they have no knowledge of each other, MOS in non-reentrant so that a 
@@ -48,8 +48,8 @@ second task will be blocked in making a MOS call until a first completes a MOS
 call. These example tasks also make time delay calls, such that task1 runs once 
 per second, and task runs 3.3 times per second, to better demonstrate the
 pre-emptive execution model.
-
 <p>
+
 DemoAgonC uses cooperative multi-tasking. Two tasks run without explicit 
 knowledge of each other, but in the knowledge other tasks also need CPU time. 
 Since they complete a MOS call before yielding, neither will be blocked by the 
@@ -62,8 +62,8 @@ To build this project you will need to install the Zilog II eZ80Acclaim! toolkit
 on your PC-host development machine. In addition to the GUI, compiler, assembler 
 and linker tools, this provides header and library files used by FreeRTOS for 
 Agon.
-
 <p>
+
 The port has been developed using using ZDS II - eZ80Acclaim! 5.3.5 (Build 
 23020901) with Compiler Version 3.4 (19101101). Other recent versions of these 
 tools should be okay; though the state of maintenance may result in errors 
@@ -78,14 +78,14 @@ https://sourceforge.net/projects/hex2bin/files/latest/download
 If you prefer to use the AgDev compiler instead of ZDS, you can Fork FreeRTOS/
 MOS for Agon and try building it with AgDev. This will create a new port (each 
 port of FreeRTOS is the combination of target hardware / compiler). 
-
 <p>
+
 You will at the least need to provide the heap location in the linker directive 
 file, or find another way to locate the heap memory; or, choose another heap
 memory solution (there are five options in 
 ./FreeRTOSv202212.01-LTS/FreeRTOS/Source/portable/MemMang). 
-
 <p>
+
 A small number of Zilog header files are used, such as ez80.h and eZ80F92.h. 
 So it should be possible to copy them over or replace them. Likewise, the Zilog
 specific libraries linked are for the C runtime, so that replacing them with 
@@ -94,13 +94,12 @@ No other concern springs to mind immediately...
 
 <h2>ToDo</h2>
 This is an alpha port of FreeRTOS / MOS for Agon Light. It is the essential 
-port of FreeRTOS, as proof of concept. I have built both Debug and Release
-versions, although I only work with the Debug builds at present. 
-The alpha port supports putch (printf) [through init.asm in each project] 
-and MOS function 14 setIntVector [through mosvec24.asm under portable], needed
-to attach the tick ISR.
-
+port of FreeRTOS, as proof of concept. The alpha port supports putch (printf) 
+[through ./Source/mos/init.asm] and MOS function 14 setIntVector [through 
+./Source/portable/Community-Supported-Ports/ZDSII/eZ80AgonLight/mosvec24.asm], 
+needed to attach the tick ISR.
 <p>
+
 A list of ToDos and improvements include:
 <ul>
   <li>mos_api:   provide a library for the MOS functions</li>
@@ -114,14 +113,14 @@ To catch those elusive resets (refer to UM007715 Illegal Instruction Traps)
 in case of stack corruption or other bugs,
 I am now waiting delivery of a $100 ZUSBASC0200ZADG debug device from
 https://www.mouser.com/datasheet/2/240/Littelfuse_ZUSBASC0200ZACG_Data_Sheet-3078266.pdf
-
 <p>
+
 You will need version 5.3.5 in order to use the ZUSBASC0200ZADG Acclaim! smart 
 cable hardware debugger. Though, in general, you will not need this to build 
 applications. I got FreeRTOS running without one, and gave my brain a workout 
 in doing so. 
-
 <p>
+
 Rather than putdown the somewhat buggy Zilog tools, I would like to see them 
 rescued from the current maintenance contract and made Open Source. What is 
 there is fundamentally good - and would be better off in more careful hands.

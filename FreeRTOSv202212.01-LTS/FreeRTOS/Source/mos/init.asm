@@ -49,12 +49,17 @@
 ;* 25/11/2022:	db	Added parameter parsing; now accepts CR or NUL as end of string markers
 ;* 13/05/2024    jhr Include in FreeRTOS demo
 
+include "mos_api.inc"
+
 
 			XREF	__low_bss
 			XREF	__len_bss
 			
 			XREF	_main
-			
+			xref _portEnterMOS
+			xref _portExitMOS
+			xref _mos_getkey
+
 			XDEF	_putch
 			XDEF	_getch
 			
@@ -210,23 +215,55 @@ _skip_spaces:		LD	A, (HL)			; Get the character from the parameter string
 ; int putch(int ch)
 ;
 __putch:
-_putch:			PUSH	IY
-			LD	IY, 0
-			ADD	IY, SP
-			LD	A, (IY+6)
-			RST.LIL	10h	
-			LD	HL, 0
-			LD	L, A
-			LD	SP, IY
-			POP	IY				
-			RET
+_putch:
+	PUSH	IY
+	LD	IY, 0
+	ADD	IY, SP
+
+;   push IY
+;	call _portEnterMOS		; MOS critical enter
+;   pop IY
+	
+	LD	A, (IY+6)
+	RST.LIL	10h	
+
+;	push af					; MOS critical exit
+;   push IY
+;	call _portExitMOS
+;   pop IY
+;	pop af
+
+	LD	HL, 0				; get char result in A to int in HL
+	LD	L, A
+	
+	LD	SP, IY
+	POP	IY				
+	RET
 
 ; Read a character in from the ESP32
 ; int getch(void)
 ;
 __getch:
-_getch:			LD	HL, 0
-			RET
+_getch:		
+    push ix                 ; Standard prologue
+    ld ix, 0
+    add ix, sp
+	
+    call _portEnterMOS		; MOS critical enter
+	
+	MOSCALL mos_getkey   	; function value in mos_api.inc
+							; returns ASCII byte in A
+
+	push af					; MOS critical exit
+	call _portExitMOS
+	pop af
+
+	ld h, 0					; get char return value in A into int HL
+	ld l, a
+	
+    ld sp, ix               ; Standard epilogue
+	pop ix
+	RET
 
 
 			SEGMENT DATA

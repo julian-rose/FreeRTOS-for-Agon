@@ -3,8 +3,9 @@
 
 <!-- file information -->
 <files>
-<file filter-key="">.\init.asm</file>
+<file filter-key="">..\..\Source\mos\init.asm</file>
 <file filter-key="">..\..\Source\portable\ThirdParty\Community-Supported-Ports\ZDSII\eZ80AgonLight\mosvec24.asm</file>
+<file filter-key="">..\..\Source\mos\mosapi24.asm</file>
 <file filter-key="">..\..\..\..\..\..\..\ZDSII_eZ80Acclaim!_5.3.5\src\rtl\common\FPDUMY.ASM</file>
 <file filter-key="">.\main.c</file>
 <file filter-key="">..\..\Source\list.c</file>
@@ -27,7 +28,7 @@
 <tool name="Assembler">
 <options>
 <option name="define" type="string" change-action="assemble">_EZ80ACCLAIM!=1,_SIMULATE=1</option>
-<option name="include" type="string" change-action="assemble"></option>
+<option name="include" type="string" change-action="assemble">..\..\Source\mos</option>
 <option name="list" type="boolean" change-action="none">false</option>
 <option name="listmac" type="boolean" change-action="none">false</option>
 <option name="name" type="boolean" change-action="none">true</option>
@@ -51,7 +52,7 @@
 <option name="promote" type="boolean" change-action="compile">true</option>
 <option name="reduceopt" type="boolean" change-action="compile">true</option>
 <option name="stdinc" type="string" change-action="compile">..\..\Source\include\;..\..\Source\portable\ThirdParty\Community-Supported-Ports\ZDSII\eZ80AgonLight\</option>
-<option name="usrinc" type="string" change-action="compile"></option>
+<option name="usrinc" type="string" change-action="compile">../../Source/mos/</option>
 <option name="watch" type="boolean" change-action="none">false</option>
 <option name="multithread" type="boolean" change-action="compile">false</option>
 </options>
@@ -147,7 +148,7 @@
 <tool name="Assembler">
 <options>
 <option name="define" type="string" change-action="assemble">_EZ80ACCLAIM!=1,_SIMULATE=1</option>
-<option name="include" type="string" change-action="assemble"></option>
+<option name="include" type="string" change-action="assemble">..\..\Source\mos</option>
 <option name="list" type="boolean" change-action="none">false</option>
 <option name="listmac" type="boolean" change-action="none">false</option>
 <option name="name" type="boolean" change-action="none">true</option>
@@ -171,7 +172,7 @@
 <option name="promote" type="boolean" change-action="compile">true</option>
 <option name="reduceopt" type="boolean" change-action="compile">false</option>
 <option name="stdinc" type="string" change-action="compile">..\..\Source\include\;..\..\Source\portable\ThirdParty\Community-Supported-Ports\ZDSII\eZ80AgonLight\</option>
-<option name="usrinc" type="string" change-action="compile"></option>
+<option name="usrinc" type="string" change-action="compile">../../Source/mos/</option>
 <option name="watch" type="boolean" change-action="none">false</option>
 <option name="multithread" type="boolean" change-action="compile">false</option>
 </options>
