@@ -49,189 +49,293 @@
 
 
 /***--------- Type definitions ---------***/
+typedef struct 
+{
+    unsigned int  baudRate;      // baudrate (bits per sec) 
+    unsigned char dataBits;      // number of databits per character to be used (in range 5..8)
+    unsigned char stopBits;      // number of stopbits to be used (in range 1..2)
+    unsigned char parity;        // parity bit option to be used (00b=none, 01b=odd, 11b=even)
+    unsigned char flowControl;   // flow control option (0: None, 1: Hardware)
+    unsigned char interrupts;    // enabled interrupts (1h=receive, 2h=transmit, 4h=line, 8h=modem, 10h=sent)
+} UART;
+
+
+typedef struct
+{
+    unsigned char keyascii;      // ASCII key code
+    unsigned char keymod;        // SHIFT, ALT, ...
+    unsigned char vkeycode;      // virtual keycode
+    unsigned char keystate;      // 1=down, 0=up
+} VDP_KB_PACKET;
+
 
 
 /***--------- MOS API functions ---------***/
-	/* MOS_API: mos_getkey:			EQU	00h
-	   Get ASCII code of any key pressed, or 0 if no key pressed, non-blocking
-	   Defined in mosapi24.asm
-	   Usage: while( 0 ==( ch = _mos_getkey( ))); // busy wait until a key is pressed */
-unsigned char mos_getkey( void );
+    /* MOS_API: mos_getkey:          EQU    00h
+       Get ASCII code of any key pressed, or 0 if no key pressed, non-blocking
+       Defined in mosapi24.asm
+       Usage: while( 0 ==( ch = _mos_getkey( ))); // busy wait until a key is pressed */
+unsigned char mos_getkey( 
+                void );
 
 
-	/* MOS_API: mos_load:			EQU	01h
-	   Load a file from SD card
-	   Defined in mosapi24.asm */
+    /* MOS_API: mos_load:            EQU    01h
+       Load a file from SD card into a memory location
+       Defined in mosapi24.asm */
 unsigned int mos_load( 
-				char * const filename, 
-				void * const address, 
-				unsigned int const size );
+                char const * const filename, 
+                void * const address, 
+                size_t const size );
 
 
-	/* MOS_API: mos_save:			EQU	02h
-	   Load a file from SD card
-	   Defined in mosapi24.asm */
+    /* MOS_API: mos_save:            EQU    02h
+       Save a file to SD card from a memory location
+       Defined in mosapi24.asm */
+unsigned int mos_save(
+                char const * const filename, 
+                void * const address, 
+                size_t const size );
 
 
-	/* MOS_API: mos_cd:				EQU	03h
-	   Load a file from SD card
-	   Defined in mosapi24.asm */
+    /* MOS_API: mos_cd:              EQU    03h
+       Change current working directory
+       Defined in mosapi24.asm */
+unsigned int mos_cd( 
+                char const * const path );
 
 
-	/* MOS_API: mos_dir:			EQU	04h
-	   Load a file from SD card
-	   Defined in mosapi24.asm */
+    /* MOS_API: mos_dir:             EQU    04h  NOT SUPPORTED
+       Displays a current directory listing.
+	   We can support this when it returns an array of filenames.
+       To Be Defined in mosapi24.asm */
 
 
-	/* MOS_API: mos_del:			EQU	05h
-	   Load a file from SD card
-	   Defined in mosapi24.asm */
+    /* MOS_API: mos_del:             EQU    05h
+       Delete a file from SD card
+       Defined in mosapi24.asm */
+unsigned int mos_del( 
+                char const * const filename );
 
 
-	/* MOS_API: mos_ren:			EQU	06h
-	   Load a file from SD card
-	   Defined in mosapi24.asm */
+    /* MOS_API: mos_ren:             EQU    06h
+       Rename a file on SD card
+       Defined in mosapi24.asm */
+unsigned int mos_ren( 
+                char const * const currentName, 
+                char const * const newName );
 
 
-	/* MOS_API: mos_mkdir:			EQU	07h
-	   Load a file from SD card
-	   Defined in mosapi24.asm */
+    /* MOS_API: mos_mkdir:           EQU    07h
+       Load a file from SD card
+       Defined in mosapi24.asm */
+unsigned int mos_md( 
+                char const * const pathname );
 
-	/* MOS_API: mos_sysvars:		EQU	08h
-	   Load a file from SD card
-	   Defined in mosapi24.asm */
 
+    /* MOS_API: mos_sysvars:         EQU    08h
+       Get a pointer to the MOS system variables
+       Defined in mosapi24.asm */
+void * mos_getsysvars( 
+                void );
 
-	/* MOS_API: mos_editline:		EQU	09h    NOT SUPPORTED
-	   Load a file from SD card
-	   Defined in mosapi24.asm */
 
+    /* MOS_API: mos_editline:        EQU    09h    NOT SUPPORTED
+       Load a file from SD card
+       Defined in mosapi24.asm */
 
-	/* MOS_API: mos_fopen:			EQU	0Ah
-	   Load a file from SD card
-	   Defined in mosapi24.asm */
 
+    /* MOS_API: mos_fopen:           EQU    0Ah
+       Open a file on the SD card
+       Defined in mosapi24.asm */
+unsigned char mos_fopen( 
+                char const * const filename, 
+                unsigned char const mode );
 
-	/* MOS_API: mos_fclose:			EQU	0Bh
-	   Load a file from SD card
-	   Defined in mosapi24.asm */
 
+    /* MOS_API: mos_fclose:          EQU    0Bh
+       Close a previously opened file
+       Defined in mosapi24.asm */
+unsigned int mos_fclose( 
+                unsigned char const filehandle );
 
-	/* MOS_API: mos_fgetc:			EQU	0Ch
-	   Load a file from SD card
-	   Defined in mosapi24.asm */
 
+    /* MOS_API: mos_fgetc:           EQU    0Ch
+       Reacd a character from a previously opened file
+       Defined in mosapi24.asm */
+unsigned char mos_fgetc( 
+                unsigned char const filehandle );
 
-	/* MOS_API: mos_fputc:			EQU	0Dh
-	   Load a file from SD card
-	   Defined in mosapi24.asm */
 
+    /* MOS_API: mos_fputc:           EQU    0Dh
+       Write a character to a previously opened file
+       Defined in mosapi24.asm */
+void mos_fputc( 
+                unsigned char const filehandle, 
+                char const c );
 
-	/* MOS_API: mos_feof:			EQU	0Eh
-	   Load a file from SD card
-	   Defined in mosapi24.asm */
 
+    /* MOS_API: mos_feof:            EQU    0Eh
+       Test whether a previously opened file position is at the end of file
+       Defined in mosapi24.asm */
+unsigned char mos_feof( 
+                unsigned char const filehandle );
 
-	/* MOS_API: mos_getError:		EQU	0Fh
-	   Load a file from SD card
-	   Defined in mosapi24.asm */
 
+    /* MOS_API: mos_getError:        EQU    0Fh
+       Get a string value for a system error code
+       Defined in mosapi24.asm */
+void mos_geterror( 
+                unsigned char const errno, 
+                void * const buffer, 
+                size_t const buffersize );
+
+
+    /* MOS_API: mos_oscli:           EQU    10h
+       Issue a MOS command (as if typed on the terminal keyboard)
+       Defined in mosapi24.asm */
+unsigned int mos_oscli( 
+                char * const cmd );
+
+
+    /* MOS_API: mos_copy:            EQU    11h
+       Make a copy of a file on the SD card
+       Defined in mosapi24.asm */
+unsigned int mos_copy(
+                char const * const src, 
+                char const * const dst );
+
+
+    /* MOS_API: mos_getrtc:          EQU    12h
+       Get the current RTC value into a (25 character) string buffer
+	   FMT: "DDD, dd/mm/yyyy hh:mm:ss\0"
+       Defined in mosapi24.asm */
+unsigned char mos_getrtc(
+                unsigned char * const buf );
+
+
+    /* MOS_API: mos_setrtc:          EQU    13h
+       Set the RTC value from a (6 character) buffer
+	   FMT: "ymdhms"
+       Defined in mosapi24.asm */
+void mos_setrtc(
+			    unsigned char const * const buf );
 
-	/* MOS_API: mos_oscli:			EQU	10h   NOT SUPPORTED
-	   Load a file from SD card
-	   Defined in mosapi24.asm */
 
+    /* MOS API: mos_setintvector     EQU    14h
+       Assigns a service routine to an interrupt vector
+       Defined in mosvec24.asm as it is used by the FreeRTOS port to bind the
+       PIT timer */
+void *mos_setintvector( 
+                unsigned int, 
+                void ( *intr_hndlr )( void ));
+
 
-	/* MOS_API: mos_copy:			EQU	11h
-	   Load a file from SD card
-	   Defined in mosapi24.asm */
-
-
-	/* MOS_API: mos_getrtc:			EQU	12h
-	   Load a file from SD card
-	   Defined in mosapi24.asm */
-
-
-	/* MOS_API: mos_setrtc:			EQU	13h
-	   Load a file from SD card
-	   Defined in mosapi24.asm */
-
-
-	/* MOS API: mos_setintvector	EQU	14h
-	   Assigns a service routine to an interrupt vector
-	   Defined in mosvec24.asm as it is used by the FreeRTOS port to bind the
-	   PIT timer */
-void *mos_setintvector( unsigned int, void ( * )( void ));
-
-
-	/* MOS_API: mos_uopen:			EQU	15h
-	   Load a file from SD card
-	   Defined in mosapi24.asm */
-
-
-	/* MOS_API: mos_uclose:			EQU	16h
-	   Load a file from SD card
-	   Defined in mosapi24.asm */
-
-
-	/* MOS_API: mos_ugetc:			EQU	17h
-	   Load a file from SD card
-	   Defined in mosapi24.asm */
-
-
-	/* MOS_API: mos_uputc:			EQU 18h
-	   Load a file from SD card
-	   Defined in mosapi24.asm */
-
-
-	/* MOS_API: mos_getfil:			EQU	19h
-	   Load a file from SD card
-	   Defined in mosapi24.asm */
-
-
-	/* MOS_API: mos_fread:			EQU	1Ah
-	   Load a file from SD card
-	   Defined in mosapi24.asm */
-
-
-	/* MOS_API: mos_fwrite:			EQU	1Bh
-	   Load a file from SD card
-	   Defined in mosapi24.asm */
-
-
-	/* MOS_API: mos_flseek:			EQU	1Ch
-	   Load a file from SD card
-	   Defined in mosapi24.asm */
-
-
-	/* MOS_API: mos_setkbvector:	EQU	1Dh
-	   Load a file from SD card
-	   Defined in mosapi24.asm */
-
-
-	/* MOS_API: mos_getkbmap:		EQU	1Eh
-	   Load a file from SD card
-	   Defined in mosapi24.asm */
-
-
-	/* MOS_API: mos_i2c_open:		EQU	1Fh
-	   Load a file from SD card
-	   Defined in mosapi24.asm */
-
-
-	/* MOS_API: mos_i2c_close:		EQU	20h
-	   Load a file from SD card
-	   Defined in mosapi24.asm */
-
-
-	/* MOS_API: mos_i2c_write:		EQU	21h
-	   Load a file from SD card
-	   Defined in mosapi24.asm */
-
-
-	/* MOS_API: mos_i2c_read:		EQU	22h
-	   Load a file from SD card
-	   Defined in mosapi24.asm */
+    /* MOS_API: mos_uopen:           EQU    15h
+       Open UART1 device
+       Defined in mosapi24.asm */
+unsigned char open_uart1(
+                UART const * const pUART );
+
+
+    /* MOS_API: mos_uclose:          EQU    16h
+       Close UART1 device
+       Defined in mosapi24.asm */
+void close_uart1( 
+                void );
+
+
+    /* MOS_API: mos_ugetc:           EQU    17h
+       Read a character from UART1
+       Defined in mosapi24.asm */
+unsigned char mos_ugetc( 
+                void );
+				
+
+    /* MOS_API: mos_uputc:           EQU    18h
+       Write a character to UART1
+       Defined in mosapi24.asm */
+unsigned char mos_uputc(
+                unsigned char const ch );
+
+
+    /* MOS_API: mos_getfil:          EQU    19h
+       Retrieve the file descriptor of a previously opened filehandle
+       Defined in mosapi24.asm */
+void * mos_getfil(
+                unsigned char const filehandle );
+
+
+    /* MOS_API: mos_fread:           EQU    1Ah
+       Read a stream of bytes from a previously opened filehandle
+       Defined in mosapi24.asm */
+unsigned int mos_fread(
+                unsigned char const filehandle,
+                void * const buffer, 
+                size_t const num_bytes_to_read );
+
+
+    /* MOS_API: mos_fwrite:          EQU    1Bh
+       Write a stream of bytes to a previously opened filehandle
+       Defined in mosapi24.asm */
+unsigned int mos_fwrite(
+                unsigned char const filehandle,
+                void const * const buffer,
+                size_t const num_bytes_to_write );
+
+
+    /* MOS_API: mos_flseek:          EQU    1Ch
+       Seek to the start + offset position of a previosuly opened file
+       Defined in mosapi24.asm */
+unsigned char mos_fseek(
+                unsigned char const filehandle,
+                unsigned long int const offset );
+
+
+    /* MOS_API: mos_setkbvector:     EQU    1Dh
+       Attach a user callback function to the keyboard packet receiver
+       Defined in mosapi24.asm */
+void mos_setkbvector( 
+                void ( *kybd_hndlr )( VDP_KB_PACKET* ));
+
+
+    /* MOS_API: mos_getkbmap:        EQU    1Eh
+       Get a pointer to the keyboard map
+       Defined in mosapi24.asm */
+void * mos_getkbmap( 
+                void );
+
+
+    /* MOS_API: mos_i2c_open:        EQU    1Fh
+       Open the I2C device as a bus controller
+	   frequency: 1=57600, 2=115200, 3=230400
+       Defined in mosapi24.asm */
+void mos_i2copen(
+                unsigned char const frequency );
+
+
+    /* MOS_API: mos_i2c_close:       EQU    20h
+       Close the i2c device
+       Defined in mosapi24.asm */
+void mos_i2cclose(
+                void );
+
+
+    /* MOS_API: mos_i2c_write:       EQU    21h
+       Write a stream (between 1..32) of bytes to target i2c device with address (0..127)
+       Defined in mosapi24.asm */
+unsigned char mos_i2cwrite(
+                unsigned char const i2c_address, 
+                size_t const num_bytes_to_write, 
+                unsigned char const * const buffer );
+
+
+    /* MOS_API: mos_i2c_read:        EQU    22h
+       Load a file from SD card
+       Defined in mosapi24.asm */
+unsigned char mos_i2cread(
+                unsigned char const i2c_Address,
+                size_t const num_bytes_to_read,
+                unsigned char * buffer );
 
 
 #endif /* MOSAPI_H */

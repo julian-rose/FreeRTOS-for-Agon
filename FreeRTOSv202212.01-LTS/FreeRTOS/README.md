@@ -8,6 +8,9 @@ FreeRTOS port, and contains its own readme file.
 
 + The **FreeRTOS/Test** directory contains the tests performed on common code and the portable layer code, and contains its own readme file.
 
+For the Agon Light port, added
++ The **FreeRTOS/Source/mos/** directory, which contains the MOS API.
+
 See [FreeRTOS/SourceOrganization](http://www.freertos.org/a00017.html) for full details of the directory structure and information on locating the files you require.
 
 The easiest way to use FreeRTOS is to start with one of the pre-configured demo
@@ -22,6 +25,3 @@ files.
 + [Quick Start Guide](http://www.freertos.org/FreeRTOS-quick-start-guide.html)
 
 + [FAQ](http://www.freertos.org/FAQHelp.html)
-
-For the Agon Light port, we added
-+ the **FreeRTOS/Source/mos/** directory, which contains the MOS API.

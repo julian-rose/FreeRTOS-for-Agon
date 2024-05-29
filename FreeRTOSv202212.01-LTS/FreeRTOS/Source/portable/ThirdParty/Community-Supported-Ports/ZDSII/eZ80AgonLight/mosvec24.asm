@@ -39,16 +39,16 @@
 ;*****************************************************************************
 include "mos_api.inc"
 
-;*        xref __init                   ; performed by MOS
-;*        xdef _reset                   ; performed by MOS
-;*        xdef __default_nmi_handler    ; MOS src_startup/vectors16.asm
-;*        xdef __default_mi_handler     ; MOS src_startup/vectors16.asm
+    ;xref __init                   ; performed by MOS
+    ;xdef _reset                   ; performed by MOS
+    ;xdef __default_nmi_handler    ; MOS src_startup/vectors16.asm
+    ;xdef __default_mi_handler     ; MOS src_startup/vectors16.asm
 
-        xdef __nvectors
-;*        xdef _init_default_vectors    ; deprectaed in favour of MOS vectors
-;*        xdef __init_default_vectors
-;*        xdef __vector_table
-		xdef _mos_setintvector
+    xdef __nvectors
+    ;xdef _init_default_vectors    ; deprectaed in favour of MOS vectors
+    ;xdef __init_default_vectors
+    ;xdef __vector_table
+    xdef _mos_setintvector
 
 
 NVECTORS EQU 102      ; number of potential interrupt vectors (00h to 66h)
@@ -64,9 +64,9 @@ NVECTORS EQU 102      ; number of potential interrupt vectors (00h to 66h)
 ;*  defined in MOS src_startup/vectors16.asm
 
 
-;*		we place interrupt handling code in linked section CODE
-        segment CODE
-        .assume ADL = 1
+    ;we place interrupt handling code in linked section CODE
+    segment CODE
+    .assume ADL = 1
 
 
 ;*****************************************************************************
@@ -159,19 +159,19 @@ _mos_setintvector:
     push ix                    ; Standard prologue
     ld ix, 0
     add ix, sp
-	push af
+    push af
      
     ld de, 0                   ; construct parameters for mos_setintvector
     ld de, (ix+6)              ; load vector number, first function call parameter
-	ld hl, 0
+    ld hl, 0
     ld hl, (ix+9)              ; load pointer to handler
-	MOSCALL mos_setintvector   ; function number defined in mos_api.inc
-							   ; returns old handler in HLU
+    MOSCALL mos_setintvector   ; function number defined in mos_api.inc
+                               ; returns old handler in HLU
 
     pop af                     ; Standard epilogue
     ld sp, ix                  ;   restore stack pointer
-	pop ix
-	ret
+    pop ix
+    ret
 
 
 ;*****************************************************************************
@@ -189,6 +189,6 @@ _mos_setintvector:
 ;*  number of vectors supported
 ;*
 __nvectors:
-        dw NVECTORS         ; extern unsigned short _num_vectors;
+    dw NVECTORS         ; extern unsigned short _num_vectors;
 
-        end
+    end

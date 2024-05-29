@@ -54,42 +54,42 @@ void vApplicationIdleHook( void );
 
 int main( void )
 {
-	BaseType_t r;
-	int tskcnt = 2;
+    BaseType_t r;
+    int tskcnt = 2;
 
-#	if defined( _DEBUG )
-	{
-		( void )printf( "&_heaptop = 0x%p\r\n", &_heaptop );
-		( void )printf( "&_heapbot = 0x%p\r\n", &_heapbot );
-		( void )printf( "Heap size 0x%x\r\n", configTOTAL_HEAP_SIZE );
-	}
-#	endif
+#   if defined( _DEBUG )
+    {
+        ( void )printf( "&_heaptop = 0x%p\r\n", &_heaptop );
+        ( void )printf( "&_heapbot = 0x%p\r\n", &_heapbot );
+        ( void )printf( "Heap size 0x%x\r\n", configTOTAL_HEAP_SIZE );
+    }
+#   endif
 
     /* Create the sample tasks. */
     r = xTaskCreate( Task1, "Task1", configMINIMAL_STACK_SIZE, (void *)10, tskIDLE_PRIORITY + 3, NULL );
-	if( pdPASS != r )
-	{
-		tskcnt--;
-		( void )printf( "Failed to allocate Task1: %d\r\n", r );
-	}
+    if( pdPASS != r )
+    {
+        tskcnt--;
+        ( void )printf( "Failed to allocate Task1: %d\r\n", r );
+    }
 
-	r = xTaskCreate( Task2, "Task2", configMINIMAL_STACK_SIZE, (void *)3,  tskIDLE_PRIORITY + 2, NULL );
-	if( pdPASS != r )
-	{
-		tskcnt--;
-		( void )printf( "Failed to allocate Task2: %d\r\n", r );
-	}
+    r = xTaskCreate( Task2, "Task2", configMINIMAL_STACK_SIZE, (void *)3,  tskIDLE_PRIORITY + 2, NULL );
+    if( pdPASS != r )
+    {
+        tskcnt--;
+        ( void )printf( "Failed to allocate Task2: %d\r\n", r );
+    }
 
-	if( 2 == tskcnt )
-	{
-		/* Start FreeRTOS */
-		( void )printf( "\r\nEntering scheduler\r\n" );
-			
-		vTaskStartScheduler( );
-		
-		// should never get here
-		( void )printf( "Back from scheduler\r\n" );
-	}
+    if( 2 == tskcnt )
+    {
+        /* Start FreeRTOS */
+        ( void )printf( "\r\nEntering scheduler\r\n" );
+            
+        vTaskStartScheduler( );
+        
+        // should never get here
+        ( void )printf( "Back from scheduler\r\n" );
+    }
 
     return( 0 );
 }
@@ -99,38 +99,33 @@ int main( void )
 void Task1( void *pvParameters )
 {
     unsigned int const ticks =( unsigned int )pvParameters;
-	char ch = '|';
-	int i;
+    char ch = '|';
+    int i;
 
-	( void )printf( "\r\nStarting %s : delay ticks = %d\r\n", 
-					pcTaskGetName( NULL ), ticks );
+    ( void )printf( "\r\nStarting %s : delay ticks = %d\r\n", 
+                    pcTaskGetName( NULL ), ticks );
 
     while( 1 )
     {
-		/* The ZDSII math library is non-reentrant. Should've read the manual. 
-		   You will get random resets if you do a loop using unguarded '%'.
-		if( 0 ==( i++ % 80 ))
-		   Math library functions must be called within crit_enter and crit_exit */
+        /* The ZDSII math library is non-reentrant. Should've read the manual. 
+           You will get random resets if you do a loop using unguarded '%'.
+        if( 0 ==( i++ % 80 ))
+           Math library functions must be called within crit_enter and crit_exit */
 
-		for( i = 0; 80 > i; i++ )
-		{
-			/* when calling standard C library functions that will access MOS,
-			   need to perform MOS enter / exit critical region */
-			portEnterMOS( );
-			putchar( ch );
-			portExitMOS( );
-			
-			vTaskDelay( ticks );
-		}
+        for( i = 0; 80 > i; i++ )
+        {
+            putchar( ch );
+            vTaskDelay( ticks );
+        }
 
-		if( '|' == ch )
-		{
-			ch = '-';
-		}
-		else
-		{
-			ch = '|';
-		}
+        if( '|' == ch )
+        {
+            ch = '-';
+        }
+        else
+        {
+            ch = '|';
+        }
     }
 }
 
@@ -139,43 +134,38 @@ void Task1( void *pvParameters )
 void Task2( void *pvParameters )
 {
     unsigned int const ticks =( unsigned int )pvParameters;
-	char ch = '/';
-	int i;
+    char ch = '/';
+    int i;
 
-	( void )printf( "\r\nStarting %s : delay ticks = %d\r\n", 
-					pcTaskGetName( NULL ), ticks );
+    ( void )printf( "\r\nStarting %s : delay ticks = %d\r\n", 
+                    pcTaskGetName( NULL ), ticks );
 
     while( 1 )
     {
-		for( i = 0; 80 > i; i++ )
-		{
-			/* when calling standard C library functions that will access MOS,
-			   need to perform MOS enter / exit critical region */
-			portEnterMOS( );
-			putchar( ch );
-			portExitMOS( );
-			
-			vTaskDelay( ticks );
-		}
+        for( i = 0; 80 > i; i++ )
+        {
+            putchar( ch );
+            vTaskDelay( ticks );
+        }
 
-		if( '/' == ch )
-		{
-			ch = '\\';
-		}
-		else
-		{
-			ch = '/';
-		}
-	}
+        if( '/' == ch )
+        {
+            ch = '\\';
+        }
+        else
+        {
+            ch = '/';
+        }
+    }
 }
 
 
 void vApplicationIdleHook( void )
 {
-	/* DO NOT call a BLOCKING function from within the IDLE task;
+    /* DO NOT call a BLOCKING function from within the IDLE task;
        IDLE must always be in either the READY or the RUN state, and no other. */
-	
-	//Machen mit ein blinken light would be excellent
+    
+    //Machen mit ein blinken light would be excellent
 
-	idlecnt++;
+    idlecnt++;
 }

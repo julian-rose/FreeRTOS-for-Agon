@@ -50,7 +50,7 @@
 */
 
 #ifndef PORTMACRO_H
-#define PORTMACRO_H
+#   define PORTMACRO_H
 
 
 /***--------- Type definitions ---------***/
@@ -74,8 +74,8 @@ typedef unsigned portBASE_TYPE    UBaseType_t;
 
 /***--------- Ticks ---------***/
 #if ( configUSE_16_BIT_TICKS == 1 )
-   typedef unsigned portSHORT 	  portTickType;
-   #define portMAX_DELAY 		  ( portTickType ) 0xffff
+    typedef unsigned portSHORT 	  portTickType;
+#   define portMAX_DELAY          ( portTickType ) 0xffff
 #else
    typedef unsigned portLONG 	  portTickType;
    #define portMAX_DELAY 		  ( portTickType ) 0xffffffff
@@ -141,7 +141,7 @@ extern void vPortYield( void );
 
 /***------------ Assert --------------***/
 #if defined( configASSERT )
-	void portAssert( char *file, unsigned int line );
+    void portAssert( char *file, unsigned int line );
 #endif
 
 
