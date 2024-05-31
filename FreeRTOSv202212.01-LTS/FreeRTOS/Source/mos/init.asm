@@ -63,6 +63,7 @@ include "mos_api.inc"
     XDEF    _getch
             
     XDEF    __putch
+    XDEF    __putchf        ; no test for MOS rentry, for use in low-leve; debugging
     XDEF    __getch
         
 
@@ -255,6 +256,23 @@ _putch:
     call    _portExitMOS
     pop     IY
     pop     HL
+
+    LD      SP, IY
+    POP     IY                
+    RET
+
+; Write a character out to the ESP32
+; int _putchf(int ch)
+;
+__putchf:
+    PUSH    IY
+    LD      IY, 0
+    ADD     IY, SP
+
+    LD      A, (IY+6)
+    RST.LIL 10h    
+    LD      HL, 0           ; get char result in A to int in HL
+    LD      L, A
 
     LD      SP, IY
     POP     IY                

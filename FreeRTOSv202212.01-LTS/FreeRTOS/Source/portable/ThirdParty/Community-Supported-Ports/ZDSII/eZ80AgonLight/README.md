@@ -55,9 +55,9 @@ Heap memory space is configured using two variables, _heaptop and _heapbot,
 defined in the linker directive file. 
 
 <h3>Real-Time</h3>
-MOS uses the Real-Time Clocl capability of the VDP. (eZ80 pin RTC_VDD is tied 
+MOS uses the Real-Time Clock capability of the VDP. (eZ80 pin RTC_VDD is tied 
 to GND on both Agon Light and Light2 boards.) The RTC time of day clock will 
-need to be set on each invocation. 
+need to be set on each invocation as it is not battery backed up. 
 
 <h3>Interrupts</h3>
 FreeRTOS requires at least a Periodic Interval Timer (PIT) or tick. (Actually,

@@ -1,5 +1,6 @@
 <h1>FreeRTOS/MOS for Agon Light</h1>
 
+
 <h2>Description</h2>
 FreeRTOS port for the Zilog eZ80-based Agon Light (and compatibles) running MOS.
 The concept is very much FreeRTOS over MOS, reflected in the project name.
@@ -23,21 +24,22 @@ And to https://www.freertos.org/features.html for the API.
 
 FreeRTOS is not an operating system in the sense of MOS or CP/M, which provide
 a command console interpreter and long-term storage. Instead, FreeRTOS for Agon 
-applications run on MOS to access those services. 
+applications run on MOS to access its services. FreeRTOS, while a general
+framework, is of particular interest for using Agon as a micro-controller.
 
 <h3>What is Agon?</h3>
 Agon Light™ is a fully open-source 8-bit microcomputer and microcontroller in 
 one small, low-cost board. Refer to https://github.com/TheByteAttic/AgonLight.
-It embeds two processor sub-systems: the eZ80-based main processor which runs 
+It embeds two processor sub-systems: the eZ80-based main processor, which runs 
 MOS (and where FreeRTOS programs will run); and the ESP32-based VDP terminal 
 processor, which primarily performs I/O functions.
 
 <h3>What is MOS?</h3>
-MOS is the Machine Operating System for Agon Light and compatibles, that runs
-on the eZ80. It provides I/O through the eZ80 on-chip peripherals, and the 
-on-board interfaces including the VDP terminal co-processor; and long-term file 
-storage through SD-cards. 
-Refer to https://agonconsole8.github.io/agon-docs/MOS/.
+MOS is the Machine Operating System for Agon Light and compatibles. It runs on 
+the eZ80 and provides an API to access the eZ80 on-chip peripherals, on-board 
+interfaces including the VDP terminal co-processor, and long-term file storage 
+through SD-cards. Refer to https://agonconsole8.github.io/agon-docs/MOS/.
+
 
 <h2>Project</h2>
 FreeRTOS / MOS for Agon Light is a multi-versioned project. "Alpha" is the 
@@ -47,24 +49,24 @@ services, namely putch (printf) and getch (scanf), and MOS function 14
 setIntVector needed to attach the tick ISR.
 <p>
 
-You can already use "alpha" to develop FreeRTOS applications that will run on 
-Agon. Though you won't have library routine access to any of the MOS services.
+You can already use "alpha" to develop full FreeRTOS applications that will run 
+on Agon. Though there are no library routine access to any of the MOS services.
 
 <h3>Versions</h3>
 <ul>
   <li>alpha:     provide all FreeRTOS with a minimal MOS in ADL mode</li>
-  <li>beta*:     provide a full library for the MOS functions</li>
+  <li>beta:      provide a full library for the MOS functions</li>
   <li>gamma:     provide a full library for the VDP functions</li>
   <li>epsilon:   provide a real-time library inspired by posix-4</li>
   <li>omega:     a safer version with Z80-mode tasks and the ADL-mode kernel</li>
 </ul>
 
-* "Beta" is currently being developed, with the sources located in 
+"Beta" is currently being developed, with the sources located in 
 ./FreeRTOSv202212.01-LTS/FreeRTOS/Source/mos/
 
 <h3>License</h3>
 FreeRTOS / MOS for Agon is released under the MIT license. This is done mainly
-for consistency with the MOS software. 
+for consistency with the existing MOS and core FreeRTOS software. 
 
 <h3>Demos</h3>
 The FreeRTOS / MOS for Agon port provides the source and binaries to two demo 
@@ -93,19 +95,28 @@ speed of FreeRTOS / MOS on Agon.
 <p>
 
 Other demos may exist from time to time, to test new capabilities. Presently
-this includes DemoMOS. 
+this includes DemoMOS, for "beta" testing. 
+
+<h3>Performance</h3>
+Because one FreeRTOS task may block another, and because MOS is non-reentrant
+(see below), FreeRTOS / MOS provides a "soft" real-time solution (rather than 
+a "hard" one.) A "soft" solution is one in which the response time is not 
+guaranteed, and may lag real time by a period (for now we might assume in the 
+order of a milli-second, though some tests are needed to provide actual 
+measurement data). 
+
 
 <h2>Build</h2>
-To build the demos, and your own application programs, you will need to 
-install the Zilog II eZ80Acclaim! toolkit on your PC-host development machine. 
-In addition to the GUI, compiler, assembler and linker tools, this provides 
-header and library files used by FreeRTOS for Agon.
+To build the demos, and to develop your own application programs, you will need 
+to install the Zilog II eZ80Acclaim! toolkit on your PC-host development 
+machine. In addition to the GUI, compiler, assembler and linker tools, this 
+provides header and library files used by FreeRTOS for Agon.
 <p>
 
-The port has been developed using using ZDS II - eZ80Acclaim! 5.3.5 
+The FreeRTOS port has been developed using using ZDS II - eZ80Acclaim! 5.3.5 
 (Build 23020901) with Compiler Version 3.4 (19101101). Other recent versions 
-of these tools should be okay; though the state of compiler maintenance may 
-result in errors different to those encountered and worked around.
+of these tools should be okay; though the state of tool maintenance may result 
+in errors different to those encountered and worked around.
 
 <h3>hex2bin</h3>
 The output from successful compilation will be a ".hex" file. This needs to be
@@ -113,25 +124,27 @@ converted to a ".bin" file for loading onto your Agon Light, which is done
 using a utility like hex2bin found at
 https://sourceforge.net/projects/hex2bin/files/latest/download
 
+
 <h2>Debugging</h2>
 To catch those elusive resets (refer to UM007715 Illegal Instruction Traps)
 in case of stack corruption or other bugs, I now possess a $100 ZUSBASC0200ZADG 
 debug device from
 https://www.mouser.com/datasheet/2/240/Littelfuse_ZUSBASC0200ZACG_Data_Sheet-3078266.pdf
-At the moment it doesn't work on my laptop :-(
+At the moment it doesn't work on my (Windows 11) laptop :-(  ticket is with
+Zilog.
 <p>
 
-I got FreeRTOS / MOS "alpha" running without a debugger, but it gave my brain a 
-workout in doing so at times. To use the ZUSBASC0200ZADG Acclaim! smart cable 
-hardware debugger, you will need version 5.3.5 of the ZDSII tools. Though, in 
-general, you will not need the debugger to build applications, it may 
-speed-up your development time if you do use it. 
+To use the ZUSBASC0200ZADG Acclaim! smart cable hardware debugger, you will need 
+version 5.3.5 of the ZDSII tools. Though, in general, you will not need the 
+debugger to build applications, it may speed-up your development time if you do 
+use it. FreeRTOS / MOS "alpha" was made running without a debugger, but it gave 
+my brain a workout in doing so at times. 
 
 <h3>Compiler Bugs</h3>
-There are bugs in the ZDS tools. Rather than put the compiler down, I would 
-like to see the Zilog tools rescued from their current maintenance contract 
-and made Open Source. What is there is fundamentally good - and would be better 
-off in more careful hands.
+There are bugs in the ZDS tools. Rather than dismiss the compiler, I would like 
+to see the Zilog tools rescued from their current maintenance contract and made 
+Open Source. What is there is fundamentally useful - and would be better off in 
+more careful hands.
 
 <h3>Re-entrancy</h3>
 I will point out, because you will run into it, that the Zilog libraries are
@@ -161,12 +174,6 @@ concurrent FreeRTOS tasks will not corrupt MOS or VDP calls. This comes at the
 cost of task-blocking - which means time passes un-usefully for the blocked 
 task - but is the correct solution.
 
-<h3>Real-time</h3>
-Because one FreeRTOS task may block another, and because MOS is non-reentrant, 
-FreeRTOS for MOS provides a "soft" real-time solution (rather than a "hard" 
-one.) This means the response time is not guaranteed, and may lag real time by
-a period (we might assume in the order of a milli-second, though I should do 
-some tests to provide precise data). 
 
 <h2>AgDev port</h2>
 If you prefer to use the LLVM AgDev compiler instead of ZDS, you can Fork 

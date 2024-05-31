@@ -6,15 +6,11 @@ ptn_Child1=ChildFrames
 
 [WorkState_v1_2.Frames.ChildFrames]
 ptn_Child1=Document-0
-ptn_Child10=Document-9
 ptn_Child2=Document-1
 ptn_Child3=Document-2
 ptn_Child4=Document-3
 ptn_Child5=Document-4
 ptn_Child6=Document-5
-ptn_Child7=Document-6
-ptn_Child8=Document-7
-ptn_Child9=Document-8
 
 [WorkState_v1_2.Frames.ChildFrames.Document-0]
 ptn_Child1=ViewFrame-0
@@ -23,106 +19,62 @@ ptn_Child1=ViewFrame-0
 DocPathName=.\main.c
 DocTemplateIndex=0
 DocumentString=IDE.Document
-IsActiveChildFrame=True
+IsActiveChildFrame=False
 IsFrameVisible=True
-WindowPlacement=MCAAAAAAAAAAAAAABAAAAAAAAAAAAAAAMOBAAAAAPPPPPPPPPPPPPPPPOAAAAAAAMJAAAAAABDDAAAAAOACAAAAA
+WindowPlacement=MCAAAAAAAAAAAAAABAAAAAAAAAAAAAAAJDCAAAAAPPPPPPPPPPPPPPPPAEAAAAAAKDAAAAAADGDAAAAAMKBAAAAA
 
 [WorkState_v1_2.Frames.ChildFrames.Document-1]
 ptn_Child1=ViewFrame-0
 
 [WorkState_v1_2.Frames.ChildFrames.Document-1.ViewFrame-0]
-DocPathName=Debug\port.src
+DocPathName=.\FreeRTOSConfig.h
 DocTemplateIndex=0
 DocumentString=IDE.Document
-IsActiveChildFrame=False
+IsActiveChildFrame=True
 IsFrameVisible=True
-WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAAAAAAAAABECAAAAAPPPPPPPPPPPPPPPPCJAAAAAAEKAAAAAAGCEAAAAADBCAAAAA
+WindowPlacement=MCAAAAAAAAAAAAAABAAAAAAAHMAAAAAAJDCAAAAAPPPPPPPPPPPPPPPPABBAAAAADHAAAAAAADEAAAAAACCAAAAA
 
 [WorkState_v1_2.Frames.ChildFrames.Document-2]
 ptn_Child1=ViewFrame-0
 
 [WorkState_v1_2.Frames.ChildFrames.Document-2.ViewFrame-0]
-DocPathName=.\FreeRTOSConfig.h
-DocTemplateIndex=0
-DocumentString=IDE.Document
-IsActiveChildFrame=False
-IsFrameVisible=True
-WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAHMAAAAAABECAAAAAPPPPPPPPPPPPPPPPEDAAAAAAEDAAAAAAIMDAAAAABOBAAAAA
-
-[WorkState_v1_2.Frames.ChildFrames.Document-3]
-ptn_Child1=ViewFrame-0
-
-[WorkState_v1_2.Frames.ChildFrames.Document-3.ViewFrame-0]
 DocPathName=..\..\Source\mos\mosapi.h
 DocTemplateIndex=0
 DocumentString=IDE.Document
 IsActiveChildFrame=False
 IsFrameVisible=True
-WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAOIBAAAAABECAAAAAPPPPPPPPPPPPPPPPLHAAAAAALGAAAAAACKDAAAAANNBAAAAA
+WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAOIBAAAAAJDCAAAAAPPPPPPPPPPPPPPPPLHAAAAAALGAAAAAACKDAAAAANNBAAAAA
 
-[WorkState_v1_2.Frames.ChildFrames.Document-4]
+[WorkState_v1_2.Frames.ChildFrames.Document-3]
 ptn_Child1=ViewFrame-0
 
-[WorkState_v1_2.Frames.ChildFrames.Document-4.ViewFrame-0]
+[WorkState_v1_2.Frames.ChildFrames.Document-3.ViewFrame-0]
 DocPathName=..\..\Source\mos\mos_api.inc
 DocTemplateIndex=0
 DocumentString=IDE.Document
 IsActiveChildFrame=False
 IsFrameVisible=True
-WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAFFCAAAAABECAAAAAPPPPPPPPPPPPPPPPLAAAAAAALGAAAAAAPCEAAAAANNBAAAAA
+WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAFFCAAAAAJDCAAAAAPPPPPPPPPPPPPPPPLAAAAAAALGAAAAAAPCEAAAAANNBAAAAA
 
-[WorkState_v1_2.Frames.ChildFrames.Document-5]
+[WorkState_v1_2.Frames.ChildFrames.Document-4]
 ptn_Child1=ViewFrame-0
 
-[WorkState_v1_2.Frames.ChildFrames.Document-5.ViewFrame-0]
+[WorkState_v1_2.Frames.ChildFrames.Document-4.ViewFrame-0]
 DocPathName=..\..\Source\mos\mosapi24.asm
 DocTemplateIndex=0
 DocumentString=IDE.Document
 IsActiveChildFrame=False
 IsFrameVisible=True
-WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAMBDAAAAABECAAAAAPPPPPPPPPPPPPPPPDMAAAAAADCAAAAAALODAAAAAMACAAAAA
+WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAHMAAAAAAJDCAAAAAPPPPPPPPPPPPPPPPDMAAAAAADCAAAAAALODAAAAAMACAAAAA
 
-[WorkState_v1_2.Frames.ChildFrames.Document-6]
+[WorkState_v1_2.Frames.ChildFrames.Document-5]
 ptn_Child1=ViewFrame-0
 
-[WorkState_v1_2.Frames.ChildFrames.Document-6.ViewFrame-0]
-DocPathName=..\..\Source\mos\init.asm
-DocTemplateIndex=0
-DocumentString=IDE.Document
-IsActiveChildFrame=False
-IsFrameVisible=True
-WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAAAAAAAAAPBCAAAAAPPPPPPPPPPPPPPPPKBAAAAAAKBAAAAAAEEDAAAAAMIBAAAAA
-
-[WorkState_v1_2.Frames.ChildFrames.Document-7]
-ptn_Child1=ViewFrame-0
-
-[WorkState_v1_2.Frames.ChildFrames.Document-7.ViewFrame-0]
+[WorkState_v1_2.Frames.ChildFrames.Document-5.ViewFrame-0]
 DocPathName=..\..\Source\portable\THIRDP~1\COMMUN~1\ZDSII\EZ80AG~1\port.c
 DocTemplateIndex=0
 DocumentString=IDE.Document
 IsActiveChildFrame=False
 IsFrameVisible=True
-WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAHMAAAAAAPBCAAAAAPPPPPPPPPPPPPPPPBFAAAAAACEAAAAAAHPDAAAAAELBAAAAA
-
-[WorkState_v1_2.Frames.ChildFrames.Document-8]
-ptn_Child1=ViewFrame-0
-
-[WorkState_v1_2.Frames.ChildFrames.Document-8.ViewFrame-0]
-DocPathName=Debug\main.src
-DocTemplateIndex=0
-DocumentString=IDE.Document
-IsActiveChildFrame=False
-IsFrameVisible=True
-WindowPlacement=MCAAAAAAAAAAAAAABAAAAAAAOIBAAAAAPBCAAAAAPPPPPPPPPPPPPPPPDHBAAAAAJAAAAAAAACEAAAAAPACAAAAA
-
-[WorkState_v1_2.Frames.ChildFrames.Document-9]
-ptn_Child1=ViewFrame-0
-
-[WorkState_v1_2.Frames.ChildFrames.Document-9.ViewFrame-0]
-DocPathName=Debug\DemoMOS.map
-DocTemplateIndex=0
-DocumentString=IDE.Document
-IsActiveChildFrame=False
-IsFrameVisible=True
-WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAOIBAAAAAPBCAAAAAPPPPPPPPPPPPPPPPDLAAAAAAHEAAAAAAHEEAAAAAEPBAAAAA
+WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAAAAAAAAAJDCAAAAAPPPPPPPPPPPPPPPPLBAAAAAACDAAAAAABMDAAAAAEKBAAAAA
 

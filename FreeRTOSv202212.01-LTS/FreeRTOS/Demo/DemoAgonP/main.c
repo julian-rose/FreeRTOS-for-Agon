@@ -166,6 +166,5 @@ void vApplicationIdleHook( void )
        IDLE must always be in either the READY or the RUN state, and no other. */
     
     //Machen mit ein blinken light would be excellent
-
     idlecnt++;
 }

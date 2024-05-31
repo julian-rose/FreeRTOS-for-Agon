@@ -68,7 +68,7 @@
 /* We require the address of the (tasks.c) pxCurrentTCB variable, 
    but don't need to know its type. */
 typedef void tskTCB;
-extern volatile tskTCB * volatile pxCurrentTCB;
+extern tskTCB * volatile pxCurrentTCB;
 
 /* we use a mutex to implement critical regions */
 static SemaphoreHandle_t portMOSMutex = NULL;
@@ -132,6 +132,47 @@ static void portTeardownTimerInterrupt( void );
     asm( "\t pop de                  " );\
     asm( "\t pop bc                  " );\
     asm( "\t pop af                  " );
+
+
+/* Initialse the stack for a task
+*/
+portSTACK_TYPE *pxPortInitialiseStack( 
+    portSTACK_TYPE *pxTopOfStack, 
+    pdTASK_CODE pxCode, 
+    void *pvParameters 
+    )
+{
+#   if defined( _DEBUG )&& 0
+        ( void )printf( "%s : %d\r\n", "port.c", __LINE__ );
+#   endif
+    
+    /* Place the parameter on the stack in the expected location. */
+    *pxTopOfStack-- =( portSTACK_TYPE )pvParameters;
+
+    /* Place the task return address on stack. Not normally used */
+    *pxTopOfStack-- =( portSTACK_TYPE )&portTaskExit;
+
+    /* The start of the task code will be popped off the stack last, so place
+    it on first. */
+    *pxTopOfStack-- =( portSTACK_TYPE )pxCode;
+
+    /* ZDS II Stack Frame saved by the compiler (IX Register). */
+    *pxTopOfStack-- =( portSTACK_TYPE )0x111111;  /* IX  */
+
+    /* Now load the registers to create a dummy frame
+       (refer to portSAVE_CONTEXT). */
+    *pxTopOfStack-- =( portSTACK_TYPE )0xAFAFAF;  /* AF  */
+    *pxTopOfStack-- =( portSTACK_TYPE )0xBCBCBC;  /* BC  */
+    *pxTopOfStack-- =( portSTACK_TYPE )0xDEDEDE;  /* DE  */
+    *pxTopOfStack-- =( portSTACK_TYPE )0xEFEFEF;  /* HL  */
+    *pxTopOfStack-- =( portSTACK_TYPE )0x222222;  /* IY  */
+    *pxTopOfStack-- =( portSTACK_TYPE )0xFAFAFA;  /* AF' */
+    *pxTopOfStack-- =( portSTACK_TYPE )0xCBCBCB;  /* BC' */
+    *pxTopOfStack-- =( portSTACK_TYPE )0xEDEDED;  /* DE' */
+    *pxTopOfStack   =( portSTACK_TYPE )0xFEFEFE;  /* HL' */
+
+    return( pxTopOfStack );
+}
 /*-----------------------------------------------------------*/
 
 /* Create critical region mutex to guard MOS accesses
@@ -230,47 +271,6 @@ void portExitMOS( void )
 }
 /*-----------------------------------------------------------*/
 
-/* Initialse the stack for a task
-*/
-portSTACK_TYPE *pxPortInitialiseStack( 
-    portSTACK_TYPE *pxTopOfStack, 
-    pdTASK_CODE pxCode, 
-    void *pvParameters 
-    )
-{
-#   if defined( _DEBUG )&& 0
-        ( void )printf( "%s : %d\r\n", "port.c", __LINE__ );
-#   endif
-    
-    /* Place the parameter on the stack in the expected location. */
-    *pxTopOfStack-- =( portSTACK_TYPE )pvParameters;
-
-    /* Place the task return address on stack. Not normally used */
-    *pxTopOfStack-- =( portSTACK_TYPE )&portTaskExit;
-
-    /* The start of the task code will be popped off the stack last, so place
-    it on first. */
-    *pxTopOfStack-- =( portSTACK_TYPE )pxCode;
-
-    /* ZDS II Stack Frame saved by the compiler (IX Register). */
-    *pxTopOfStack =( portSTACK_TYPE )pxTopOfStack--;  /* IX  */
-
-    /* Now load the registers to create a dummy frame
-       (refer to portSAVE_CONTEXT). */
-    *pxTopOfStack-- =( portSTACK_TYPE )0xAFAFAF;  /* AF  */
-    *pxTopOfStack-- =( portSTACK_TYPE )0xBCBCBC;  /* BC  */
-    *pxTopOfStack-- =( portSTACK_TYPE )0xDEDEDE;  /* DE  */
-    *pxTopOfStack-- =( portSTACK_TYPE )0xEFEFEF;  /* HL  */
-    *pxTopOfStack-- =( portSTACK_TYPE )0x222222;  /* IY  */
-    *pxTopOfStack-- =( portSTACK_TYPE )0xFAFAFA;  /* AF' */
-    *pxTopOfStack-- =( portSTACK_TYPE )0xCBCBCB;  /* BC' */
-    *pxTopOfStack-- =( portSTACK_TYPE )0xEDEDED;  /* DE' */
-    *pxTopOfStack   =( portSTACK_TYPE )0xFEFEFE;  /* HL' */
-
-    return( pxTopOfStack );
-}
-/*-----------------------------------------------------------*/
-
 /* Start the FreeRTOS scheduler
  *    on success this routine will never return, rather tasks will run
  *    return pdTRUE if we fell out of the scheduler
@@ -347,13 +347,13 @@ portBASE_TYPE xPortStartScheduler( void )
 }
 /*-----------------------------------------------------------*/
 
-
 void vPortEndScheduler( void )
 {
     /* It is unlikely that the eZ80 port will require this function as there
     is nothing to return to.  If this is required - stop the tick ISR then
     return back to main. */
     portTeardownTimerInterrupt( );
+	( void )printf( "Port End Scheduler\r\n" );
 }
 /*-----------------------------------------------------------*/
 
@@ -367,7 +367,8 @@ void vPortYield( void )
 {
     /* push BC     is inserted by "Zilog eZ80 ANSI C Compiler Version 3.4 (19101101)"
        following the standard prolog. But it is neither popped in the postlog, nor 
-       by the caller on return from vPortYield */
+       by the caller on return from vPortYield. We don't want it left on the task
+       stack. */
     asm( "\t pop    bc   ; remove pushed BC from the stack" );
 
     portSAVE_CONTEXT( );
@@ -381,129 +382,88 @@ void vPortYield( void )
 }
 /*-----------------------------------------------------------*/
 
-/*
- * Context switch function used by the tick.  This must be identical to
- * vPortYield() from the call to vTaskSwitchContext() onwards.  The only
- * difference from vPortYield() is the tick count is incremented as the
- * call comes from the tick ISR.
- */
-void vPortYieldFromTick( void )
+/* vPortYieldFromTick
+ *   Context switch function used by the tick.  
+ *   This must be identical to vPortYield() from the call to vTaskSwitchContext() 
+ *   onwards.  
+ *   We have to save the context, even in non-preemptive configuration,
+ *   in order to preserve the AF flags register */
+static void vPortYieldFromTick( void )
 {
-#   if defined( _DEBUG )&& 0
-    {
-        ( void )printf( "%s : %d : vPortYieldFromTick\r\n", "port.c", __LINE__ );
-    }
-#   endif
-    /* push BC     is inserted by "Zilog eZ80 ANSI C Compiler Version 3.4 (19101101)"
-       following the standard prolog. But it is neither popped in the postlog, nor 
-       by the caller on return from vPortYield */
-    asm( "\t pop    bc   ; remove pushed BC from the stack" );
-
+    /* The current task context SHALL be saved first; 
+       even if 0==configUSE_PREEMPTION. */
     portSAVE_CONTEXT( );
+
+    /* The Tick Count SHALL be incremented; 
+       returns pdTRUE if any higher priority task is ready to run */
     if( pdFALSE != xTaskIncrementTick( ))
     {
         /* A context switch is required. */
+        asm( "\t push hl        ; in lieu of prologue stack frame" );        
         vTaskMissedYield( );
-    }
-    vTaskSwitchContext( );
-
-#   if defined( _DEBUG )&& 0
+        asm( "\t pop hl         ; " );
+	}
+	
+#   if( 1 == configUSE_PREEMPTION )
     {
-        ( void )printf( "%s : %d : back from vTaskSwitchContext\r\n", "port.c", __LINE__ );
-    }
-#   endif
-
-    portRESTORE_CONTEXT( );
-
-    asm( "\t pop    ix    ; postlog         " );
-    asm( "\t ei           ; enable interrupts to start tick ISR " );
-    asm( "\t ret          ; ret from here   " );
-    asm( "                ; postlog below not followed " );
-}
-/*-----------------------------------------------------------*/
-
-/* timer_isr is an ISR bound to a PRT countdown expiry event, 
-   via the MOS interrupt vector table.
-   MOS runs in mixed mode (MADL=1), so all ISRs begin in ADL mode.
-   timer_isr is invoked following an interrupt from that PRT 
-   (on-chip vectored peripheral) to the eZ80 CPU.
-   Refer to UM007715 Interrupts in Mixed Memory Mode Applications, 
-   Table 25 ADL=1 MADL=1 (same as per IM 2 table 24).
-   An ISR will run on the stack of the current program (task). */
-void timer_isr( void )
-{
-    volatile unsigned char __INTIO * const tmr_ctl =
-        ( volatile unsigned char __INTIO* )( 0x80 +( portTmr * 3 ));
-    unsigned char ctl;
-
-    ctl = *tmr_ctl;  /* clear bit 7 PRT_IRQ, by reading CTL */
-#   if defined( _DEBUG )&& 0
-    {
-        ( void )printf( "\r\n%s : %d : timer_isr ctl = 0x%x\r\n", 
-                            "port.c", __LINE__, ctl );
-        ctl = *tmr_ctl;
-        ( void )printf( "%s : %d : timer_isr ctl = 0x%x\r\n", 
-                            "port.c", __LINE__, ctl );
-    }
-#   endif
-
-    /* now we're done with local tmr_ctl and ctl variables,
-       pop the bc register from the stack which was pushed by 
-       Zilog eZ80 ANSI C Compiler Version 3.4 (19101101) as part of the 
-       prologue. */
-    asm( "\t inc sp      ; postlog   SP adjust after prolog");
-    asm( "\t pop bc      ; postlog   BC pushed after prolog");
-
-#   if( configUSE_PREEMPTION == 1 )
-    {
-        /*
-         * Tick ISR for preemptive scheduler.  
-         * We need to check if the current task is accessing the non-reentrant MOS.
-         * If MOS is in use, then indicate that a context switch might be needed.
-         * The tick count is incremented after the context is saved.
+        /* Check if the current task is accessing the non-reentrant MOS.
+         * If MOS is in use, then indicate that a context switch is needed.
          */
         if( pdTRUE == xSemaphoreTakeFromISR( portMOSMutex, NULL ))
         {
-            xSemaphoreGiveFromISR( portMOSMutex, NULL );
+            ( void )xSemaphoreGiveFromISR( portMOSMutex, NULL );
 
-            /* not blocked on MOS, so do the usual task yield from tick 
+            /* not blocked on MOS, so do the task yield from tick 
                xTaskIncrementTick is done in this function */
-            vPortYieldFromTick( );
-        }
+            asm( "\t push hl        ; in lieu of prologue stack frame" );        
+            vTaskSwitchContext( );
+            asm( "\t pop hl         ; " );
+        } 
         else
         {
-            /* blocked on MOS */
-            if( pdFALSE != xTaskIncrementTick( ))
-            {
-                /* A context switch is required. */
-                vTaskMissedYield( );
-            }
-            asm( "\t ld sp, ix      ; postlog   restore stack pointer");
-        }
-    }
-#   else /* configUSE_PREEMPTION == 1 */
-    {
-        /*
-         * Tick ISR for the cooperative scheduler.  
-         * This increments the tick count only. We don't switch context because
-         * this is controlled by application task calls to taskYIELD();
-         */
-        if( pdFALSE != xTaskIncrementTick( ))
-        {
-            /* A context switch is required. */
+            /* blocked on MOS; indicate a context switch is required. */
+            asm( "\t push hl        ; in lieu of prologue stack frame" );        
             vTaskMissedYield( );
+            asm( "\t pop hl         ; " );
         }
-        asm( "\t ld sp, ix      ; postlog   restore stack pointer");
     }
 #   endif /* configUSE_PREEMPTION == 1 */
 
-    asm( "\t pop ix      ; postlog   retrieve IX pushed in prolog");
+    portRESTORE_CONTEXT( );
+
+	/* RESTORE CONTEXT is shared with port yield, so that we must "ret" to a 
+	   calling task. In this case, the calling tick ISR shall reti */
+    asm( "\t pop    ix    ; return from here," );
+    asm( "\t ret          ; so that we don't modify the stack pointer" );
+    asm( "                ; in the compiler epilog that follows" );
+        /* following compiler-inserted epilogue is not executed */
+}
+
+/* timer_isr is an ISR bound to a PRT countdown expiry event, 
+     via the MOS interrupt vector table.
+   - MOS runs in mixed mode (MADL=1), so all ISRs begin in ADL mode.
+     timer_isr is invoked following an interrupt from that PRT 
+     (on-chip vectored peripheral) to the eZ80 CPU.
+   - Refer to UM007715 Interrupts in Mixed Memory Mode Applications, 
+     Table 25 ADL=1 MADL=1 (same as per IM 2 table 24).
+   - An ISR will run on the stack of the current FreeRTOS task */
+static void timer_isr( void )
+{
+	/* We can clear the timer interrupt down ahead of saving the task context,
+       provided no general purpose registers are modified. */
+    asm( "\t push af           ; preserve AF for SAVE CONTEXT" );
+    asm( "\t in0 a,(83h)       ; clear PRT1 (page 0) iflag down" );
+    asm( "\t pop af            ; restore AF for SAVE CONTEXT" );
+
+    vPortYieldFromTick( );
+
+    asm( "\t pop ix      ; epilogue, restore IX pushed in prolog");
     asm( "               ; like github.com/breakintoprogram/agon-mos/blob/main/src_startup/vectors16.asm" );
     asm( "               ;   __default_mi_handler" );
     asm( "\t ei          ; re-enable interrupts (on completion of following ret)" );
     asm( "\t reti.l      ; need reti.L as per UM007715 table 25 for IM 2 ADL=1 MADL=1");
 
-        /* following postlog is not followed */
+    /* following compiler-inserted epilogue is not executed */
 }
 /*-----------------------------------------------------------*/
 
@@ -537,12 +497,6 @@ static BaseType_t prvSetupTimerInterrupt( void )
     volatile unsigned char __INTIO *tmr_rrl;
     unsigned int reload;
     int i;
-
-#   if defined( _DEBUG )&& 0
-    {
-        ( void )printf( "%s : %d\r\n", "port.c", __LINE__ );
-    }
-#   endif
 
 #   if 0  /* Algorithm (long) */
     {
@@ -612,7 +566,6 @@ static BaseType_t prvSetupTimerInterrupt( void )
             ( void )printf( "Assigned Timer %d to FreeRTOS tick\r\n", portTmr );
         }
 #       endif
-
 #       if defined( _DEBUG )&& 0
         {
             ( void )printf( "%s : %d : vector 0x%x\r\n", "port.c", 
@@ -722,7 +675,7 @@ void portAssert( char *file, unsigned int line )
     }
 #   endif
     
-    for( ;; );
+    for( ;; );   /* set a BREAKPOINT here */
 }
 /*-----------------------------------------------------------*/
 
@@ -734,5 +687,5 @@ static void portTaskExit( void )
     }
 #   endif
     
-    for( ;; );
+    for( ;; );   /* set a BREAKPOINT here */
 }

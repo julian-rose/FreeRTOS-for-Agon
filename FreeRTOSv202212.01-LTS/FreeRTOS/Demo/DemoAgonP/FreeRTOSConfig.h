@@ -59,7 +59,7 @@
 #define configSTACK_DEPTH_TYPE          		int
 #define configCHECK_FOR_STACK_OVERFLOW			0
 #define configRECORD_STACK_HIGH_ADDRESS			0
-#define configMINIMAL_STACK_SIZE				(( portSTACK_TYPE )512 )
+#define configMINIMAL_STACK_SIZE				(( portSTACK_TYPE )1024 )
 
 /* Memory allocation */
 #define configSUPPORT_DYNAMIC_ALLOCATION		1

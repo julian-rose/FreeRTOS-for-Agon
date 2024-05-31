@@ -121,12 +121,18 @@ void vApplicationIdleHook( void )
 }
 
 
+/* doKeyboardTest
+ *   Try out MOS function 0 "getkey".
+ *   We see this API is sporadic, and it is difficult to type at normal
+ *   speed without losing input, or getting extra input. Not such a good
+ *   API.
+*/
 static void doKeyboardTest( void )
 {
     char ch;
     char prevch = 0;
 
-    ( void )printf( "Running keyboard test. "
+    ( void )printf( "\r\n\r\nRunning keyboard test. "
                     "Type some keys. "
                     "Press ESC to exit test\r\n" );
     while( 1 )
@@ -181,6 +187,13 @@ void kbHndlr( VDP_KB_PACKET *keyboard_packet )
 }
 
 
+/* doKeyboardCallback
+ *   Try out MOS function 1Dh "setkbvector".
+ *   An alternative to MOS fucntion 0, bypass the MOS key input buffer and 
+ *   attach directly to the VDP ISR in MOS to buffer our own input. This API 
+ *   results in reliable input, and the design is well-suited to real-time 
+ *   systems as it treats the keyboard like a device. 
+*/
 #if defined( _DEBUG )&& 0
   extern volatile int _mosapi_kbvect;
 #endif
@@ -196,7 +209,7 @@ static void doKeyboardCallback( void )
 	}
 #   endif
 
-    ( void )printf( "Running keyboard callback test. "
+    ( void )printf( "\r\n\r\nRunning keyboard callback test. "
                     "Type some keys. "
                     "Press CRET to exit test\r\n" );
 
@@ -218,33 +231,23 @@ static void doKeyboardCallback( void )
     {
         unsigned char ch = kbbuf[( 0 < kbidx )?( kbidx - 1 ): 0 ];
 
-asm("di");  // BUG: we need to ensure no interrupts over the if statement
         if( 13 == ch )
         {
-asm("ei");  // ENDBUG: otherwise we can enter here false positive, because the flags register is wrong
             putchar( '-' );
             break;
         }
-asm("ei");  // ENDBUG: when we expect to get here
 
-asm("di");  // BUG: we need to ensure no interrupts over the if statement
         if( kbhcnt > 25 )
         {
-asm("ei");  // ENDBUG: otherwise we can enter here false positive, because the flags register is wrong
             putchar( '/' );
             break;
         }
-asm("ei");  // ENDBUG: when we expect to get here
 
-asm("di");  // BUG: we need to ensure no interrupts over the if statement
         if( 1000 < x++ )
         {
-asm("ei");  // ENDBUG: otherwise we can enter here false positive, because the flags register is wrong
             putchar( '.' );
             x = 0;
         }
-asm("ei");  // ENDBUG: when we expect to get here
-
     }
 
 #   if defined( _DEBUG )&& 0
