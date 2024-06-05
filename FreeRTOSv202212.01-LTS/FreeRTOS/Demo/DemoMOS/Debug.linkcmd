@@ -68,6 +68,7 @@ DEFINE __heapbot =( highaddr of RAM + 1 )- $020000
  ".\mosapi24.obj", \
  ".\FPDUMY.obj", \
  ".\main.obj", \
+ ".\mosapi.obj", \
  ".\croutine.obj", \
  ".\event_groups.obj", \
  ".\list.obj", \
@@ -77,6 +78,7 @@ DEFINE __heapbot =( highaddr of RAM + 1 )- $020000
  ".\port.obj", \
  ".\tasks.obj", \
  ".\heap_3.obj", \
+ ".\sbrk.obj", \
  "C:\Users\jrose\tech_stuff\retro\Zilog\eZ80\ZDSII_eZ80Acclaim!_5.3.5\lib\zilog\zsldevinitdummy.obj", \
  "C:\Users\jrose\tech_stuff\retro\Zilog\eZ80\ZDSII_eZ80Acclaim!_5.3.5\lib\std\chelpD.lib", \
  "C:\Users\jrose\tech_stuff\retro\Zilog\eZ80\ZDSII_eZ80Acclaim!_5.3.5\lib\std\crtD.lib", \

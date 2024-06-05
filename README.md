@@ -7,7 +7,7 @@ The concept is very much FreeRTOS over MOS, reflected in the project name.
 FreeRTOS provides concurrency and time, and MOS provides the system services.
 <p>
 
-This port to Agon Light integrates FreeRTOS version 20221201-LTS (10.5.1) with 
+This Agon Light port integrates FreeRTOS version 20221201-LTS (10.5.1) with 
 the Zilog ZDSII eZ80Acclaim! version 5.3.5 (Build 23020901) C language toolset. 
 The choice of version 20221201-LTS prioritises stability over latest and 
 greatest. For a detailed description of the Agon port, refer to the README in 
@@ -27,6 +27,12 @@ a command console interpreter and long-term storage. Instead, FreeRTOS for Agon
 applications run on MOS to access its services. FreeRTOS, while a general
 framework, is of particular interest for using Agon as a micro-controller.
 
+<h4>Why do we care about concurrency and time?</h4>
+In a nutshell, because they are in the real world. A micro-controller interacts 
+with the real world, through sensors and actuators. So we need to embrace ideas 
+of time and the order of events (concurrency) in our software, for it to 
+function well. 
+
 <h3>What is Agon?</h3>
 Agon Light™ is a fully open-source 8-bit microcomputer and microcontroller in 
 one small, low-cost board. Refer to https://github.com/TheByteAttic/AgonLight.
@@ -39,7 +45,12 @@ MOS is the Machine Operating System for Agon Light and compatibles. It runs on
 the eZ80 and provides an API to access the eZ80 on-chip peripherals, on-board 
 interfaces including the VDP terminal co-processor, and long-term file storage 
 through SD-cards. Refer to https://agonconsole8.github.io/agon-docs/MOS/.
+<p>
 
+We have built against MOS version 1.4. All recent versions of MOS may work, 
+but they have not been tested and there are a small number of tightly coupled 
+dependencies in some parts of the code (such as the keyboard read functions) 
+which may fail if differences exist between versions of the MOS code.
 
 <h2>Project</h2>
 FreeRTOS / MOS for Agon Light is a multi-versioned project. "Alpha" is the 

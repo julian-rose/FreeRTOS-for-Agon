@@ -63,14 +63,16 @@
 #include "mosapi.h"
 
 
-/*-----------------------------------------------------------*/
+/*----- Global Names --------------------------------------------------------*/
 
-/* We require the address of the (tasks.c) pxCurrentTCB variable, 
-   but don't need to know its type. */
+    /* We require the address of the (tasks.c) pxCurrentTCB variable, 
+       but don't need to know its type. */
 typedef void tskTCB;
 extern tskTCB * volatile pxCurrentTCB;
 
-/* we use a mutex to implement critical regions */
+
+/*----- Private Variables ---------------------------------------------------*/
+    /* we use a mutex to implement critical regions */
 static SemaphoreHandle_t portMOSMutex = NULL;
 
 /* we keep track of our installed ISR, to remove it in case of exit */
@@ -78,13 +80,13 @@ static void( *portPrevprev )( void ) = NULL;
 static int portTmr = -1;
 
 
-/*-- Private functions --------------------------------------*/
+/*----- Private Functions ---------------------------------------------------*/
 static BaseType_t prvSetupTimerInterrupt( void );
 static void portTaskExit( void );
 static void portTeardownTimerInterrupt( void );
 
 
-/*-- Function definitions -----------------------------------*/
+/*----- Function Definitions ------------------------------------------------*/
 /*
  * Macro to save all the general purpose registers, 
  *  then save the stack pointer into the TCB.
@@ -173,8 +175,9 @@ portSTACK_TYPE *pxPortInitialiseStack(
 
     return( pxTopOfStack );
 }
-/*-----------------------------------------------------------*/
 
+
+/*---------------------------------------------------------------------------*/
 /* Create critical region mutex to guard MOS accesses
  * We don't use portENTER_CRITICAL and thereby disable interrupts,
  * because the eZ80 talks to the ESP32 via a serial link and this
@@ -269,8 +272,9 @@ void portExitMOS( void )
         ( void )printf( "%s : %d\r\n", "port.c", __LINE__ );
 #   endif
 }
-/*-----------------------------------------------------------*/
 
+
+/*---------------------------------------------------------------------------*/
 /* Start the FreeRTOS scheduler
  *    on success this routine will never return, rather tasks will run
  *    return pdTRUE if we fell out of the scheduler
@@ -288,17 +292,17 @@ portBASE_TYPE xPortStartScheduler( void )
     if( pdPASS == prvSetupTimerInterrupt( ))
     {
 #       if defined( _DEBUG )&& 0
-		{
+        {
             ( void )printf( "%s : %d\r\n", "port.c", __LINE__ );
-		}
+        }
 #       endif
 
         if( pdPASS == portCreateMOSMutex( ))
         {
 #           if defined( _DEBUG )&& 0
-			{
+            {
                 ( void )printf( "%s : %d\r\n", "port.c", __LINE__ );
-			}
+            }
 #           endif
 
             /* start running the tasks */
@@ -345,7 +349,6 @@ portBASE_TYPE xPortStartScheduler( void )
     
     return( ret );
 }
-/*-----------------------------------------------------------*/
 
 void vPortEndScheduler( void )
 {
@@ -353,10 +356,11 @@ void vPortEndScheduler( void )
     is nothing to return to.  If this is required - stop the tick ISR then
     return back to main. */
     portTeardownTimerInterrupt( );
-	( void )printf( "Port End Scheduler\r\n" );
+    ( void )printf( "Port End Scheduler\r\n" );
 }
-/*-----------------------------------------------------------*/
 
+
+/*---------------------------------------------------------------------------*/
 /*
  * Manual context switch.  
  *      Save the current task context
@@ -380,7 +384,7 @@ void vPortYield( void )
     asm( "\t ret          ; ret from here   " );
     asm( "                ; compiler-inserted postlog below not followed " );
 }
-/*-----------------------------------------------------------*/
+
 
 /* vPortYieldFromTick
  *   Context switch function used by the tick.  
@@ -402,8 +406,8 @@ static void vPortYieldFromTick( void )
         asm( "\t push hl        ; in lieu of prologue stack frame" );        
         vTaskMissedYield( );
         asm( "\t pop hl         ; " );
-	}
-	
+    }
+    
 #   if( 1 == configUSE_PREEMPTION )
     {
         /* Check if the current task is accessing the non-reentrant MOS.
@@ -431,8 +435,8 @@ static void vPortYieldFromTick( void )
 
     portRESTORE_CONTEXT( );
 
-	/* RESTORE CONTEXT is shared with port yield, so that we must "ret" to a 
-	   calling task. In this case, the calling tick ISR shall reti */
+    /* RESTORE CONTEXT is shared with port yield, so that we must "ret" to a 
+       calling task. In this case, the calling tick ISR shall reti */
     asm( "\t pop    ix    ; return from here," );
     asm( "\t ret          ; so that we don't modify the stack pointer" );
     asm( "                ; in the compiler epilog that follows" );
@@ -449,7 +453,7 @@ static void vPortYieldFromTick( void )
    - An ISR will run on the stack of the current FreeRTOS task */
 static void timer_isr( void )
 {
-	/* We can clear the timer interrupt down ahead of saving the task context,
+    /* We can clear the timer interrupt down ahead of saving the task context,
        provided no general purpose registers are modified. */
     asm( "\t push af           ; preserve AF for SAVE CONTEXT" );
     asm( "\t in0 a,(83h)       ; clear PRT1 (page 0) iflag down" );
@@ -465,8 +469,9 @@ static void timer_isr( void )
 
     /* following compiler-inserted epilogue is not executed */
 }
-/*-----------------------------------------------------------*/
 
+
+/*---------------------------------------------------------------------------*/
 /*
  * Setup timer.
  *   Bind an EZ80F92 TMR as the Periodic Interval Timer function. 
@@ -498,147 +503,79 @@ static BaseType_t prvSetupTimerInterrupt( void )
     unsigned int reload;
     int i;
 
-#   if 0  /* Algorithm (long) */
-    {
-        /* Search for and assign from the available timers in PRT1..PRT3 */
-        for( i = 1; i < 4; i++ )
-        {
-            /* set Timer interrupt vector (PRTn_IVECT) through MOS */
-            prev = mos_setintvector(( PRT0_IVECT +( i * 2 )), timer_isr );
-#           if defined( _DEBUG )&& 0
-            {
-                ( void )printf( "%s : %d : i = %d : prev = %p\r\n", 
-                                "port.c", __LINE__, i, prev );
-            }
-#           endif
-            if( NULL != prev )
-            {
-                /* some ISR was already bound to this PRT */
-                if( timer_isr == prev )
-                {
-                    /* it's us; we were already installed before, 
-                       so if we survived a device reset then continue */
-                    portTmr = i;
-                    break;
-                }
-                else
-                {
-                    /* something else is already bound to this vector */
-                    if( portPrevprev == prev )
-                    {
-                        /* the previous device and this device are both bound to the
-                           same vector; guess it's __default_mi_handler, so assign 
-                           this device */
-                        portTmr = i;
-                        break;
-                    }
-                
-                    /* don't know if it is the default handler, so restore the
-                       previous owner and try the next vector */
-                    mos_setintvector(( PRT0_IVECT +( i * 2 )), prev );
-                    portPrevprev = prev;  /* remember it, it may be a default handler */
-                    continue;
-                }
-            }
-            else
-            {
-                /* no previous ISR setup, so use this PRT */
-                portTmr = i;
-                portPrevprev = NULL;
-                break;
-            }
-        }
-    }
-#   else  /* Algorithm (short) */
-    {
-        /* Assign PRT1 for FreeRTOS */
-        portTmr = 1;
-        portPrevprev = mos_setintvector(( PRT0_IVECT +( portTmr * 2 )), timer_isr );
+    /* Assign PRT1 for FreeRTOS */
+    portTmr = 1;
+    portPrevprev = mos_setintvector(( PRT0_IVECT +( portTmr * 2 )), timer_isr );
         
         /* Applications are free to use PRT2 or PRT3 */
-    }
-#   endif /* Algorithm */
 
-    if( 0 <= portTmr )
+#   if defined( _DEBUG )
     {
-#       if defined( _DEBUG )
-        {
-            ( void )printf( "Assigned Timer %d to FreeRTOS tick\r\n", portTmr );
-        }
-#       endif
-#       if defined( _DEBUG )&& 0
-        {
-            ( void )printf( "%s : %d : vector 0x%x\r\n", "port.c", 
-                            __LINE__, ( PRT0_IVECT +( portTmr * 2 )) );
-        }
-#       endif
-
-        /* Timer Source Select;
-           input for the periodic timer (TMR0_IN) shall be the system clock 
-           (divided by the clock divider). Refer to eZ80F92 ProdSpec, section 
-           Programmable Reload Timers table 37 */
-        iss = TMR_ISS;
-        iss &= ~( unsigned char )( PRT_ISS_SYSCLK <<( portTmr * 2 ));
-#       if defined( _DEBUG )&& 0
-        {
-            ( void )printf( "%s : %d : iss %d\r\n", "port.c", __LINE__, iss );
-        }
-#       endif
-        TMR_ISS =( unsigned char )iss;
-
-        /* program Timer i Reload Registers;
-           refer to eZ80F92 ProdSpec, section Programmable Reload Timers table 
-           35-36 */
-        tmr_rrl =( volatile unsigned char __INTIO* )( 0x81 +( portTmr * 3 ));
-        tmr_rrh =( volatile unsigned char __INTIO* )( 0x82 +( portTmr * 3 ));
-#       if defined( _DEBUG )&& 0
-        {
-            ( void )printf( "%s : %d : tmr_rrl 0x%x : tmr_rrh 0x%x\r\n", 
-                            "port.c", __LINE__, tmr_rrl, tmr_rrh );
-        }
-#       endif
-
-        /* RRH:RRL are each 8-bit registers nd onr 16-bit register as a pair.
-           Refer to eZ80F92 ProdSpec, section Setting Timer Duration.
-           TimerPeriod(s) =(( PRT_CLK_PRESCALER * reload )/ configCPU_CLOCK_HZ )
-              e.g. 0.1(s) =((       64          * 28800  )/     18432000 )       */
-        reload =( configCPU_CLOCK_HZ / PRT_CLK_PRESCALER / configTICK_RATE_HZ );
-        configASSERT(( reload & 0xffff )== reload );
-        reload &= 0xffff;
-        *tmr_rrh =( unsigned char )( reload >> 8 );
-        *tmr_rrl =( unsigned char )( reload & 0xFF );
-
-        tmr_ctl =( volatile unsigned char __INTIO* )( 0x80 +( portTmr * 3 ));
-        ctl = *tmr_ctl;  /* clear bit 7 PRT_IRQ, by reading CTL */
-
-        /* program TMR0_CTL and enable the timer */
-        *tmr_ctl =( PRT_CTL_IRQ_EN |
-                    PRT_CTL_MODE_CONTINUOUS |
-                    PRT_CTL_DIV64  |           // cross-relate with PRT_CLK_PRESCALER
-                    PRT_CTL_RST_EN |
-                    PRT_CTL_ENABLE );
-
-#       if defined( _DEBUG )&& 0
-        {
-            ctl = *tmr_ctl;   /* PRT_CTL_RST_EN will be cleared (undocumented but expected) */
-            ( void )printf( "%s : %d : ctl = 0x%x\r\n", "port.c", __LINE__, ctl );
-        }
-#       endif
+        ( void )printf( "Assigned Timer %d to FreeRTOS tick\r\n", portTmr );
     }
-    else
+#   endif
+#   if defined( _DEBUG )&& 0
     {
-        /* No free Timer available */
-        r = pdFAIL;
-#       if defined( _DEBUG )
-        {
-            ( void )printf( "%s : %d : No timer available\r\n", "port.c", __LINE__ );
-        }
-#       endif
+        ( void )printf( "%s : %d : vector 0x%x\r\n", "port.c", 
+                        __LINE__, ( PRT0_IVECT +( portTmr * 2 )) );
     }
+#   endif
+
+    /* Timer Source Select;
+       input for the periodic timer (TMR0_IN) shall be the system clock 
+       (divided by the clock divider). Refer to eZ80F92 ProdSpec, section 
+       Programmable Reload Timers table 37 */
+    iss = TMR_ISS;
+    iss &= ~( unsigned char )( PRT_ISS_SYSCLK <<( portTmr * 2 ));
+#   if defined( _DEBUG )&& 0
+    {
+        ( void )printf( "%s : %d : iss %d\r\n", "port.c", __LINE__, iss );
+    }
+#   endif
+    TMR_ISS =( unsigned char )iss;
+
+    /* program Timer i Reload Registers;
+       refer to eZ80F92 ProdSpec, section Programmable Reload Timers table 
+       35-36 */
+    tmr_rrl =( volatile unsigned char __INTIO* )( 0x81 +( portTmr * 3 ));
+    tmr_rrh =( volatile unsigned char __INTIO* )( 0x82 +( portTmr * 3 ));
+#   if defined( _DEBUG )&& 0
+    {
+        ( void )printf( "%s : %d : tmr_rrl 0x%x : tmr_rrh 0x%x\r\n", 
+                        "port.c", __LINE__, tmr_rrl, tmr_rrh );
+    }
+#   endif
+
+    /* RRH:RRL are each 8-bit registers nd onr 16-bit register as a pair.
+       Refer to eZ80F92 ProdSpec, section Setting Timer Duration.
+       TimerPeriod(s) =(( PRT_CLK_PRESCALER * reload )/ configCPU_CLOCK_HZ )
+         e.g. 0.1(s) =((       64          * 28800  )/     18432000 )       */
+    reload =( configCPU_CLOCK_HZ / PRT_CLK_PRESCALER / configTICK_RATE_HZ );
+    configASSERT(( reload & 0xffff )== reload );
+    reload &= 0xffff;
+    *tmr_rrh =( unsigned char )( reload >> 8 );
+    *tmr_rrl =( unsigned char )( reload & 0xFF );
+
+    tmr_ctl =( volatile unsigned char __INTIO* )( 0x80 +( portTmr * 3 ));
+    ctl = *tmr_ctl;  /* clear bit 7 PRT_IRQ, by reading CTL */
+
+    /* program TMR0_CTL and enable the timer */
+    *tmr_ctl =( PRT_CTL_IRQ_EN |
+                PRT_CTL_MODE_CONTINUOUS |
+                PRT_CTL_DIV64  |         // cross-relate with PRT_CLK_PRESCALER
+                PRT_CTL_RST_EN |
+                PRT_CTL_ENABLE );
+
+#   if defined( _DEBUG )&& 0
+    {
+        ctl = *tmr_ctl;   /* PRT_CTL_RST_EN will be cleared (undocumented but expected) */
+        ( void )printf( "%s : %d : ctl = 0x%x\r\n", "port.c", __LINE__, ctl );
+    }
+#   endif
     
     return( r );
 }
-/*-----------------------------------------------------------*/
+
 
 /*
  * Teardown timer.
@@ -665,8 +602,9 @@ static void portTeardownTimerInterrupt( void )
     portTmr = -1;
     portPrevprev = NULL;
 }
-/*-----------------------------------------------------------*/
 
+
+/*---------------------------------------------------------------------------*/
 void portAssert( char *file, unsigned int line )
 {
 #   if defined( _DEBUG )
@@ -677,7 +615,7 @@ void portAssert( char *file, unsigned int line )
     
     for( ;; );   /* set a BREAKPOINT here */
 }
-/*-----------------------------------------------------------*/
+
 
 static void portTaskExit( void )
 {

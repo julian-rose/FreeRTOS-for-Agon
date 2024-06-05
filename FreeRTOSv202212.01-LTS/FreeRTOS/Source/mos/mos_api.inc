@@ -192,7 +192,7 @@ vdp_pflag_mouse:       EQU    01000000b
 ;
 ; Object ID and allocation information (FFOBJID)
 ;
-FFOBJID    .STRUCT
+FFOBJID .STRUCT
     fs:                DS     3    ; Pointer to the hosting volume of this object
     id:                DS     2    ; Hosting volume mount ID
     attr:              DS     1    ; Object attribute
@@ -228,7 +228,7 @@ DIR_SIZE .ENDSTRUCT    DIR
 ;
 ; File information structure (FILINFO)
 ;
-FILINFO      .STRUCT
+FILINFO .STRUCT
     fsize:             DS     4    ; File size
     fdate:             DS     2    ; Modified date
     ftime:             DS     2    ; Modified time
@@ -242,7 +242,7 @@ FILINFO_SIZE .ENDSTRUCT FILINFO
 ; Parameters:
 ; - function: One of the function numbers listed above
 ;
-MOSCALL:     MACRO function
+MOSCALL: MACRO function
                        LD         A, function
                        RST.LIS    08h
-             ENDMACRO     
+         ENDMACRO     

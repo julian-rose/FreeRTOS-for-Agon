@@ -48,7 +48,7 @@
 #define MOSAPI_H
 
 
-/***--------- Type definitions ---------***/
+/*----- Type Definitions ----------------------------------------------------*/
 typedef struct 
 {
     unsigned int  baudRate;      // baudrate (bits per sec) 
@@ -69,19 +69,73 @@ typedef struct
 } VDP_KB_PACKET;
 
 
+typedef struct _mos_errnos
+{
+    int const errnum;
+    char const * const errstr;
+} MOS_ERRNOS;
 
-/***--------- MOS API functions ---------***/
+
+/*----- Constants -----------------------------------------------------------*/
+#define ESC  27
+#define CRET 13
+#define LF   10
+#define BS    8
+
+#if !defined( EOF )
+# define EOF -1
+#endif
+
+
+
+/*----- Global Names --------------------------------------------------------*/
+typedef enum _mos_errnum
+{
+    /* refer to /agon-mos-main/src_fatfs/ff.h
+                /agon-mos-main/mos.c */
+    MOS_ERR_OK                 = 0,
+    MOS_ERR_SDCARD_ACCESS      = 1,
+    MOS_ERR_ASSERT             = 2,
+    MOS_ERR_SDCARD_FAIL        = 3,
+    MOS_ERR_FILE_NOT_EXIST     = 4,
+    MOS_ERR_PATH_NOT_EXIST     = 5,
+    MOS_ERR_PATHNAME_INVALID   = 6,
+    MOS_ERR_DIRECTORY_FULL     = 7,
+    MOS_ERR_ACCESS_DENIED      = 8,
+    MOS_ERR_INVALID_FILE       = 9,
+    MOS_ERR_SDCARD_WRITE       = 10,
+    MOS_ERR_DRIVE_NUM          = 11,
+    MOS_ERR_VOL_WORKAREA       = 12,
+    MOS_ERR_VOL_FILESYSTEM     = 13,
+    MOS_ERR_MKFS               = 14,
+    MOS_ERR_VOL_TIMEOUT        = 15,
+    MOS_ERR_VOL_LOCKED         = 16,
+    MOS_ERR_LFN_BUF            = 17,
+    MOS_ERR_TOO_MANY_FILES     = 18,
+    MOS_ERR_PARAM_INVALID      = 19,
+    MOS_ERR_COMMAND_INVALID    = 20,
+    MOS_ERR_EXECUTABLE_INVALID = 21,
+    
+    MOS_ERR_END
+
+} MOS_ERRNO;
+
+extern MOS_ERRNOS const mos_errnos[ ];
+
+
+/*----- Function Declarations -----------------------------------------------*/
     /* MOS_API: mos_getkey:          EQU    00h
        Get ASCII code of any key pressed, or 0 if no key pressed, non-blocking
        Defined in mosapi24.asm
-       Usage: while( 0 ==( ch = _mos_getkey( ))); // busy wait until a key is pressed */
+       Use: while( 0 ==( ch = mos_getkey( ))); // busy wait for a key press */
 unsigned char mos_getkey( 
                 void );
 
 
     /* MOS_API: mos_load:            EQU    01h
        Load a file from SD card into a memory location
-       Defined in mosapi24.asm */
+       Defined in mosapi24.asm
+       Use: err = mos_load( "test.dat", buf, bufsz ); // copy test.dat to buf */
 unsigned int mos_load( 
                 char const * const filename, 
                 void * const address, 
@@ -106,7 +160,7 @@ unsigned int mos_cd(
 
     /* MOS_API: mos_dir:             EQU    04h  NOT SUPPORTED
        Displays a current directory listing.
-	   We can support this when it returns an array of filenames.
+       We can support this when it returns an array of filenames.
        To Be Defined in mosapi24.asm */
 
 
@@ -121,14 +175,14 @@ unsigned int mos_del(
        Rename a file on SD card
        Defined in mosapi24.asm */
 unsigned int mos_ren( 
-                char const * const currentName, 
+                char const * const oldName, 
                 char const * const newName );
 
 
     /* MOS_API: mos_mkdir:           EQU    07h
        Load a file from SD card
        Defined in mosapi24.asm */
-unsigned int mos_md( 
+unsigned int mos_mkdir( 
                 char const * const pathname );
 
 
@@ -207,7 +261,7 @@ unsigned int mos_copy(
 
     /* MOS_API: mos_getrtc:          EQU    12h
        Get the current RTC value into a (25 character) string buffer
-	   FMT: "DDD, dd/mm/yyyy hh:mm:ss\0"
+       FMT: "DDD, dd/mm/yyyy hh:mm:ss\0"
        Defined in mosapi24.asm */
 unsigned char mos_getrtc(
                 unsigned char * const buf );
@@ -215,10 +269,10 @@ unsigned char mos_getrtc(
 
     /* MOS_API: mos_setrtc:          EQU    13h
        Set the RTC value from a (6 character) buffer
-	   FMT: "ymdhms"
+       FMT: "ymdhms"
        Defined in mosapi24.asm */
 void mos_setrtc(
-			    unsigned char const * const buf );
+                unsigned char const * const buf );
 
 
     /* MOS API: mos_setintvector     EQU    14h
@@ -249,7 +303,7 @@ void close_uart1(
        Defined in mosapi24.asm */
 unsigned char mos_ugetc( 
                 void );
-				
+                
 
     /* MOS_API: mos_uputc:           EQU    18h
        Write a character to UART1
@@ -307,7 +361,7 @@ void * mos_getkbmap(
 
     /* MOS_API: mos_i2c_open:        EQU    1Fh
        Open the I2C device as a bus controller
-	   frequency: 1=57600, 2=115200, 3=230400
+       frequency: 1=57600, 2=115200, 3=230400
        Defined in mosapi24.asm */
 void mos_i2copen(
                 unsigned char const frequency );

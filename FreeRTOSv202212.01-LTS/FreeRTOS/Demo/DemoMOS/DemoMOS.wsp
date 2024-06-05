@@ -11,28 +11,29 @@ ptn_Child3=Document-2
 ptn_Child4=Document-3
 ptn_Child5=Document-4
 ptn_Child6=Document-5
+ptn_Child7=Document-6
 
 [WorkState_v1_2.Frames.ChildFrames.Document-0]
 ptn_Child1=ViewFrame-0
 
 [WorkState_v1_2.Frames.ChildFrames.Document-0.ViewFrame-0]
-DocPathName=.\main.c
+DocPathName=..\..\Source\mos\mos_api.inc
 DocTemplateIndex=0
 DocumentString=IDE.Document
 IsActiveChildFrame=False
 IsFrameVisible=True
-WindowPlacement=MCAAAAAAAAAAAAAABAAAAAAAAAAAAAAAJDCAAAAAPPPPPPPPPPPPPPPPAEAAAAAAKDAAAAAADGDAAAAAMKBAAAAA
+WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAAAAAAAAAIDCAAAAAPPPPPPPPPPPPPPPPLAAAAAAALGAAAAAAJCDAAAAANNBAAAAA
 
 [WorkState_v1_2.Frames.ChildFrames.Document-1]
 ptn_Child1=ViewFrame-0
 
 [WorkState_v1_2.Frames.ChildFrames.Document-1.ViewFrame-0]
-DocPathName=.\FreeRTOSConfig.h
+DocPathName=..\..\Source\mos\mosapi24.asm
 DocTemplateIndex=0
 DocumentString=IDE.Document
-IsActiveChildFrame=True
+IsActiveChildFrame=False
 IsFrameVisible=True
-WindowPlacement=MCAAAAAAAAAAAAAABAAAAAAAHMAAAAAAJDCAAAAAPPPPPPPPPPPPPPPPABBAAAAADHAAAAAAADEAAAAAACCAAAAA
+WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAHMAAAAAAIDCAAAAAPPPPPPPPPPPPPPPPAMAAAAAAKAAAAAAAIODAAAAADPBAAAAA
 
 [WorkState_v1_2.Frames.ChildFrames.Document-2]
 ptn_Child1=ViewFrame-0
@@ -43,38 +44,49 @@ DocTemplateIndex=0
 DocumentString=IDE.Document
 IsActiveChildFrame=False
 IsFrameVisible=True
-WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAOIBAAAAAJDCAAAAAPPPPPPPPPPPPPPPPLHAAAAAALGAAAAAACKDAAAAANNBAAAAA
+WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAOIBAAAAAIDCAAAAAPPPPPPPPPPPPPPPPNAAAAAAAKGAAAAAABKDAAAAAPACAAAAA
 
 [WorkState_v1_2.Frames.ChildFrames.Document-3]
 ptn_Child1=ViewFrame-0
 
 [WorkState_v1_2.Frames.ChildFrames.Document-3.ViewFrame-0]
-DocPathName=..\..\Source\mos\mos_api.inc
+DocPathName=..\..\Source\mos\mosapi.c
 DocTemplateIndex=0
 DocumentString=IDE.Document
 IsActiveChildFrame=False
 IsFrameVisible=True
-WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAFFCAAAAAJDCAAAAAPPPPPPPPPPPPPPPPLAAAAAAALGAAAAAAPCEAAAAANNBAAAAA
+WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAFFCAAAAAIDCAAAAAPPPPPPPPPPPPPPPPNJAAAAAANFAAAAAABDEAAAAACACAAAAA
 
 [WorkState_v1_2.Frames.ChildFrames.Document-4]
 ptn_Child1=ViewFrame-0
 
 [WorkState_v1_2.Frames.ChildFrames.Document-4.ViewFrame-0]
-DocPathName=..\..\Source\mos\mosapi24.asm
-DocTemplateIndex=0
-DocumentString=IDE.Document
-IsActiveChildFrame=False
-IsFrameVisible=True
-WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAHMAAAAAAJDCAAAAAPPPPPPPPPPPPPPPPDMAAAAAADCAAAAAALODAAAAAMACAAAAA
-
-[WorkState_v1_2.Frames.ChildFrames.Document-5]
-ptn_Child1=ViewFrame-0
-
-[WorkState_v1_2.Frames.ChildFrames.Document-5.ViewFrame-0]
 DocPathName=..\..\Source\portable\THIRDP~1\COMMUN~1\ZDSII\EZ80AG~1\port.c
 DocTemplateIndex=0
 DocumentString=IDE.Document
 IsActiveChildFrame=False
 IsFrameVisible=True
-WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAAAAAAAAAJDCAAAAAPPPPPPPPPPPPPPPPLBAAAAAACDAAAAAABMDAAAAAEKBAAAAA
+WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAMBDAAAAAIDCAAAAAPPPPPPPPPPPPPPPPOJAAAAAADGAAAAAACDEAAAAAIACAAAAA
+
+[WorkState_v1_2.Frames.ChildFrames.Document-5]
+ptn_Child1=ViewFrame-0
+
+[WorkState_v1_2.Frames.ChildFrames.Document-5.ViewFrame-0]
+DocPathName=.\main.c
+DocTemplateIndex=0
+DocumentString=IDE.Document
+IsActiveChildFrame=True
+IsFrameVisible=True
+WindowPlacement=MCAAAAAAAAAAAAAABAAAAAAAFFCAAAAAHBCAAAAAPPPPPPPPPPPPPPPPAEAAAAAAADAAAAAAENDAAAAAFNBAAAAA
+
+[WorkState_v1_2.Frames.ChildFrames.Document-6]
+ptn_Child1=ViewFrame-0
+
+[WorkState_v1_2.Frames.ChildFrames.Document-6.ViewFrame-0]
+DocPathName=.\FreeRTOSConfig.h
+DocTemplateIndex=0
+DocumentString=IDE.Document
+IsActiveChildFrame=False
+IsFrameVisible=True
+WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAAAAAAAAAGBCAAAAAPPPPPPPPPPPPPPPPDGAAAAAABHAAAAAAHPDAAAAAFBCAAAAA
 

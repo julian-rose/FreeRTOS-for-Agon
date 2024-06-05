@@ -44,73 +44,74 @@
 
 
 /* General kernel configuration */
-	// configENABLE_BACKWARD_COMPATIBILITY enables pre-8.0 API (the eZ80 port was originally 5.0)
-#define configENABLE_BACKWARD_COMPATIBILITY		1
-#define configUSE_PREEMPTION					0
-	// configCPU_CLOCK_HZ as per Project->Settings->Setup->System Clock Frequency
-#define configCPU_CLOCK_HZ						(( unsigned portLONG )18432000 )
-#define configTICK_RATE_HZ						(( portTickType )10 )
-#define configUSE_16_BIT_TICKS					0
-#define configUSE_TIME_SLICING					1
-#define configIDLE_SHOULD_YIELD					1
+    /* configENABLE_BACKWARD_COMPATIBILITY enables pre-8.0 API 
+       (the eZ80 port was originally 5.0) */
+#define configENABLE_BACKWARD_COMPATIBILITY        1
+#define configUSE_PREEMPTION                    0
+    // configCPU_CLOCK_HZ as per Project->Settings->Setup->System Clock Frequency
+#define configCPU_CLOCK_HZ                        (( unsigned portLONG )18432000 )
+#define configTICK_RATE_HZ                        (( portTickType )10 )
+#define configUSE_16_BIT_TICKS                    0
+#define configUSE_TIME_SLICING                    1
+#define configIDLE_SHOULD_YIELD                    1
 
 /* Stack */
-	// configSTACK_DEPTH_TYPE should be a port definition (do not change it from int)
-#define configSTACK_DEPTH_TYPE          		int
-#define configRECORD_STACK_HIGH_ADDRESS			0
-#define configCHECK_FOR_STACK_OVERFLOW			0
-#define configMINIMAL_STACK_SIZE				(( portSTACK_TYPE )1024 )
+    // configSTACK_DEPTH_TYPE should be a port definition (do not change it from int)
+#define configSTACK_DEPTH_TYPE                  int
+#define configRECORD_STACK_HIGH_ADDRESS            0
+#define configCHECK_FOR_STACK_OVERFLOW            0
+#define configMINIMAL_STACK_SIZE                (( portSTACK_TYPE )512 )
 
 /* Memory allocation */
-#define configSUPPORT_DYNAMIC_ALLOCATION		1
-#define configSUPPORT_STATIC_ALLOCATION			0
-	// configure __heaptop and __heapbot in the linker directive (linkcmd) file
-#define configTOTAL_HEAP_SIZE					(( size_t )(( unsigned int )&_heaptop -( unsigned int )&_heapbot ))
+#define configSUPPORT_DYNAMIC_ALLOCATION        1
+#define configSUPPORT_STATIC_ALLOCATION            0
+    // configure __heaptop and __heapbot in the linker directive (linkcmd) file
+#define configTOTAL_HEAP_SIZE                    (( size_t )(( unsigned int )&_heaptop -( unsigned int )&_heapbot ))
 
 /* Hooks */
-#define configUSE_IDLE_HOOK						1
-#define configUSE_TICK_HOOK						0
-#define configUSE_MALLOC_FAILED_HOOK			0
+#define configUSE_IDLE_HOOK                        1
+#define configUSE_TICK_HOOK                        0
+#define configUSE_MALLOC_FAILED_HOOK            0
 
 /* Software timers */
-#define configUSE_TIMERS						0
+#define configUSE_TIMERS                        0
 
 /* Tasks */
-	// 0 is lowest (idle) priority, configMAX_PRIORITIES - 1 is highest priority
-#define configMAX_PRIORITIES					5
-#define configMAX_TASK_NAME_LEN					16
-#define configUSE_TASK_NOTIFICATIONS			1
-#define configUSE_COUNTING_SEMAPHORES			0
-#define configUSE_QUEUE_SETS					0
-#define configUSE_MUTEXES						1
+    // 0 is lowest (idle) priority, configMAX_PRIORITIES - 1 is highest priority
+#define configMAX_PRIORITIES                    5
+#define configMAX_TASK_NAME_LEN                    16
+#define configUSE_TASK_NOTIFICATIONS            1
+#define configUSE_COUNTING_SEMAPHORES            0
+#define configUSE_QUEUE_SETS                    0
+#define configUSE_MUTEXES                        1
 
 /* Co-routines */
-#define configUSE_CO_ROUTINES 					0
-#define configMAX_CO_ROUTINE_PRIORITIES 		2
+#define configUSE_CO_ROUTINES                     0
+#define configMAX_CO_ROUTINE_PRIORITIES         2
 
 /* Run time and task stats gathering */
-#define configGENERATE_RUN_TIME_STATS			0
+#define configGENERATE_RUN_TIME_STATS            0
 #if defined( _DEBUG )
-#	define configUSE_TRACE_FACILITY				0
+#    define configUSE_TRACE_FACILITY                0
 #else
-#	define configUSE_TRACE_FACILITY				0
+#    define configUSE_TRACE_FACILITY                0
 #endif
 
 /* Assert */
 #if defined( _DEBUG )&&( 0 )
-#	define configASSERT( x )					if( 0==( x )) portAssert( __FILE__, __LINE__ )
+#    define configASSERT( x )                    if( 0==( x )) portAssert( __FILE__, __LINE__ )
 #endif
 
 /* Extra functions
     set the following definitions to 1 to include the API function, 
                                   or zero to exclude the API function. */
-#define INCLUDE_vTaskPrioritySet				1
-#define INCLUDE_uxTaskPriorityGet				1
-#define INCLUDE_vTaskDelete						1
-#define INCLUDE_vTaskCleanUpResources			1
-#define INCLUDE_vTaskSuspend					1
-#define INCLUDE_vTaskDelayUntil					1
-#define INCLUDE_vTaskDelay						1
+#define INCLUDE_vTaskPrioritySet                1
+#define INCLUDE_uxTaskPriorityGet                1
+#define INCLUDE_vTaskDelete                        1
+#define INCLUDE_vTaskCleanUpResources            1
+#define INCLUDE_vTaskSuspend                    1
+#define INCLUDE_vTaskDelayUntil                    1
+#define INCLUDE_vTaskDelay                        1
 #define INCLUDE_xTaskGetSchedulerState          1
 #define INCLUDE_xTaskGetCurrentTaskHandle       1
 #define INCLUDE_uxTaskGetStackHighWaterMark     1

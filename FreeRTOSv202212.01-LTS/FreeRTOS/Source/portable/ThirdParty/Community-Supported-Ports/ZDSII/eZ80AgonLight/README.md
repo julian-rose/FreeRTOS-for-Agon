@@ -7,8 +7,8 @@ using the Zilog ZDSII toolset. This port is integrated with FreeRTOS version
 We set out for stability in porting to the newer FreeRTOS kernel, rather than go 
 for latest and greatest.
 
-The Agon Light port of FreeRTOS runs on top of MOS in ADL mode and willon have 
-access to its services, and hence through to the on-board (ESP32) VDP Terminal 
+The Agon Light port of FreeRTOS runs in ADL mode, on top of MOS to have access 
+to its services, and hence through to the on-board (ESP32) VDP Terminal 
 Processor services. In its initial incarnation only putch and MOS function 0x14 
 mos_setintvector are supported. Others will follow...
 
@@ -49,10 +49,29 @@ fix to revert back to the proper ./Source/tasks.c
 
 <h3>Heap Memory</h3>
 Each port may choose one from five supplied alternative implementations of heap 
-memory management. ZDSII uses heap_3, which is the version that relies on the 
-compiler-provided malloc() and free() implementation. 
-Heap memory space is configured using two variables, _heaptop and _heapbot,
-defined in the linker directive file. 
+memory management. The Agon port uses heap_3, which relies on the compiler-
+provided malloc() and free() implementation. Heap memory space is configured 
+between limits in two variables, _heaptop and _heapbot, defined in the linker 
+directive file. 
+<p>
+
+It was necessary to replace the ZDSII sbrk.asm for FreeRTOS. The Zilog (library)
+memory model assumes stack is located above the heap; their malloc routine tests 
+the SP register and fails if that condition does not hold. (Refer to the C 
+program memory model in UM014425::malloc and around p:315.) However, in FreeRTOS 
+we allocate a stack for each task from the heap; such that the Zilog malloc will 
+not work after we start the FreeRTOS scheduler. This necessitated a rework of 
+the sbrk code, so that it correctly tests allocated memory lies between the 
+__heapbot and __heaptop limits. This works for all cases, both before and after
+starting the FreeRTOS scheduler.
+<p>
+
+(Zilog's routine tests the SP register to check for stack corruption, which is
+laudible. However, their implementation of malloc likely predates introduction 
+of their linker directives. Zilog should now update their library and tools 
+such that runtime stack checking is made a build option, to be performed, say, 
+on entry to each library function. We would disable this option and perform our
+own stack checking in FreeRTOS builds. Ticket raised to Zilog.)
 
 <h3>Real-Time</h3>
 MOS uses the Real-Time Clock capability of the VDP. (eZ80 pin RTC_VDD is tied 

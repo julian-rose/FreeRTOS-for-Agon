@@ -49,7 +49,7 @@
 include "mos_api.inc"
 
 
-;*-------- declarations --------
+;********** Declarations ******************************************************
 
     XREF    __low_bss
     XREF    __len_bss
@@ -67,37 +67,50 @@ include "mos_api.inc"
     XDEF    __getch
         
 
-;*-------- globals --------
-
+;********** Constants *********************************************************
 argv_ptrs_max  EQU  16      ; Maximum number of arguments allowed in argv
 
 
-;*-------- code ---------------------------------------------------------------
+;******************** Macros **************************************************
+; Macro for setting the upper byte in HLU
+; Parameters:
+;   uval: The value to set in HLU
+SET_AHL24: MACRO uval
+    push AF
+    ld A, uval
+    push HL            
+    ld HL, 2
+    add HL, SP
+    ld (HL), A
+    pop HL
+    pop AF
+ENDMACRO     
+
+
+;********** Code Segment ******************************************************
 
     SEGMENT CODE
 
-;
-; Start in ADL mode
-;
-    .ASSUME ADL = 1    
-    JP      _start          ; Jump to start
 
-;
-; MOS header
-;
+; Start in ADL mode
+    .ASSUME ADL = 1    
+    JP      _start          ; Entry point
+
+
+;********** MOS Header ********************************************************
 _exec_name: 
     DB "FreeRTOS.BIN", 0    ; The executable name, only used in argv
                             ; part of the MOS header - don't move to DATA section
 
-;*-------- MOS header --------
-    ALIGN   64              ; The executable header is from byte 64 onwards
+    ALIGN   64              ; A MOSLET executable header is from byte 64 onwards
             
     DB      "MOS"           ; Flag for MOS - to confirm this is a valid MOS command
     DB      00h             ; MOS header version 0
     DB      01h             ; Flag for run mode (0: Z80, 1: ADL)
 
 
-;*-------- local functions --------
+
+;********** Local Functions ***************************************************
 ;
 ; And the code follows on immediately after the header
 ;
@@ -121,7 +134,7 @@ _start:
     POP     DE              ; return value from _main
     POP     DE              ; Balance the stack
 
-    POP     IY              ; Restore registers
+    POP     IY              ; Restore registers for MOS on exit
     POP     IX
     POP     DE
     POP     BC
@@ -205,7 +218,7 @@ _get_token:
 $$: LD      A, (HL)         ; Get the character from the parameter string
     OR      A               ; Exit if 0 (end of parameter string in MOS)
     RET     Z
-	
+    
     CP      13              ; Exit if CR (end of parameter string in BBC BASIC)
     RET     Z
 
@@ -281,7 +294,8 @@ __putchf:
 
 ; Read a character in from the ESP32
 ; int getch(void)
-;
+;   return int value in HL
+;   (similar to mosapi2.asm::_mos_getkey, which returns result in A)
 __getch:
 _getch:        
     push    ix              ; Standard prologue
@@ -293,21 +307,22 @@ _getch:
     pop     ix
     
     MOSCALL mos_getkey      ; function value in mos_api.inc
+    SET_AHL24 0             ; ld 0 into HLU to clear the upper byte
     ld      h, 0            ; returns ASCII byte in A
     ld      l, a            ; get char return value in A into int HL
-    push    hl
-	
-	push    ix
+
+    push    hl              ; preserve HL over call to portExitMOS
+    push    ix
     call    _portExitMOS    ; MOS critical exit
-	pop     ix
-	
-    pop     hl
+    pop     ix
+    pop     hl              ; recover preserved HL 
+
     ld      sp, ix          ; Standard epilogue
     pop     ix
     RET
 
 
-;*-------- data ---------------------------------------------------------------
+;********** Data Segment ******************************************************
 
     SEGMENT DATA
 
