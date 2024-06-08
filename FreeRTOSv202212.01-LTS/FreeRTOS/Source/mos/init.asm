@@ -75,7 +75,7 @@ argv_ptrs_max  EQU  16      ; Maximum number of arguments allowed in argv
 ; Macro for setting the upper byte in HLU
 ; Parameters:
 ;   uval: The value to set in HLU
-SET_AHL24: MACRO uval
+SET_HLU24: MACRO uval
     push AF
     ld A, uval
     push HL            
@@ -307,7 +307,7 @@ _getch:
     pop     ix
     
     MOSCALL mos_getkey      ; function value in mos_api.inc
-    SET_AHL24 0             ; ld 0 into HLU to clear the upper byte
+    SET_HLU24  0            ; ld 0 (clear) HLU upper byte
     ld      h, 0            ; returns ASCII byte in A
     ld      l, a            ; get char return value in A into int HL
 

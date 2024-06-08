@@ -47,7 +47,7 @@ interfaces including the VDP terminal co-processor, and long-term file storage
 through SD-cards. Refer to https://agonconsole8.github.io/agon-docs/MOS/.
 <p>
 
-We have built against MOS version 1.4. All recent versions of MOS may work, 
+We have built against MOS version 1.04. All recent versions of MOS may work, 
 but they have not been tested and there are a small number of tightly coupled 
 dependencies in some parts of the code (such as the keyboard read functions) 
 which may fail if differences exist between versions of the MOS code.
@@ -66,14 +66,17 @@ on Agon. Though there are no library routine access to any of the MOS services.
 <h3>Versions</h3>
 <ul>
   <li>alpha:     provide all FreeRTOS with a minimal MOS in ADL mode</li>
-  <li>beta:      provide a full library for the MOS functions</li>
-  <li>gamma:     provide a full library for the VDP functions</li>
-  <li>epsilon:   provide a real-time library inspired by posix-4</li>
+  <li>beta:      provide a full library for the MOS (and a subset of the FFS) API</li>
+  <li>gamma:     provide a full library for the VDP API</li>
+  <li>epsilon:   provide a real-time library inspired by the posix-4 API</li>
   <li>omega:     a safer version with Z80-mode tasks and the ADL-mode kernel</li>
 </ul>
 
 "Beta" is currently being developed, with the sources located in 
 ./FreeRTOSv202212.01-LTS/FreeRTOS/Source/mos/
+The MOS command line functions (mos_dir, mos_oscli, mos_ediline) are not 
+provided. Presently only the subset of FFS that does not require Console8 
+MOS 2.2.0 are provided (that means no ffs_dopen, ffs_dclose, ffs_dread). 
 
 <h3>License</h3>
 FreeRTOS / MOS for Agon is released under the MIT license. This is done mainly

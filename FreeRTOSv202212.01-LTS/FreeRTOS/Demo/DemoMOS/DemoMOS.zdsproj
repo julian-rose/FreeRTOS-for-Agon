@@ -7,6 +7,7 @@
 <file filter-key="">..\..\Source\portable\ThirdParty\Community-Supported-Ports\ZDSII\eZ80AgonLight\mosvec24.asm</file>
 <file filter-key="">..\..\Source\portable\ThirdParty\Community-Supported-Ports\ZDSII\eZ80AgonLight\sbrk.asm</file>
 <file filter-key="">..\..\Source\mos\mosapi24.asm</file>
+<file filter-key="">..\..\Source\mos\ffsapi24.asm</file>
 <file filter-key="">..\..\Source\mos\mosapi.c</file>
 <file filter-key="">..\..\..\..\..\..\..\ZDSII_eZ80Acclaim!_5.3.5\src\rtl\common\FPDUMY.ASM</file>
 <file filter-key="">.\main.c</file>

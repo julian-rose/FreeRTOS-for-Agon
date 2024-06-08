@@ -54,6 +54,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "mosapi.h"
+#include "ffsapi.h"
 
 
 /*----- Global Names --------------------------------------------------------*/
@@ -80,7 +81,6 @@ static volatile unsigned int kbhcnt = 0;
 
 /*----- Local Declarations --------------------------------------------------*/
 void Task1( void *pvParameters );
-void Task2( void *pvParameters );
 void vApplicationIdleHook( void );
 void kbHndl( void );
 
@@ -95,6 +95,15 @@ static void doDeleteFile( void );
 static void doRenameFile( void );
 static void doMakeDirectory( void );
 static void doCopyFile( void );
+static void doSysVars( void );
+static void doFopsC( void );
+static void doFopsB( void );
+static void doFopsS( void );
+static void doGetError( void );
+static void doGetFil( void );
+static void doFFopsR( void );
+static void doFFopsS( void );
+static void doFFopsW( void );
 
 
 /*----- Function Definitions ------------------------------------------------*/
@@ -145,7 +154,7 @@ static void * menu( void )
 {
     MOSFTEST const tests[ ]=
     {
-        { '0', "Test MOS function 0, \"get_key\"", doKeyboardTest },
+        { '0', "Test MOS function 00h \"get_key\"", doKeyboardTest },
         { '1', "Test MOS function 1Dh \"set_kbvector\"", doKeyboardCallback },
         { '2', "Test MOS function 01h \"mos_load\"", doLoadFile },
         { '3', "Test MOS function 02h \"mos_save\"", doSaveFile },
@@ -154,6 +163,15 @@ static void * menu( void )
         { '6', "Test MOS function 06h \"mos_ren\"", doRenameFile },
         { '7', "Test MOS function 07h \"mos_mkdir\"", doMakeDirectory },
         { '8', "Test MOS function 11h \"mos_copy\"", doCopyFile },
+        { '9', "Test MOS function 08h \"mos_sysvar\"", doSysVars },
+        { 'a', "Test MOS function 0Ah..0Eh \"mos_fgetc, fputc fileops\"", doFopsC },
+        { 'b', "Test MOS function 1Ah..1Bh \"mos_fread, mos_fwrite fileops\"", doFopsB },
+        { 'c', "Test MOS function 1Ch \"mos_flseek\"", doFopsS },
+        { 'd', "Test MOS function 0Fh \"mos_getError\"", doGetError },
+        { 'e', "Test MOS function 19h \"mos_getFil\"", doGetFil },
+        { 'f', "Test MOS function 80h..82h \"ffs_read\"", doFFopsR },
+        { 'g', "Test MOS function 83h \"ffs_fwrite\"", doFFopsW },
+        { 'h', "Test MOS function 84h \"ffs_flseek\"", doFFopsS },
         { 'q', "End tests", NULL }
     };
     void ( *ret )( void )=( void* )-1;  /* any non-NULL value */
@@ -161,11 +179,11 @@ static void * menu( void )
     int i;
 
     
-    ( void )printf( "Enter required test number:\r\n" );
+    ( void )printf( "\r\n\r\nEnter required test number:\r\n" );
     ( void )printf( "\r\n" );
     for( i = 0; ( sizeof( tests )/sizeof( tests[ 0 ]))> i; i++ )
     {
-        ( void )printf( "\t%c\t%s\r\n", tests[ i ].menukey, tests[ i ].menudesc );
+        ( void )printf( "Press %c to %s\r\n", tests[ i ].menukey, tests[ i ].menudesc );
     }
 
     ( void )printf( "\r\n>" );
@@ -459,7 +477,11 @@ static void doLoadFile( void )
 
 #       if( 1 == configSUPPORT_DYNAMIC_ALLOCATION )
         {        
-            free( buf );  // return mallocated memory to the heap
+            portENTER_CRITICAL( );
+            {
+                free( buf );  // return mallocated memory to the heap
+            }
+            portEXIT_CRITICAL( );
         }
 #       endif
     }
@@ -545,7 +567,11 @@ static void doSaveFile( void )
 
 #       if( 1 == configSUPPORT_DYNAMIC_ALLOCATION )
         {        
-            free( buf );  // return mallocated memory to the heap
+            portENTER_CRITICAL( );
+            {
+                free( buf );  // return mallocated memory to the heap
+            }
+            portEXIT_CRITICAL( );
         }
 #       endif
     }
@@ -774,6 +800,815 @@ static void doCopyFile( void )
             ( void )printf( "\r\nSuccess\r\n" );
         }
         break;
+    }
+}
+
+
+/* doSysVars
+ *   Try out MOS function 08h "mos_sysvars".
+ *   Routine will call mos_getsysvars to retrieve system variables pointer
+ *   Routine will look up certain variables (RTC, screen width) using offset and size
+*/
+static void doSysVars( void )
+{
+    MOS_SYSVARS_DESC * svard;
+    
+    ( void )printf( "\r\n\r\nRunning sysvars test.\r\n" );
+    
+    svard =(( MOS_SYSVARS_DESC * )mos_getsysvars( ));
+    ( void )printf( "\r\nsysvars = %p\r\n", svard );
+
+    /* RTC results aren't that useful; not updating by the clock */
+    ( void )printf( "\r\Retrieving RTC data from sysvars\r\n" );
+    ( void )printf( 
+                "\r\nYear = %d : Month = %d : Day = %d" 
+                " : Hour = %d : Minute = %d : Second = %d\r\n",
+                svard->MOS_SYSVAR_RTC[ 0 ]+ 1980, 
+                svard->MOS_SYSVAR_RTC[ 1 ], 
+                svard->MOS_SYSVAR_RTC[ 2 ],
+                svard->MOS_SYSVAR_RTC[ 3 ], 
+                svard->MOS_SYSVAR_RTC[ 4 ], 
+                svard->MOS_SYSVAR_RTC[ 5 ]);    
+
+    ( void )printf( "Screen width = %d\r\n", svard->MOS_SYSVAR_SCR_WIDTH );
+    ( void )printf( "Screen height = %d\r\n", svard->MOS_SYSVAR_SCR_HEIGHT );
+
+}
+
+
+/* doGetError
+ *   Try out MOS function 0Fh "mos_getError".
+ *   Routine will call mos_getError to retrieve a range of system error messages
+*/
+static void doGetError( void )
+{
+    void *buf;
+    int i;
+    
+    ( void )printf( "\r\n\r\nRunning Get Error test.\r\n" );
+
+#   if( 1 == configSUPPORT_DYNAMIC_ALLOCATION )
+    {
+        /* remember when we call Zilog library functions 
+           to safeguard from concurrent access */
+        portENTER_CRITICAL( );
+        {
+            buf = malloc( 128 );     
+        }
+        portEXIT_CRITICAL( );
+    }
+#   else
+    {
+        static unsigned char buff[ 128 ];
+        buf = buff;
+    }
+#   endif
+
+    if( NULL != buf )
+    {
+        for( i=0; MOS_ERR_END > i; i++ )
+        {
+            ( void )memset( buf, 0, 128 );
+            mos_geterror( i, buf, 128 );
+            ( void )printf( "\r\nErr : %d : %s", i, buf );
+        }
+
+        ( void )printf( "\rnSuccess\rn" );
+
+#       if( 1 == configSUPPORT_DYNAMIC_ALLOCATION )
+        {        
+            portENTER_CRITICAL( );
+            {
+                free( buf );  // return mallocated memory to the heap
+            }
+            portEXIT_CRITICAL( );
+        }
+#       endif
+    }
+    else
+    {
+        ( void )printf( "\r\nFailed to allocate heap memory\r\n" );
+    }
+}
+
+
+/* doFopsC
+ *   Try out MOS function 0Ah "mos_fopen"
+ *                        0Bh "mos_fclose"
+ *                        0Ch "mos_fgetc"
+ *                        0Dh "mos_fputc"
+ *                        0Eh "mos_feof"
+ * 1.User to enter filename
+ *   Routine will call mos_fopen to open an existing file for read on the SD-card
+ *    return a meaningful error if the file cannot be located or read
+ *
+ * 2.User to enter filename
+ *   Routine shall call mos_fopen to create a new file for writing on the SD-card
+ *    return a meaningful error if the file cannot be created or written to
+*/
+static void doFopsC( void )
+{
+    char *fn;
+    int fh;
+    char ch;
+    char *buf;
+    int len;
+    int i;
+
+
+    /***** 1. Read test *****/
+    ( void )printf( "\r\n\r\nRunning fops test 1 - read file.\r\n" );
+
+    ( void )printf( "Enter a filename eg. \"test.dat\".\r\n"
+                    "Press <enter> to finish.\r\n" );
+    fn = getName( );
+
+    ( void )printf( "\r\nOpening file '%s' for reading on SD-card\r\n", fn );
+
+    fh = mos_fopen( fn, MOS_FAM_READ );
+    if( fh )
+    {
+        ( void )printf( "Success\r\n" );
+
+        ( void )printf( "\r\nReading file '%s' from SD-card\r\n", fn );
+        while( ! mos_feof( fh ))
+        {
+            ch = mos_fgetc( fh );
+            putchar( ch );
+        }
+
+        ( void )printf( "\r\nClosing file '%s' on SD-card\r\n", fn );
+        ( void )mos_fclose( fh );
+    }
+    else
+    {
+        ( void )printf( "Failed to open '%s'\r\n", fn );
+        /* MOS 1.04 does not return the error code back from mos_fopen,
+           although mos_fopen captures the error code; nor does MOS maintain 
+           a system _errno together with an api like mos_errno() to retrieve 
+           it. */
+    }
+
+
+    /***** 2. Write test *****/
+    ( void )printf( "\r\n\r\nRunning fops test 2 - write file.\r\n" );
+
+#   if( 1 == configSUPPORT_DYNAMIC_ALLOCATION )
+    {
+        /* remember when we call Zilog library functions 
+           to safeguard from concurrent access */
+        portENTER_CRITICAL( );
+        {
+            buf = malloc( MAX_FILE_SIZE );     
+        }
+        portEXIT_CRITICAL( );
+    }
+#   else
+    {
+        static unsigned char buff[ MAX_FILE_SIZE ];
+        buf = buff;
+    }
+#   endif
+    if( NULL != buf )
+    {
+        ( void )memset( buf, 0, MAX_FILE_SIZE );   // fill buffer with 0s
+
+        // create text file content in buf
+        portENTER_CRITICAL( );
+        {
+            ( void )sprintf( buf, 
+                         "This text is auto-generated by the mos_fops test function.\r\n"
+                         "Hello from FreeRTOS / MOS for Agon!\r\n" );
+            len = strlen( buf );
+        }
+        portEXIT_CRITICAL( );
+
+        ( void )printf( "Enter a filename eg. \"test.dat\".\r\n"
+                        "Press <enter> to finish.\r\n" );
+        fn = getName( );
+
+        ( void )printf( "\r\nOpening file '%s' for writing on SD-card\r\n", fn );
+
+        fh = mos_fopen( fn, MOS_FAM_CREATE | MOS_FAM_WRITE );
+        if( fh )
+        {
+            ( void )printf( "Success\r\n" );
+
+            ( void )printf( "\r\nWriting file '%s' from SD-card\r\n", fn );
+            for( i=0; len > i; i++ )
+            {
+                mos_fputc( fh, buf[ i ]);
+                putchar( buf[ i ]);
+            }
+
+            ( void )printf( "\r\nClosing file '%s' on SD-card\r\n", fn );
+            ( void )mos_fclose( fh );
+        }
+        else
+        {
+            ( void )printf( "Failed to open '%s'\r\n", fn );
+        }
+
+#       if( 1 == configSUPPORT_DYNAMIC_ALLOCATION )
+        {        
+            portENTER_CRITICAL( );
+            {
+                free( buf );  // return mallocated memory to the heap
+            }
+            portEXIT_CRITICAL( );
+        }
+#       endif
+    }
+    else
+    {
+        ( void )printf( "\r\nFailed to allocate heap memory\r\n" );
+    }
+}
+
+
+/* doFopsB
+ *   Try out MOS function 0Ah "mos_fopen"
+ *                        0Bh "mos_fclose"
+ *                        1Ah "mos_fread"
+ *                        1Bh "mos_fwrite"
+ * 1.User to enter filename
+ *   Routine will call mos_fopen to open an existing file for fread on the SD-card
+ *    return a meaningful error if the file cannot be located or read
+ *
+ * 2.User to enter filename
+ *   Routine shall call mos_fopen to create a new file for fwrite on the SD-card
+ *    return a meaningful error if the file cannot be created or written to
+*/
+static void doFopsB( void )
+{
+    char *fn;
+    int fh;
+    char ch;
+    char *buf;
+    int len;
+    int i;
+
+
+#   if( 1 == configSUPPORT_DYNAMIC_ALLOCATION )
+    {
+        /* remember when we call Zilog library functions 
+           to safeguard from concurrent access */
+        portENTER_CRITICAL( );
+        {
+            buf = malloc( MAX_FILE_SIZE );     
+        }
+        portEXIT_CRITICAL( );
+    }
+#   else
+    {
+        static unsigned char buff[ MAX_FILE_SIZE ];
+        buf = buff;
+    }
+#   endif
+    if( NULL != buf )
+    {
+        ( void )memset( buf, 0, MAX_FILE_SIZE );   // fill buffer with 0s
+
+        /***** 3. Read test *****/
+        ( void )printf( "\r\n\r\nRunning fops test 3 - fread file.\r\n" );
+
+        ( void )printf( "Enter a filename eg. \"test.dat\".\r\n"
+                    "Press <enter> to finish.\r\n" );
+        fn = getName( );
+
+        ( void )printf( "\r\nOpening file '%s' for fread on SD-card\r\n", fn );
+
+        fh = mos_fopen( fn, MOS_FAM_READ );
+        if( fh )
+        {
+            ( void )printf( "Success\r\n" );
+
+            ( void )printf( "\r\nReading file '%s' from SD-card\r\n", fn );
+            len = mos_fread( fh, buf, MAX_FILE_SIZE );
+            for( i=0; len > i; i++ )
+            {
+                putchar( buf[ i ]);
+            }
+
+            ( void )printf( "\r\nClosing file '%s' on SD-card\r\n", fn );
+            ( void )mos_fclose( fh );
+        }
+        else
+        {
+            ( void )printf( "Failed to open '%s'\r\n", fn );
+            /* MOS 1.04 does not return the error code back from mos_fopen,
+               although mos_fopen captures the error code; nor does MOS maintain 
+               a system _errno together with an api like mos_errno() to retrieve 
+               it. */
+        }
+
+
+        /***** 4. Write test *****/
+        ( void )printf( "\r\n\r\nRunning fops test 4 - fwrite file.\r\n" );
+        ( void )memset( buf, 0, MAX_FILE_SIZE );   // fill buffer with 0s
+
+        // create text file content in buf
+        portENTER_CRITICAL( );
+        {
+            ( void )sprintf( buf, 
+                         "Auto-generated by the mos_fops test function.\r\n"
+                         "Hello from FreeRTOS / MOS for Agon!\r\n" );
+            len = strlen( buf );
+        }
+        portEXIT_CRITICAL( );
+
+        ( void )printf( "Enter a filename eg. \"test.dat\".\r\n"
+                        "Press <enter> to finish.\r\n" );
+        fn = getName( );
+
+        ( void )printf( "\r\nOpening file '%s' for writing on SD-card\r\n", fn );
+
+        fh = mos_fopen( fn, MOS_FAM_CREATE | MOS_FAM_WRITE );
+        if( fh )
+        {
+            ( void )printf( "Success\r\n" );
+
+            ( void )printf( "\r\nWriting file '%s' from SD-card\r\n", fn );
+            len = mos_fwrite( fh, buf, len );
+
+            ( void )printf( "\r\nClosing file '%s' on SD-card\r\n", fn );
+            ( void )mos_fclose( fh );
+        }
+        else
+        {
+            ( void )printf( "Failed to open '%s'\r\n", fn );
+        }
+
+#       if( 1 == configSUPPORT_DYNAMIC_ALLOCATION )
+        {        
+            portENTER_CRITICAL( );
+            {
+                free( buf );  // return mallocated memory to the heap
+            }
+            portEXIT_CRITICAL( );
+        }
+#       endif
+    }
+    else
+    {
+        ( void )printf( "\r\nFailed to allocate heap memory\r\n" );
+    }
+}
+
+
+/* doFopsS
+ *   Try out MOS function 1Ch "mos_flseek"
+ *
+ *   User to enter filename
+ *   Routine will call mos_fopen to open an existing file on the SD-card and do an flseek
+ *    return a meaningful error if the file cannot be located or seeked
+*/
+static void doFopsS( void )
+{
+    char *fn;
+    int fh;
+    char *buf;
+    int i;
+    int len;
+    int err;
+
+
+#   if( 1 == configSUPPORT_DYNAMIC_ALLOCATION )
+    {
+        /* remember when we call Zilog library functions 
+           to safeguard from concurrent access */
+        portENTER_CRITICAL( );
+        {
+            buf = malloc( MAX_FILE_SIZE );     
+        }
+        portEXIT_CRITICAL( );
+    }
+#   else
+    {
+        static unsigned char buff[ MAX_FILE_SIZE ];
+        buf = buff;
+    }
+#   endif
+    if( NULL != buf )
+    {
+        ( void )memset( buf, 0, MAX_FILE_SIZE );   // fill buffer with 0s
+
+        ( void )printf( "\r\n\r\nRunning fops test 5 - flseek file.\r\n" );
+
+        ( void )printf( "Enter a filename eg. \"test.dat\".\r\n"
+                    "Press <enter> to finish.\r\n" );
+        fn = getName( );
+
+        ( void )printf( "\r\nOpening file '%s' for fread on SD-card\r\n", fn );
+
+        fh = mos_fopen( fn, MOS_FAM_READ );
+        if( fh )
+        {
+            ( void )printf( "Success\r\n" );
+
+            ( void )printf( "\r\nSeeking 10 bytes in to file\r\n", fn );
+            err = mos_flseek( fh, 10 );
+            ( void )printf( "\r\nResult = %d\r\n", err );
+
+            ( void )printf( "\r\nReading file '%s' from SD-card\r\n", fn );
+            len = mos_fread( fh, buf, MAX_FILE_SIZE );
+            for( i=0; len > i; i++ )
+            {
+                putchar( buf[ i ]);
+            }
+
+            ( void )printf( "\r\nClosing file '%s' on SD-card\r\n", fn );
+            ( void )mos_fclose( fh );
+        }
+        else
+        {
+            ( void )printf( "Failed to open '%s'\r\n", fn );
+            /* MOS 1.04 does not return the error code back from mos_fopen,
+               although mos_fopen captures the error code; nor does MOS maintain 
+               a system _errno together with an api like mos_errno() to retrieve 
+               it. */
+        }
+
+
+#       if( 1 == configSUPPORT_DYNAMIC_ALLOCATION )
+        {        
+            portENTER_CRITICAL( );
+            {
+                free( buf );  // return mallocated memory to the heap
+            }
+            portEXIT_CRITICAL( );
+        }
+#       endif
+    }
+    else
+    {
+        ( void )printf( "\r\nFailed to allocate heap memory\r\n" );
+    }
+}
+
+
+/* doGetFil
+ *   Try out MOS function 19h "mos_getfil".
+ *   Routine will call mos_getfil to retrieve a FIL structure for an fopen'ed file
+*/
+static void doGetFil( void )
+{
+    MOS_FIL *fil;
+    char *fn;
+    int fh;
+    
+    ( void )printf( "\r\n\r\nRunning Get Fil test.\r\n" );
+
+    ( void )printf( "Enter a filename eg. \"test.dat\".\r\n"
+                    "Press <enter> to finish.\r\n" );
+    fn = getName( );
+
+    ( void )printf( "\r\nRetrieving FIL for file '%s' on SD-card\r\n", fn );
+    fh = mos_fopen( fn, MOS_FAM_OPEN_ALWAYS );
+    if( fh )
+    {
+        fil = mos_getfil( fh );
+
+        ( void )printf( "\r\nFIL data:\r\n" );
+        ( void )printf( 
+                "\r\n\tFlag = 0x%x\r\n\tErr = 0x%x\r\n\tFptr = 0x%x" 
+                "\r\n\tClust = %d\r\n\tSect = %d\r\n\tDirSect = %d"
+                "\r\n\tDirPtr = 0x%p\r\n",
+                fil->flag, fil->err, fil->fptr,
+                fil->clust, fil->sect, fil->dir_sect, fil->dir_ptr );
+             // Flag = mos_fopen mode arg (MOS_FAM_OPEN_ALWAYS)
+
+        ( void )printf( "\r\nClosing file '%s' on SD-card\r\n", fn );
+        ( void )mos_fclose( fh );
+    }
+    else
+    {
+        ( void )printf( "Failed to open '%s'\r\n", fn );
+        /* MOS 1.04 does not return the error code back from mos_fopen,
+           although mos_fopen captures the error code; nor does MOS maintain 
+           a system _errno together with an api like mos_errno() to retrieve 
+           it. */
+    }
+}
+
+
+/* doFFopsR
+ *   Try out FFS function 80h "ffs_fopen"
+ *                        81h "ffs_fclose"
+ *                        82h "ffs_fread"
+ *                        8Eh "ffs_feof"
+ *   User to enter filename
+ *   Routine will call ffs_fopen to open an existing file for ffs_fread on the SD-card
+ *    return a meaningful error if the file cannot be located or read
+*/
+static void doFFopsR( void )
+{
+    char *fn;
+    MOS_FIL fil;
+    MOS_ERRNO err;
+    char *buf;
+    unsigned int len;
+    unsigned int cnt;
+    int i;
+
+
+    ( void )printf( "\r\n\r\nRunning ffsops test 1 - ffs_fread file.\r\n" );
+
+#   if( 1 == configSUPPORT_DYNAMIC_ALLOCATION )
+    {
+        /* remember when we call Zilog library functions 
+           to safeguard from concurrent access */
+        portENTER_CRITICAL( );
+        {
+            buf = malloc( MAX_FILE_SIZE );     
+        }
+        portEXIT_CRITICAL( );
+    }
+#   else
+    {
+        static unsigned char buff[ MAX_FILE_SIZE ];
+        buf = buff;
+    }
+#   endif
+    if( NULL != buf )
+    {
+        ( void )memset( buf, 0, MAX_FILE_SIZE );   // fill buffer with 0s
+
+        ( void )printf( "Enter a filename eg. \"test.dat\".\r\n"
+                    "Press <enter> to finish.\r\n" );
+        fn = getName( );
+
+        ( void )printf( "\r\nOpening file '%s' for ffs_fread on SD-card\r\n", fn );
+
+        err = ffs_fopen( &fil, fn, MOS_FAM_READ );
+        if( MOS_ERR_OK == err )
+        {
+            ( void )printf( "\r\nReading file '%s' from SD-card\r\n", fn );
+            for( cnt = 0;
+                 ( !ffs_feof( &fil ))&&( MAX_FILE_SIZE > cnt );
+                 cnt += len )
+            {
+                err = ffs_fread( &fil, &buf[ cnt ], MAX_FILE_SIZE - cnt, &len );
+                if( MOS_ERR_OK == err )
+                {
+                    ( void )printf( "\r\nRead '%d' bytes\r\n", len );
+            
+                    for( i=cnt;( cnt + len )> i; i++ )
+                    {
+                        putchar( buf[ i ]);
+                    }
+                }
+                else
+                {
+                    ( void )printf( 
+                                "Failed to read '%s' : %d : %s\r\n", 
+                                fn, err, mos_errnos[ err ].errstr );
+                    break;
+                }
+            }
+
+            ( void )printf( "\r\nClosing file '%s' on SD-card\r\n", fn );
+            ( void )ffs_fclose( &fil );
+        }
+        else
+        {
+            ( void )printf( 
+                        "Failed to open '%s' : %d : %s\r\n", 
+                        fn, err, mos_errnos[ err ].errstr );
+        }
+
+
+#       if( 1 == configSUPPORT_DYNAMIC_ALLOCATION )
+        {        
+            portENTER_CRITICAL( );
+            {
+                free( buf );  // return mallocated memory to the heap
+            }
+            portEXIT_CRITICAL( );
+        }
+#       endif
+    }
+    else
+    {
+        ( void )printf( "\r\nFailed to allocate heap memory\r\n" );
+    }
+}
+
+
+/* doFFopsW
+ *   Try out FFS function 83h "ffs_fwrite"
+ *   User to enter filename
+ *   Routine will call ffs_fopen to open an existing file for ffs_fwrite on the SD-card
+ *    return a meaningful error if the file cannot be located or written
+*/
+static void doFFopsW( void )
+{
+    char *fn;
+    MOS_FIL fil;
+    MOS_ERRNO err;
+    char *buf;
+    unsigned int len;
+
+
+    ( void )printf( "\r\n\r\nRunning ffsops test 2 - ffs_fwrite file.\r\n" );
+
+#   if( 1 == configSUPPORT_DYNAMIC_ALLOCATION )
+    {
+        /* remember when we call Zilog library functions 
+           to safeguard from concurrent access */
+        portENTER_CRITICAL( );
+        {
+            buf = malloc( MAX_FILE_SIZE );     
+        }
+        portEXIT_CRITICAL( );
+    }
+#   else
+    {
+        static unsigned char buff[ MAX_FILE_SIZE ];
+        buf = buff;
+    }
+#   endif
+    if( NULL != buf )
+    {
+        ( void )memset( buf, 0, MAX_FILE_SIZE );   // fill buffer with 0s
+
+        ( void )printf( "Enter a filename eg. \"test.dat\".\r\n"
+                    "Press <enter> to finish.\r\n" );
+        fn = getName( );
+
+        ( void )printf( "\r\nOpening file '%s' for ffs_fwrite on SD-card\r\n", fn );
+
+        err = ffs_fopen( &fil, fn, MOS_FAM_WRITE | MOS_FAM_CREATE );
+        if( MOS_ERR_OK == err )
+        {
+            // create text file content in buf
+            portENTER_CRITICAL( );    // safeguard sprintf and strlen zilog library routines
+            {
+                ( void )sprintf( buf, 
+                         "Auto-generated by the ffs_fops test function.\r\n"
+                         "Hello from FreeRTOS / MOS for Agon!\r\n" );
+                len = strlen( buf );
+            }
+            portEXIT_CRITICAL( );
+
+            ( void )printf( 
+                        "\r\n\tFlag = 0x%x\r\n\tErr = 0x%x\r\n\tFptr = 0x%x" 
+                        "\r\n\tClust = %d\r\n\tSect = %d\r\n\tDirSect = %d"
+                        "\r\n\tDirPtr = 0x%p\r\n",
+                        fil.flag, fil.err, fil.fptr,
+                        fil.clust, fil.sect, fil.dir_sect, fil.dir_ptr );
+
+            ( void )printf( "Writing %d bytes\r\n", len );
+            err = ffs_fwrite( &fil, buf, len, &len );
+            if( MOS_ERR_OK == err )
+            {
+                ( void )printf( "Wrote %d bytes\r\n", len );
+
+                ( void )printf( 
+                            "\r\n\tFlag = 0x%x\r\n\tErr = 0x%x\r\n\tFptr = 0x%x" 
+                            "\r\n\tClust = %d\r\n\tSect = %d\r\n\tDirSect = %d"
+                            "\r\n\tDirPtr = 0x%p\r\n",
+                            fil.flag, fil.err, fil.fptr,
+                            fil.clust, fil.sect, fil.dir_sect, fil.dir_ptr );
+            }
+            else
+            {
+                ( void )printf( 
+                            "Failed to write '%s' : %d : %s\r\n", 
+                            fn, err, mos_errnos[ err ].errstr );
+            }
+
+            
+            ( void )printf( "\r\nClosing file '%s' on SD-card\r\n", fn );
+            ( void )ffs_fclose( &fil );
+        }
+        else
+        {
+            ( void )printf( 
+                        "Failed to open '%s' : %d : %s\r\n", 
+                        fn, err, mos_errnos[ err ].errstr );
+        }
+
+
+#       if( 1 == configSUPPORT_DYNAMIC_ALLOCATION )
+        {        
+            portENTER_CRITICAL( );
+            {
+                free( buf );  // return mallocated memory to the heap
+            }
+            portEXIT_CRITICAL( );
+        }
+#       endif
+    }
+    else
+    {
+        ( void )printf( "\r\nFailed to allocate heap memory\r\n" );
+    }
+}
+
+
+/* doFFopsS
+ *   Try out FFS function 80h "ffs_fopen"
+ *                        81h "ffs_fclose"
+ *                        82h "ffs_fread"
+ *                        84h "ffs_fseek"
+ *   User to enter filename
+ *   Routine will call ffs_fopen to open an existing file for ffs_lseek on the SD-card
+ *    return a meaningful error if the file cannot be located or seeked
+*/
+static void doFFopsS( void )
+{
+    char *fn;
+    MOS_FIL fil;
+    MOS_ERRNO err;
+    char *buf;
+    unsigned int len;
+    int i;
+
+
+    ( void )printf( "\r\n\r\nRunning ffsops test 3 - ffs_flseek file.\r\n" );
+
+#   if( 1 == configSUPPORT_DYNAMIC_ALLOCATION )
+    {
+        /* remember when we call Zilog library functions 
+           to safeguard from concurrent access */
+        portENTER_CRITICAL( );
+        {
+            buf = malloc( MAX_FILE_SIZE );     
+        }
+        portEXIT_CRITICAL( );
+    }
+#   else
+    {
+        static unsigned char buff[ MAX_FILE_SIZE ];
+        buf = buff;
+    }
+#   endif
+    if( NULL != buf )
+    {
+        ( void )memset( buf, 0, MAX_FILE_SIZE );   // fill buffer with 0s
+
+        ( void )printf( "Enter a filename eg. \"test.dat\".\r\n"
+                    "Press <enter> to finish.\r\n" );
+        fn = getName( );
+
+        ( void )printf( "\r\nOpening file '%s' for ffs_flseek on SD-card\r\n", fn );
+
+        err = ffs_fopen( &fil, fn, MOS_FAM_READ );
+        if( MOS_ERR_OK == err )
+        {
+            ( void )printf( "\r\nSeeking file '%s' to offset 20\r\n", fn );
+            err = ffs_flseek( &fil, 20 );
+            if( MOS_ERR_OK == err )
+            {
+                err = ffs_fread( &fil, buf, MAX_FILE_SIZE, &len );
+                if( MOS_ERR_OK == err )
+                {
+                    ( void )printf( "\r\nRead '%d' bytes\r\n", len );
+            
+                    for( i=0; len > i; i++ )
+                    {
+                        putchar( buf[ i ]);
+                    }
+                }
+                else
+                {
+                    ( void )printf( 
+                                "Failed to read '%s' : %d : %s\r\n", 
+                                fn, err, mos_errnos[ err ].errstr );
+                }
+            }
+            else
+            {
+                ( void )printf( 
+                            "Failed to seek '%s' : %d : %s\r\n", 
+                            fn, err, mos_errnos[ err ].errstr );
+            }
+
+            ( void )printf( "\r\nClosing file '%s' on SD-card\r\n", fn );
+            ( void )ffs_fclose( &fil );
+        }
+        else
+        {
+            ( void )printf( 
+                        "Failed to open '%s' : %d : %s\r\n", 
+                        fn, err, mos_errnos[ err ].errstr );
+        }
+
+
+#       if( 1 == configSUPPORT_DYNAMIC_ALLOCATION )
+        {        
+            portENTER_CRITICAL( );
+            {
+                free( buf );  // return mallocated memory to the heap
+            }
+            portEXIT_CRITICAL( );
+        }
+#       endif
+    }
+    else
+    {
+        ( void )printf( "\r\nFailed to allocate heap memory\r\n" );
     }
 }
 
