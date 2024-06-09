@@ -6,8 +6,6 @@ ptn_Child1=ChildFrames
 
 [WorkState_v1_2.Frames.ChildFrames]
 ptn_Child1=Document-0
-ptn_Child10=Document-9
-ptn_Child11=Document-10
 ptn_Child2=Document-1
 ptn_Child3=Document-2
 ptn_Child4=Document-3
@@ -26,73 +24,62 @@ DocTemplateIndex=0
 DocumentString=IDE.Document
 IsActiveChildFrame=False
 IsFrameVisible=True
-WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAAAAAAAAAHDCAAAAAPPPPPPPPPPPPPPPPFAAAAAAANEAAAAAADCDAAAAAPLBAAAAA
+WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAHMAAAAAAFBCAAAAAPPPPPPPPPPPPPPPPFAAAAAAANEAAAAAADCDAAAAAPLBAAAAA
 
 [WorkState_v1_2.Frames.ChildFrames.Document-1]
 ptn_Child1=ViewFrame-0
 
 [WorkState_v1_2.Frames.ChildFrames.Document-1.ViewFrame-0]
-DocPathName=.\FreeRTOSConfig.h
+DocPathName=..\..\Source\mos\ffsapi24.asm
 DocTemplateIndex=0
 DocumentString=IDE.Document
 IsActiveChildFrame=False
 IsFrameVisible=True
-WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAHMAAAAAAHDCAAAAAPPPPPPPPPPPPPPPPDGAAAAAABHAAAAAAHPDAAAAAFBCAAAAA
-
-[WorkState_v1_2.Frames.ChildFrames.Document-10]
-ptn_Child1=ViewFrame-0
-
-[WorkState_v1_2.Frames.ChildFrames.Document-10.ViewFrame-0]
-DocPathName=.\main.c
-DocTemplateIndex=0
-DocumentString=IDE.Document
-IsActiveChildFrame=False
-IsFrameVisible=True
-WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAAAAAAAAADPBAAAAAPPPPPPPPPPPPPPPPJHAAAAAAKAAAAAAANAEAAAAAPOBAAAAA
+WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAHMAAAAAAHDCAAAAAPPPPPPPPPPPPPPPPNJAAAAAAEBAAAAAABDEAAAAAHLBAAAAA
 
 [WorkState_v1_2.Frames.ChildFrames.Document-2]
 ptn_Child1=ViewFrame-0
 
 [WorkState_v1_2.Frames.ChildFrames.Document-2.ViewFrame-0]
-DocPathName=..\..\Source\mos\init.asm
+DocPathName=..\..\Source\mos\mosapi24.asm
 DocTemplateIndex=0
 DocumentString=IDE.Document
 IsActiveChildFrame=False
 IsFrameVisible=True
-WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAOIBAAAAAHDCAAAAAPPPPPPPPPPPPPPPPLCAAAAAAEGAAAAAAPLDAAAAAHACAAAAA
+WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAOIBAAAAAHDCAAAAAPPPPPPPPPPPPPPPPGNAAAAAAFBAAAAAAOPDAAAAAOPBAAAAA
 
 [WorkState_v1_2.Frames.ChildFrames.Document-3]
 ptn_Child1=ViewFrame-0
 
 [WorkState_v1_2.Frames.ChildFrames.Document-3.ViewFrame-0]
-DocPathName=..\..\..\..\..\..\src\AGON-M~1\SRC_FA~1\ff.c
+DocPathName=..\..\Source\mos\mosapi.h
 DocTemplateIndex=0
 DocumentString=IDE.Document
 IsActiveChildFrame=False
 IsFrameVisible=True
-WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAFFCAAAAAHDCAAAAAPPPPPPPPPPPPPPPPAFAAAAAAGGAAAAAAEODAAAAAJACAAAAA
+WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAFFCAAAAAHDCAAAAAPPPPPPPPPPPPPPPPKCAAAAAACFAAAAAAOLDAAAAAHPBAAAAA
 
 [WorkState_v1_2.Frames.ChildFrames.Document-4]
 ptn_Child1=ViewFrame-0
 
 [WorkState_v1_2.Frames.ChildFrames.Document-4.ViewFrame-0]
-DocPathName=..\..\..\..\..\..\src\AGON-M~1\SRC_FA~1\ff.h
+DocPathName=.\main.c
 DocTemplateIndex=0
 DocumentString=IDE.Document
-IsActiveChildFrame=False
+IsActiveChildFrame=True
 IsFrameVisible=True
-WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAMBDAAAAAHDCAAAAAPPPPPPPPPPPPPPPPKBAAAAAAKBAAAAAAOKDAAAAANLBAAAAA
+WindowPlacement=MCAAAAAAAAAAAAAABAAAAAAAFFCAAAAAFBCAAAAAPPPPPPPPPPPPPPPPJGAAAAAAPAAAAAAANPDAAAAAEPBAAAAA
 
 [WorkState_v1_2.Frames.ChildFrames.Document-5]
 ptn_Child1=ViewFrame-0
 
 [WorkState_v1_2.Frames.ChildFrames.Document-5.ViewFrame-0]
-DocPathName=Debug\main.src
+DocPathName=.\mosConfig.inc
 DocTemplateIndex=0
 DocumentString=IDE.Document
 IsActiveChildFrame=False
 IsFrameVisible=True
-WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAAAAAAAAAFBCAAAAAPPPPPPPPPPPPPPPPOEAAAAAAOEAAAAAACODAAAAABPBAAAAA
+WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAMBDAAAAAHDCAAAAAPPPPPPPPPPPPPPPPDCAAAAAADFAAAAAAHLDAAAAAGPBAAAAA
 
 [WorkState_v1_2.Frames.ChildFrames.Document-6]
 ptn_Child1=ViewFrame-0
@@ -103,38 +90,27 @@ DocTemplateIndex=0
 DocumentString=IDE.Document
 IsActiveChildFrame=False
 IsFrameVisible=True
-WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAHMAAAAAAFBCAAAAAPPPPPPPPPPPPPPPPNAAAAAAAMBAAAAAABKDAAAAAPLBAAAAA
+WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAAAAAAAAAFBCAAAAAPPPPPPPPPPPPPPPPAAAAAAAAAAAAAAAAEJDAAAAADKBAAAAA
 
 [WorkState_v1_2.Frames.ChildFrames.Document-7]
 ptn_Child1=ViewFrame-0
 
 [WorkState_v1_2.Frames.ChildFrames.Document-7.ViewFrame-0]
-DocPathName=..\..\Source\mos\ffsapi24.asm
+DocPathName=..\..\Source\mos\devapi24.asm
 DocTemplateIndex=0
 DocumentString=IDE.Document
 IsActiveChildFrame=False
 IsFrameVisible=True
-WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAOIBAAAAAFBCAAAAAPPPPPPPPPPPPPPPPMEAAAAAAPCAAAAAAAODAAAAACNBAAAAA
+WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAAAAAAAAAHDCAAAAAPPPPPPPPPPPPPPPPJHAAAAAAHCAAAAAANAEAAAAAKMBAAAAA
 
 [WorkState_v1_2.Frames.ChildFrames.Document-8]
 ptn_Child1=ViewFrame-0
 
 [WorkState_v1_2.Frames.ChildFrames.Document-8.ViewFrame-0]
-DocPathName=..\..\Source\mos\mosapi24.asm
+DocPathName=..\..\Source\mos\mosapi.c
 DocTemplateIndex=0
 DocumentString=IDE.Document
 IsActiveChildFrame=False
 IsFrameVisible=True
-WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAFFCAAAAAFBCAAAAAPPPPPPPPPPPPPPPPNABAAAAAGCAAAAAAFDEAAAAAPACAAAAA
-
-[WorkState_v1_2.Frames.ChildFrames.Document-9]
-ptn_Child1=ViewFrame-0
-
-[WorkState_v1_2.Frames.ChildFrames.Document-9.ViewFrame-0]
-DocPathName=..\..\Source\mos\mosapi.h
-DocTemplateIndex=0
-DocumentString=IDE.Document
-IsActiveChildFrame=True
-IsFrameVisible=True
-WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAMBDAAAAAFBCAAAAAPPPPPPPPPPPPPPPPKAAAAAAADGAAAAAAOJDAAAAAIACAAAAA
+WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAOIBAAAAAFBCAAAAAPPPPPPPPPPPPPPPPHCAAAAAALFAAAAAALLDAAAAAOPBAAAAA
 

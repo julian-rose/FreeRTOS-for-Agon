@@ -77,6 +77,7 @@ static unsigned int idlecnt = 0;
 static volatile char kbbuf[ KBBUF_SIZ ]={ 0 };
 static volatile unsigned char kbidx = 0;
 static volatile unsigned int kbhcnt = 0;
+static unsigned char doingRTCtest = 0;
 
 
 /*----- Local Declarations --------------------------------------------------*/
@@ -104,6 +105,7 @@ static void doGetFil( void );
 static void doFFopsR( void );
 static void doFFopsS( void );
 static void doFFopsW( void );
+static void doRTC( void );
 
 
 /*----- Function Definitions ------------------------------------------------*/
@@ -172,6 +174,7 @@ static void * menu( void )
         { 'f', "Test MOS function 80h..82h \"ffs_read\"", doFFopsR },
         { 'g', "Test MOS function 83h \"ffs_fwrite\"", doFFopsW },
         { 'h', "Test MOS function 84h \"ffs_flseek\"", doFFopsS },
+        { 'i', "Test MOS function 12h..13h \"mos_getrtc, mos_setrtc\"", doRTC },
         { 'q', "End tests", NULL }
     };
     void ( *ret )( void )=( void* )-1;  /* any non-NULL value */
@@ -446,9 +449,7 @@ static void doLoadFile( void )
         {
             default :
             {
-                ( void )printf( "\r\nmos_load returned error %d : %s\r\n",
-                                    err,
-                                    mos_errnos[ err ].errstr );
+                mos_printerr( "mos_load", err );
             }
             break;
 
@@ -552,9 +553,7 @@ static void doSaveFile( void )
         {
             default :
             {
-                ( void )printf( "\r\nmos_save returned error %d : %s\r\n",
-                                    err,
-                                    mos_errnos[ err ].errstr );
+                mos_printerr( "mos_save", err );
             }
             break;
 
@@ -606,9 +605,7 @@ static void doChangeDirectory( void )
     {
         default :
         {
-            ( void )printf( "\r\nmos_cd returned error %d : %s\r\n",
-                                err,
-                                mos_errnos[ err ].errstr );
+            mos_printerr( "mos_cd", err );
         }
         break;
 
@@ -646,9 +643,7 @@ static void doDeleteFile( void )
     {
         default :
         {
-            ( void )printf( "\r\nmos_del returned error %d : %s\r\n",
-                                err,
-                                mos_errnos[ err ].errstr );
+            mos_printerr( "mos_del", err );
         }
         break;
 
@@ -698,9 +693,7 @@ static void doRenameFile( void )
     {
         default :
         {
-            ( void )printf( "\r\nmos_ren returned error %d : %s\r\n",
-                                err,
-                                mos_errnos[ err ].errstr );
+            mos_printerr( "mos_ren", err );
         }
         break;
 
@@ -738,9 +731,7 @@ static void doMakeDirectory( void )
     {
         default :
         {
-            ( void )printf( "\r\nmos_mkdir returned error %d : %s\r\n",
-                                err,
-                                mos_errnos[ err ].errstr );
+            mos_printerr( "mos_mkdir", err );
         }
         break;
 
@@ -789,9 +780,7 @@ static void doCopyFile( void )
     {
         default :
         {
-            ( void )printf( "\r\nmos_copy returned error %d : %s\r\n",
-                                err,
-                                mos_errnos[ err ].errstr );
+            mos_printerr( "mos_copy", err );
         }
         break;
 
@@ -830,9 +819,11 @@ static void doSysVars( void )
                 svard->MOS_SYSVAR_RTC[ 4 ], 
                 svard->MOS_SYSVAR_RTC[ 5 ]);    
 
-    ( void )printf( "Screen width = %d\r\n", svard->MOS_SYSVAR_SCR_WIDTH );
-    ( void )printf( "Screen height = %d\r\n", svard->MOS_SYSVAR_SCR_HEIGHT );
-
+    if( ! doingRTCtest )
+    {
+        ( void )printf( "Screen width = %d\r\n", svard->MOS_SYSVAR_SCR_WIDTH );
+        ( void )printf( "Screen height = %d\r\n", svard->MOS_SYSVAR_SCR_HEIGHT );
+    }
 }
 
 
@@ -842,52 +833,13 @@ static void doSysVars( void )
 */
 static void doGetError( void )
 {
-    void *buf;
     int i;
     
     ( void )printf( "\r\n\r\nRunning Get Error test.\r\n" );
 
-#   if( 1 == configSUPPORT_DYNAMIC_ALLOCATION )
+    for( i=0; MOS_ERR_END > i; i++ )
     {
-        /* remember when we call Zilog library functions 
-           to safeguard from concurrent access */
-        portENTER_CRITICAL( );
-        {
-            buf = malloc( 128 );     
-        }
-        portEXIT_CRITICAL( );
-    }
-#   else
-    {
-        static unsigned char buff[ 128 ];
-        buf = buff;
-    }
-#   endif
-
-    if( NULL != buf )
-    {
-        for( i=0; MOS_ERR_END > i; i++ )
-        {
-            ( void )memset( buf, 0, 128 );
-            mos_geterror( i, buf, 128 );
-            ( void )printf( "\r\nErr : %d : %s", i, buf );
-        }
-
-        ( void )printf( "\rnSuccess\rn" );
-
-#       if( 1 == configSUPPORT_DYNAMIC_ALLOCATION )
-        {        
-            portENTER_CRITICAL( );
-            {
-                free( buf );  // return mallocated memory to the heap
-            }
-            portEXIT_CRITICAL( );
-        }
-#       endif
-    }
-    else
-    {
-        ( void )printf( "\r\nFailed to allocate heap memory\r\n" );
+        mos_printerr( "doGetError Test", i );
     }
 }
 
@@ -1360,9 +1312,7 @@ static void doFFopsR( void )
                 }
                 else
                 {
-                    ( void )printf( 
-                                "Failed to read '%s' : %d : %s\r\n", 
-                                fn, err, mos_errnos[ err ].errstr );
+                    mos_printerr( "Failed to read", err );
                     break;
                 }
             }
@@ -1372,9 +1322,7 @@ static void doFFopsR( void )
         }
         else
         {
-            ( void )printf( 
-                        "Failed to open '%s' : %d : %s\r\n", 
-                        fn, err, mos_errnos[ err ].errstr );
+            mos_printerr( "Failed to open", err );
         }
 
 
@@ -1473,9 +1421,7 @@ static void doFFopsW( void )
             }
             else
             {
-                ( void )printf( 
-                            "Failed to write '%s' : %d : %s\r\n", 
-                            fn, err, mos_errnos[ err ].errstr );
+                mos_printerr( "Failed to write", err );
             }
 
             
@@ -1484,9 +1430,7 @@ static void doFFopsW( void )
         }
         else
         {
-            ( void )printf( 
-                        "Failed to open '%s' : %d : %s\r\n", 
-                        fn, err, mos_errnos[ err ].errstr );
+            mos_printerr( "Failed to open", err );
         }
 
 
@@ -1573,16 +1517,12 @@ static void doFFopsS( void )
                 }
                 else
                 {
-                    ( void )printf( 
-                                "Failed to read '%s' : %d : %s\r\n", 
-                                fn, err, mos_errnos[ err ].errstr );
+                    mos_printerr( "Failed to read", err );
                 }
             }
             else
             {
-                ( void )printf( 
-                            "Failed to seek '%s' : %d : %s\r\n", 
-                            fn, err, mos_errnos[ err ].errstr );
+                mos_printerr( "Failed to seek", err );
             }
 
             ( void )printf( "\r\nClosing file '%s' on SD-card\r\n", fn );
@@ -1590,9 +1530,7 @@ static void doFFopsS( void )
         }
         else
         {
-            ( void )printf( 
-                        "Failed to open '%s' : %d : %s\r\n", 
-                        fn, err, mos_errnos[ err ].errstr );
+            mos_printerr( "Failed to open", err );
         }
 
 
@@ -1613,6 +1551,37 @@ static void doFFopsS( void )
 }
 
 
+/* doRTC
+ *   Try out MOS functions 12h "mos_getrtc" and 13h "mos_setrtc"
+ *   Routine will call mos_setrtc to set the time, followed by mos_getrtc
+ *   Routine will print the retrieved time, or meaningful errors
+*/
+static void doRTC( void )
+{
+    static MOS_RTC_STRING_R rbuf;
+    static MOS_RTC_STRING_W wbuf;
+    
+    ( void )printf( "\r\n\r\nRunning RTC test.\r\n" );
+
+    mos_getrtc( rbuf );
+    ( void )printf( "\Uninitialised time : %s\r\n", rbuf );
+
+    ( void )printf( "\Setting time at 2024, June, 09 11:51:15\r\n" );
+    ( void )sprintf( wbuf, "%c%c%c%c%c%c", 
+                2024 - RTC_EPOCH_YEAR, 6, 9, 11, 51, 15 );
+    mos_setrtc( wbuf );
+
+    mos_getrtc( rbuf );
+    ( void )printf( "\Initialised time : %s\r\n", rbuf );
+    
+    /* bonus test - check that sysvars is updated too;
+       no, it isn't
+    doingRTCtest = 1;
+    doSysVars( );
+    doingRTCtest = 0; */
+}
+
+
 /*----- Task Definitions ----------------------------------------------------*/
 #pragma asm "\tSEGMENT TASKS"
 void Task1( void *pvParameters )
@@ -1627,11 +1596,10 @@ void Task1( void *pvParameters )
         }
     }
     ( void )printf( "\r\nTests complete\r\n" );
+    ( void )printf( "Waiting 3 seconds before resetting Agon\r\n");
+    vTaskDelay( 30 );  // wait 3 seconds at 10 ticks/sec
 
-    for( ;; )    
-    {
-        portYIELD( );
-    }
+    asm( "\tRST.LIS 00h      ; invoke MOS reset");
     
     ( void )pvParameters;
 }

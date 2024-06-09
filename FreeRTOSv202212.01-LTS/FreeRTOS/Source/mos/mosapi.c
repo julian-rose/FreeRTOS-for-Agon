@@ -45,46 +45,72 @@
 */
 
 #include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+
+#include "FreeRTOS.h"
 #include "mosapi.h"
 
 
 /*----- Global Names --------------------------------------------------------*/
-    /* A place to hold the global MOS-errno strings;
-         https://github.com/breakintoprogram/agon-mos/blob/main/src/mos.c
-         also                               /agon-mos-main/src_fatfs/ff.h */
-MOS_ERRNOS const mos_errnos[ ]= 
-{
-    { MOS_ERR_OK,                 "OK" },
-    { MOS_ERR_SDCARD_ACCESS,      "Error accessing SD card" },
-    { MOS_ERR_ASSERT,             "Assertion failed" },
-    { MOS_ERR_SDCARD_FAIL,        "SD card failure" },
-    { MOS_ERR_FILE_NOT_EXIST,     "Could not find file" },
-    { MOS_ERR_PATH_NOT_EXIST,     "Could not find path" },
-    { MOS_ERR_PATHNAME_INVALID,   "Invalid path name" },
-    { MOS_ERR_DIRECTORY_FULL,     "Access denied or directory full" },
-    { MOS_ERR_ACCESS_DENIED,      "Access denied" },
-    { MOS_ERR_INVALID_FILE,       "Invalid file/directory object" },
-    { MOS_ERR_SDCARD_WRITE,       "SD card is write protected" },
-    { MOS_ERR_DRIVE_NUM,          "Logical drive number is invalid" },
-    { MOS_ERR_VOL_WORKAREA,       "Volume has no work area" },
-    { MOS_ERR_VOL_FILESYSTEM,     "No valid FAT volume" },
-    { MOS_ERR_MKFS,               "Error occurred during mkfs" },
-    { MOS_ERR_VOL_TIMEOUT,        "Volume timeout" },
-    { MOS_ERR_VOL_LOCKED,         "Volume locked" },
-    { MOS_ERR_LFN_BUF,            "LFN working buffer could not be allocated" },
-    { MOS_ERR_TOO_MANY_FILES,     "Too many open files" },
-    { MOS_ERR_PARAM_INVALID,      "Invalid parameter" },
-    { MOS_ERR_COMMAND_INVALID,    "Invalid command" },
-    { MOS_ERR_EXECUTABLE_INVALID, "Invalid executable" },
-};
 
 
 /*----- Private functions ---------------------------------------------------*/
 
 
-
 /*----- Function definitions ------------------------------------------------*/
+/* doGetError
+ *   Try out MOS function 0Fh "mos_getError".
+ *   Routine will call mos_getError to retrieve a range of system error messages
+*/
+void mos_printerr( char const * const callstr, MOS_ERRNO const err )
+{
+    void *buf;
+    
+#   if( 1 == configSUPPORT_DYNAMIC_ALLOCATION )
+    {
+        /* remember when we call Zilog library functions 
+           to safeguard from concurrent access */
+        portENTER_CRITICAL( );
+        {
+            buf = malloc( 128 );     
+        }
+        portEXIT_CRITICAL( );
+    }
+#   else
+    {
+        static unsigned char buff[ 128 ];
+        buf = buff;
+    }
+#   endif
 
+    if( NULL != buf )
+    {
+        /* safeguard Zilog library functions from concurrent access */
+        portENTER_CRITICAL( );
+        {
+            ( void )memset( buf, 0, 128 );
+        }
+        portEXIT_CRITICAL( );
 
+        mos_geterror( err, buf, 128 );
+        ( void )printf( "\r\n%s > Err : %d : %s\r\n", callstr, err, buf );
+
+#       if( 1 == configSUPPORT_DYNAMIC_ALLOCATION )
+        {        
+            /* safeguard Zilog library functions from concurrent access */
+            portENTER_CRITICAL( );
+            {
+                free( buf );  // return mallocated memory to the heap
+            }
+            portEXIT_CRITICAL( );
+        }
+#       endif
+    }
+    else
+    {
+        ( void )printf( "\r\n%s > Err : %d\r\n", callstr, err );
+    }
+}
 
 /*---------------------------------------------------------------------------*/

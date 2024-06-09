@@ -12,12 +12,18 @@ https://agonconsole8.github.io/agon-docs/MOS-API/#fatfs-commands
 These API implementations are provided in a new ./Source/mos/ folder 
 containing the MOS API and the FFS API source files.
 
+<h3>mos_api.inc</h3>
+A lightly modified copy of mos_api.inc is found in .Source/mos/mosapi.h file.
+
 <h3>mosapi.h</h3>
 C Prototypes for the Agon FreeRTOS / MOS API functions are located in the 
 .Source/mos/mosapi.h file.
 
 <h3>mosapi24.asm</h3>
 MOS API function definitions are located in the ./Source/mos/mosapi24.asm file.
+
+<h3>devapi24.asm</h3>
+MOS API Device function definitions are located in the ./Source/mos/devapi24.asm file.
 
 <h3>ffsapi.h</h3>
 C Prototypes for the Agon FreeRTOS / MOS FFS API functions are located in the 

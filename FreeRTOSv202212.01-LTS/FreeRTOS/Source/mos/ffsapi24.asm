@@ -34,17 +34,24 @@
 ;*   Created 07/Jun/2024 by Julian Rose for Agon Light port
 ;*
 ;*****************************************************************************
+include "mosConfig.inc"
 include "mos_api.inc"
 
     xref _portEnterMOS
     xref _portExitMOS
 
+IF( 1 == configUSE_FFS_FILE_OPS )
     xdef _ffs_fopen             ; implement call to FFS API function 80h
     xdef _ffs_fclose            ; implement call to FFS API function 81h
     xdef _ffs_fread             ; implement call to FFS API function 82h
     xdef _ffs_fwrite            ; implement call to FFS API function 83h
     xdef _ffs_flseek            ; implement call to FFS API function 84h
     xdef _ffs_feof              ; implement call to FFS API function 8Eh
+ENDIF
+
+IF( 1 == configUSE_FFS_DIR_OPS )
+    xdef _ffs_stat              ; implement call to FFS API function 96h
+ENDIF
 
 
 ;******************** Globals ************************************************
@@ -105,7 +112,10 @@ ENDMACRO
 ;*     FatFS Errno (int)
 ;*     Refer to AN033301 table 2 for registers containing different return types
 ; 
+IF( 1 == configUSE_FFS_FILE_OPS )
+
 _ffs_fopen:
+
     push ix                     ; Standard prologue
     ld ix, 0
     add ix, sp
@@ -129,6 +139,8 @@ _ffs_fopen:
     pop ix
 
     ret
+
+ENDIF
 
 
 ;*****************************************************************************
@@ -156,7 +168,10 @@ _ffs_fopen:
 ;*     FatFS Errno (int)
 ;*     Refer to AN033301 table 2 for registers containing different return types
 ; 
+IF( 1 == configUSE_FFS_FILE_OPS )
+
 _ffs_fclose:
+
     push ix                     ; Standard prologue
     ld ix, 0
     add ix, sp
@@ -178,6 +193,8 @@ _ffs_fclose:
     pop ix
 
     ret
+
+ENDIF
 
 
 ;*****************************************************************************
@@ -213,7 +230,10 @@ _ffs_fclose:
 ;*     FatFS Errno (int)
 ;*     Refer to AN033301 table 2 for registers containing different return types
 ; 
+IF( 1 == configUSE_FFS_FILE_OPS )
+
 _ffs_fread:
+
     push ix                     ; Standard prologue
     ld ix, 0
     add ix, sp
@@ -240,6 +260,8 @@ _ffs_fread:
     pop ix
 
     ret
+
+ENDIF
 
 
 ;*****************************************************************************
@@ -275,7 +297,10 @@ _ffs_fread:
 ;*     FatFS Errno (int)
 ;*     Refer to AN033301 table 2 for registers containing different return types
 ; 
+IF( 1 == configUSE_FFS_FILE_OPS )
+
 _ffs_fwrite:
+
     push ix                     ; Standard prologue
     ld ix, 0
     add ix, sp
@@ -302,6 +327,8 @@ _ffs_fwrite:
     pop ix
 
     ret
+
+ENDIF
 
 
 ;*****************************************************************************
@@ -332,7 +359,10 @@ _ffs_fwrite:
 ;*     FatFS Errno (int)
 ;*     Refer to AN033301 table 2 for registers containing different return types
 ;
+IF( 1 == configUSE_FFS_FILE_OPS )
+
 _ffs_flseek:
+
     push ix                     ; Standard prologue
     ld ix, 0
     add ix, sp
@@ -356,6 +386,8 @@ _ffs_flseek:
     pop ix
 
     ret
+
+ENDIF
 
 
 ;*****************************************************************************
@@ -384,7 +416,10 @@ _ffs_flseek:
 ;*     1 at EOF else 0, in A reg
 ;*     Refer to AN033301 table 2 for registers containing different return types
 ; 
+IF( 1 == configUSE_FFS_FILE_OPS )
+
 _ffs_feof:
+
     push ix                     ; Standard prologue
     ld ix, 0
     add ix, sp
@@ -402,6 +437,8 @@ _ffs_feof:
     pop ix
 
     ret
+
+ENDIF
 
 
 ;*****************************************************************************
@@ -431,7 +468,10 @@ _ffs_feof:
 ;*     FatFS Errno (int)
 ;*     Refer to AN033301 table 2 for registers containing different return types
 ;
+IF( 1 == configUSE_FFS_DIR_OPS )
+
 _ffs_stat:
+
     push ix                     ; Standard prologue
     ld ix, 0
     add ix, sp
@@ -454,6 +494,8 @@ _ffs_stat:
     pop ix
 
     ret
+
+ENDIF
 
 
 ;*****************************************************************************

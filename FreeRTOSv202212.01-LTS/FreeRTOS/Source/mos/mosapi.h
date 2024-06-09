@@ -61,6 +61,8 @@
 # define EOF -1
 #endif
 
+#define RTC_EPOCH_YEAR 1980
+
 
 /*----- Enumeration Types ---------------------------------------------------*/
 typedef enum _mos_errnum              // MOS error numbers
@@ -111,33 +113,6 @@ typedef enum _mos_file_access_modes    // MOS FAT file access modes
 
 
 /*----- Type Definitions ----------------------------------------------------*/
-typedef struct _uart             // UART descriptor
-{
-    unsigned int  baudRate;      // baudrate (bits per sec) 
-    unsigned char dataBits;      // number of databits per character to be used (in range 5..8)
-    unsigned char stopBits;      // number of stopbits to be used (in range 1..2)
-    unsigned char parity;        // parity bit option to be used (00b=none, 01b=odd, 11b=even)
-    unsigned char flowControl;   // flow control option (0: None, 1: Hardware)
-    unsigned char interrupts;    // enabled interrupts (1h=receive, 2h=transmit, 4h=line, 8h=modem, 10h=sent)
-} UART;
-
-
-typedef struct _vdp_kb_packet    // VDP Keybaord Packet
-{
-    unsigned char keyascii;      // ASCII key code
-    unsigned char keymod;        // SHIFT, ALT, ...
-    unsigned char vkeycode;      // virtual keycode
-    unsigned char keystate;      // 1=down, 0=up
-} VDP_KB_PACKET;
-
-
-typedef struct _mos_errnos       // Error Numbers Descriptor
-{
-    int const errnum;
-    char const * const errstr;
-} MOS_ERRNOS;
-
-
 typedef struct _mos_sysvars_desc                // System Variables Descriptor
 {
     unsigned long  MOS_SYSVAR_TIME;             // Clock timer in centiseconds (incremented by 2 every VBLANK)
@@ -175,8 +150,32 @@ typedef struct _mos_sysvars_desc                // System Variables Descriptor
 } MOS_SYSVARS_DESC;
 
 
+typedef struct _vdp_kb_packet    // VDP Keyboard Packet
+{
+    unsigned char keyascii;      // ASCII key code
+    unsigned char keymod;        // SHIFT, ALT, ...
+    unsigned char vkeycode;      // virtual keycode
+    unsigned char keystate;      // 1=down, 0=up
+} VDP_KB_PACKET;
+
+
+typedef struct _uart             // UART descriptor
+{
+    unsigned int  baudRate;      // baudrate (bits per sec) 
+    unsigned char dataBits;      // number of databits per character to be used (in range 5..8)
+    unsigned char stopBits;      // number of stopbits to be used (in range 1..2)
+    unsigned char parity;        // parity bit option to be used (00b=none, 01b=odd, 11b=even)
+    unsigned char flowControl;   // flow control option (0: None, 1: Hardware)
+    unsigned char interrupts;    // enabled interrupts (1h=receive, 2h=transmit, 4h=line, 8h=modem, 10h=sent)
+} UART;
+
+
+typedef char MOS_RTC_STRING_R[ 32 ];   // String output from mos_GETRTC::rtc_unpack needs 31 bytes
+typedef char MOS_RTC_STRING_W[ 6 ];    // String input to mos_SETRTC needs 6 bytes
+
+
 /*----- Global Names --------------------------------------------------------*/
-extern MOS_ERRNOS const mos_errnos[ ];
+extern void mos_printerr( char const * const callstr, MOS_ERRNO const err );
 
 
 /*----- Function Declarations -----------------------------------------------*/
@@ -330,18 +329,18 @@ MOS_ERRNO mos_copy(
     /* MOS_API: mos_getrtc:          EQU    12h
        Get the current RTC value into a (25 character) string buffer
        FMT: "DDD, dd/mm/yyyy hh:mm:ss\0"
-       Defined in mosapi24.asm */
-unsigned char mos_getrtc(
-                unsigned char * const buf
-              );
+       Defined in devapi24.asm */
+void mos_getrtc(
+         MOS_RTC_STRING_R const buf
+     );
 
 
     /* MOS_API: mos_setrtc:          EQU    13h
        Set the RTC value from a (6 character) buffer
        FMT: "ymdhms"
-       Defined in mosapi24.asm */
+       Defined in devapi24.asm */
 void mos_setrtc(
-                unsigned char const * const buf
+         MOS_RTC_STRING_W const buf
      );
 
 
@@ -357,7 +356,7 @@ void * mos_setintvector(
 
     /* MOS_API: mos_uopen:           EQU    15h
        Open UART1 device
-       Defined in mosapi24.asm */
+       Defined in devapi24.asm */
 unsigned char open_uart1(
                 UART const * const pUART
               );
@@ -365,7 +364,7 @@ unsigned char open_uart1(
 
     /* MOS_API: mos_uclose:          EQU    16h
        Close UART1 device
-       Defined in mosapi24.asm */
+       Defined in devapi24.asm */
 void close_uart1( 
                 void
      );
@@ -373,7 +372,7 @@ void close_uart1(
 
     /* MOS_API: mos_ugetc:           EQU    17h
        Read a character from UART1
-       Defined in mosapi24.asm */
+       Defined in devapi24.asm */
 unsigned char mos_ugetc( 
                 void
               );
@@ -381,7 +380,7 @@ unsigned char mos_ugetc(
 
     /* MOS_API: mos_uputc:           EQU    18h
        Write a character to UART1
-       Defined in mosapi24.asm */
+       Defined in devapi24.asm */
 MOS_ERRNO mos_uputc(
               unsigned char const ch
           );
@@ -426,7 +425,7 @@ MOS_ERRNO mos_flseek(
 
     /* MOS_API: mos_setkbvector:     EQU    1Dh
        Attach a user callback function to the keyboard packet receiver
-       Defined in mosapi24.asm */
+       Defined in devapi24.asm */
 void mos_setkbvector( 
          void ( *kybd_hndlr )( VDP_KB_PACKET* )
      );
@@ -434,7 +433,7 @@ void mos_setkbvector(
 
     /* MOS_API: mos_getkbmap:        EQU    1Eh
        Get a pointer to the keyboard map
-       Defined in mosapi24.asm */
+       Defined in devapi24.asm */
 void * mos_getkbmap( 
            void
        );
@@ -443,7 +442,7 @@ void * mos_getkbmap(
     /* MOS_API: mos_i2c_open:        EQU    1Fh
        Open the I2C device as a bus controller
        frequency: 1=57600, 2=115200, 3=230400
-       Defined in mosapi24.asm */
+       Defined in devapi24.asm */
 void mos_i2copen(
          unsigned char const frequency
      );
@@ -451,7 +450,7 @@ void mos_i2copen(
 
     /* MOS_API: mos_i2c_close:       EQU    20h
        Close the i2c device
-       Defined in mosapi24.asm */
+       Defined in devapi24.asm */
 void mos_i2cclose(
          void
      );
@@ -459,7 +458,7 @@ void mos_i2cclose(
 
     /* MOS_API: mos_i2c_write:       EQU    21h
        Write a stream (between 1..32) of bytes to target i2c device with address (0..127)
-       Defined in mosapi24.asm */
+       Defined in devapi24.asm */
 unsigned int mos_i2cwrite(
                  unsigned char const i2c_address, 
                  size_t const num_bytes_to_write, 
@@ -469,7 +468,7 @@ unsigned int mos_i2cwrite(
 
     /* MOS_API: mos_i2c_read:        EQU    22h
        Load a file from SD card
-       Defined in mosapi24.asm */
+       Defined in devapi24.asm */
 unsigned int mos_i2cread(
                  unsigned char const i2c_Address,
                  size_t const num_bytes_to_read,
