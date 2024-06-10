@@ -40,6 +40,8 @@ include "mos_api.inc"
     xref _portEnterMOS
     xref _portExitMOS
 
+    xdef _mos_setintvector
+
 IF( 1 == configUSE_MOS_KEYBOARD_OPS )
     xdef _mos_getkey            ; implement call to MOS API function 00h
     xdef _mos_setkbvector       ; implement call to MOS API function 1Dh
@@ -135,6 +137,58 @@ _mos_getkey:
     ret
 
 ENDIF
+
+
+;*****************************************************************************
+;* void *mos_setintvector( unsigned short vector, void( *handler )( void ));
+;*
+;*  (IX+9)  handler - address of user interrupt handler
+;*  (IX+6)  vector  - interrupt vector
+;*
+;* Purpose: install a user interrupt handler in the MOS interrupt vector table
+;*          (similar to mos_setpithandler with _portEnterMOS..._portExitMOS
+;*           guards)
+;*
+;* Method:
+;*   https://agonconsole8.github.io/agon-docs/MOS-API/#0x14-mos_setintvector
+;*
+;*   Invoke a MOS function call, through RST 8, passing in function number:
+;*     0x14: mos_setintvector 
+;*     Set an interrupt vector (Requires MOS 1.03 or above)
+;*     Implemented in MOS:
+;*       vectors16.asm::_rst_08_handler -> call mos_api
+;*       mos_api.asm::mos_api -> switch-like call to mos_api_setintvector
+;*       mos_api.asm::mos_api_setintvector call to _mos_SETINTVECTOR
+;*       mos.c::_mos_SETINTVECTOR call to set_vector 
+;*       vectors16.asm::set_vector, 
+;*         https://github.com/breakintoprogram/agon-mos/blob/main/src_startup/vectors16.asm
+;*         which installs a user interrupt handler in the 2nd interrupt 
+;*         vector jump table
+;* 
+;* Parameters:
+;*     E: Interrupt vector number to set
+;*     HLU: Address of new interrupt vector (24-bit pointer)
+;* 
+;* Returns:
+;*     HL(U): Address of the previous interrupt vector (24-bit pointer)
+;* 
+_mos_setintvector:
+    push ix                     ; Standard prologue
+    ld ix, 0
+    add ix, sp
+
+    call _portEnterMOS          ; MOS critical enter
+                                ; construct parameters for mos_setintvector
+    ld de, (ix+6)               ; load vector number, first function call parameter
+    ld hl, (ix+9)               ; load pointer to handler
+    MOSCALL mos_setintvector    ; function number defined in mos_api.inc
+                                ; returns old handler in HLU
+    call _portExitMOS           ; MOS critical exit
+	
+    ld sp, ix                   ; Standard epilogue
+    pop ix
+
+    ret
 
 
 ;*****************************************************************************

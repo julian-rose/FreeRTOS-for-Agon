@@ -19,8 +19,10 @@ interested in then all the other directories can be ignored.
 
 -----------------------------------------------------------------
 
-We include two demos for the initial Agon Light port.
+We include several Demos for the Agon Light port, for each of the project
+versions.
 
+Alpha:
 DemoAgonP demonstrates pre-emptive tasks with delays. This uses the tick isr to
 switch between tasks. If you are interested a in full real-time program structure
 then this is for you. This demo uses time delays to illustrate the use of task
@@ -29,6 +31,9 @@ states and queues.
 DemoAgonC demonstrates co-operative tasks without delays. Task switching is
 invoked directly within each application task, through a call to Yield. This
 demo illustrates the speed with which FreeRTOS can run on Agon Light.
+
+Beta:
+DemoMOS demonstrates the MOS API provided in the Agon Light port.
 
 -----------------------------------------------------------------
 

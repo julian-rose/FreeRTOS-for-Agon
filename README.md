@@ -78,17 +78,19 @@ The MOS command line functions (mos_dir, mos_oscli, mos_ediline) are not
 provided. Presently only the subset of FFS that does not require Console8 
 MOS 2.2.0 are provided (that means no ffs_dopen, ffs_dclose, ffs_dread). 
 
-<h3>License</h3>
-FreeRTOS / MOS for Agon is released under the MIT license. This is done mainly
-for consistency with the existing MOS and core FreeRTOS software. 
-
 <h3>Demos</h3>
-The FreeRTOS / MOS for Agon port provides the source and binaries to two demo 
-programs, which are found in ./FreeRTOSv202212.01-LTS/FreeRTOS/Demo/DemoAgonC/ 
-and ./FreeRTOSv202212.01-LTS/FreeRTOS/Demo/DemoAgonP/. These are MOS application
-programs, so that you can download the files .../DemoAgonC/Debug/DemoAgonC.bin 
-and .../DemoAgonP/Debug/DemoAgonP.bin, copy them to your Agon Light SD card, 
-load, and run them from the MOS prompt.
+The FreeRTOS / MOS for Agon port provides the source and binaries to 'Demo'
+programs. These serve both as tests and as a starting point for new user
+applications. They are MOS application programs, so that you can download 
+them, copy them to your Agon Light SD card, load, and run them from the MOS 
+prompt.
+
+<h4>Alpha Demos</h4>
+Alpha demos are found in ./FreeRTOSv202212.01-LTS/FreeRTOS/Demo/DemoAgonC/ 
+and ./FreeRTOSv202212.01-LTS/FreeRTOS/Demo/DemoAgonP/. You can open the 
+.../DemoAgonC/Debug/DemoAgonC.zdsproj and .../DemoAgonC/Debug/DemoAgonP.zdsproj
+files in ZDSII. You can find the pre-built executable files in
+.../DemoAgonC/Debug/DemoAgonC.bin and .../DemoAgonP/Debug/DemoAgonP.bin
 <p>
 
 DemoAgonP uses pre-emptive multi-tasking. Two tasks run without knowledge of 
@@ -108,8 +110,17 @@ These example tasks do not make time delay calls, to better demonstrate the
 speed of FreeRTOS / MOS on Agon.
 <p>
 
-Other demos may exist from time to time, to test new capabilities. Presently
-this includes DemoMOS, for "beta" testing. 
+<h4>Beta Demos</h4>
+A Beta demo is found in ./FreeRTOSv202212.01-LTS/FreeRTOS/Demo/DemoMOS/.
+DemoMOS uses the MOS API to access MOS services, including files, directory,
+and devices including the keyboard, Uart and I2C serial interfaces. Beta
+projects include the configuration file mosConfig.inc, to select which APIs 
+should be linked into the executable, mirroring the FreeRTOSConfig.h file;
+and the API library files too.
+
+<h3>License</h3>
+FreeRTOS / MOS for Agon is released under the MIT license. This is done mainly
+for consistency with the existing MOS and core FreeRTOS software. 
 
 <h3>Performance</h3>
 Because one FreeRTOS task may block another, and because MOS is non-reentrant

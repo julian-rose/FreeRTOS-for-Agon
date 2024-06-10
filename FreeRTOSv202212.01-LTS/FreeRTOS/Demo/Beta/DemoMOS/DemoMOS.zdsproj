@@ -3,22 +3,26 @@
 
 <!-- file information -->
 <files>
-<file filter-key="">..\..\Source\mos\init.asm</file>
-<file filter-key="">..\..\Source\portable\ThirdParty\Community-Supported-Ports\ZDSII\eZ80AgonLight\mosvec24.asm</file>
-<file filter-key="">..\..\Source\mos\mosapi24.asm</file>
-<file filter-key="">..\..\..\..\..\..\..\ZDSII_eZ80Acclaim!_5.3.5\src\rtl\common\FPDUMY.ASM</file>
+<file filter-key="">..\..\..\Source\mos\init.asm</file>
+<file filter-key="">..\..\..\Source\portable\ThirdParty\Community-Supported-Ports\ZDSII\eZ80AgonLight\mosvec24.asm</file>
+<file filter-key="">..\..\..\Source\portable\ThirdParty\Community-Supported-Ports\ZDSII\eZ80AgonLight\sbrk.asm</file>
+<file filter-key="">..\..\..\Source\mos\mosapi24.asm</file>
+<file filter-key="">..\..\..\Source\mos\devapi24.asm</file>
+<file filter-key="">..\..\..\Source\mos\ffsapi24.asm</file>
+<file filter-key="">..\..\..\Source\mos\mosapi.c</file>
+<file filter-key="">..\..\..\..\..\..\..\..\ZDSII_eZ80Acclaim!_5.3.5\src\rtl\common\FPDUMY.ASM</file>
 <file filter-key="">.\main.c</file>
-<file filter-key="">..\..\Source\list.c</file>
-<file filter-key="">..\..\Source\queue.c</file>
-<file filter-key="">..\..\Source\stream_buffer.c</file>
-<file filter-key="">..\..\Source\croutine.c</file>
-<file filter-key="">..\..\Source\timers.c</file>
-<file filter-key="">..\..\Source\event_groups.c</file>
-<file filter-key="">..\..\Source\portable\MemMang\heap_3.c</file>
-<file filter-key="">..\..\Source\portable\ThirdParty\Community-Supported-Ports\ZDSII\eZ80AgonLight\port.c</file>
-<file filter-key="">..\..\Source\portable\ThirdParty\Community-Supported-Ports\ZDSII\eZ80AgonLight\tasks.c</file>
+<file filter-key="">..\..\..\Source\list.c</file>
+<file filter-key="">..\..\..\Source\queue.c</file>
+<file filter-key="">..\..\..\Source\stream_buffer.c</file>
+<file filter-key="">..\..\..\Source\croutine.c</file>
+<file filter-key="">..\..\..\Source\timers.c</file>
+<file filter-key="">..\..\..\Source\event_groups.c</file>
+<file filter-key="">..\..\..\Source\portable\MemMang\heap_3.c</file>
+<file filter-key="">..\..\..\Source\portable\ThirdParty\Community-Supported-Ports\ZDSII\eZ80AgonLight\port.c</file>
 <file filter-key="">.\Debug.linkcmd</file>
 <file filter-key="">.\Release.linkcmd</file>
+<file filter-key="">..\..\..\Source\portable\ThirdParty\Community-Supported-Ports\ZDSII\eZ80AgonLight\tasks.c</file>
 </files>
 
 <!-- configuration information -->
@@ -27,8 +31,8 @@
 <tools>
 <tool name="Assembler">
 <options>
-<option name="define" type="string" change-action="assemble">_EZ80ACCLAIM!=1,_SIMULATE=1</option>
-<option name="include" type="string" change-action="assemble">..\..\Source\mos</option>
+<option name="define" type="string" change-action="assemble">_EZ80ACCLAIM!=1</option>
+<option name="include" type="string" change-action="assemble">..\..\..\Source\mos</option>
 <option name="list" type="boolean" change-action="none">false</option>
 <option name="listmac" type="boolean" change-action="none">false</option>
 <option name="name" type="boolean" change-action="none">true</option>
@@ -41,7 +45,7 @@
 <tool name="Compiler">
 <options>
 <option name="padbranch" type="string" change-action="compile">Off</option>
-<option name="define" type="string" change-action="compile">_DEBUG,_EZ80F92,_EZ80ACCLAIM!,ZDSII_EZ80_AGON,_SIMULATE</option>
+<option name="define" type="string" change-action="compile">_DEBUG,_EZ80F92,_EZ80ACCLAIM!,ZDSII_EZ80_AGON</option>
 <option name="genprintf" type="boolean" change-action="compile">false</option>
 <option name="keepasm" type="boolean" change-action="none">true</option>
 <option name="keeplst" type="boolean" change-action="none">false</option>
@@ -51,8 +55,8 @@
 <option name="optspeed" type="boolean" change-action="compile">true</option>
 <option name="promote" type="boolean" change-action="compile">true</option>
 <option name="reduceopt" type="boolean" change-action="compile">true</option>
-<option name="stdinc" type="string" change-action="compile">..\..\Source\include\;..\..\Source\portable\ThirdParty\Community-Supported-Ports\ZDSII\eZ80AgonLight\</option>
-<option name="usrinc" type="string" change-action="compile">../../Source/mos/</option>
+<option name="stdinc" type="string" change-action="compile">../../../Source/include;../../../Source/portable/ThirdParty/Community-Supported-Ports/ZDSII/eZ80AgonLight;../../../Source/mos/</option>
+<option name="usrinc" type="string" change-action="compile"></option>
 <option name="watch" type="boolean" change-action="none">false</option>
 <option name="multithread" type="boolean" change-action="compile">false</option>
 </options>
@@ -60,7 +64,7 @@
 <tool name="Debugger">
 <options>
 <option name="target" type="string" change-action="rebuild">AgonLight_Flash</option>
-<option name="debugtool" type="string" change-action="none">Simulator</option>
+<option name="debugtool" type="string" change-action="none">AcclaimSmartCable</option>
 <option name="usepageerase" type="boolean" change-action="none">true</option>
 </options>
 </tool>
@@ -96,7 +100,7 @@
 </tool>
 <tool name="Librarian">
 <options>
-<option name="outfile" type="string" change-action="build">.\Debug\DemoAgonP.lib</option>
+<option name="outfile" type="string" change-action="build">.\Debug\DemoMOS.lib</option>
 </options>
 </tool>
 <tool name="Linker">
@@ -108,7 +112,7 @@
 <option name="map" type="boolean" change-action="none">true</option>
 <option name="maxhexlen" type="integer" change-action="build">64</option>
 <option name="objlibmods" type="string" change-action="build"></option>
-<option name="of" type="string" change-action="build">Debug\DemoAgonP</option>
+<option name="of" type="string" change-action="build">Debug\DemoMOS</option>
 <option name="quiet" type="boolean" change-action="none">true</option>
 <option name="relist" type="boolean" change-action="build">true</option>
 <option name="startuptype" type="string" change-action="build">Included</option>
@@ -171,8 +175,8 @@
 <option name="optspeed" type="boolean" change-action="compile">false</option>
 <option name="promote" type="boolean" change-action="compile">true</option>
 <option name="reduceopt" type="boolean" change-action="compile">false</option>
-<option name="stdinc" type="string" change-action="compile">..\..\Source\include\;..\..\Source\portable\ThirdParty\Community-Supported-Ports\ZDSII\eZ80AgonLight\</option>
-<option name="usrinc" type="string" change-action="compile">../../Source/mos/</option>
+<option name="stdinc" type="string" change-action="compile">../../Source/include/;../../Source/portable/ThirdParty/Community-Supported-Ports/ZDSII/eZ80AgonLight/;../../Source/mos/</option>
+<option name="usrinc" type="string" change-action="compile"></option>
 <option name="watch" type="boolean" change-action="none">false</option>
 <option name="multithread" type="boolean" change-action="compile">false</option>
 </options>
@@ -216,7 +220,7 @@
 </tool>
 <tool name="Librarian">
 <options>
-<option name="outfile" type="string" change-action="build">.\Release\DemoAgonP.lib</option>
+<option name="outfile" type="string" change-action="build">.\Release\DemoMOS.lib</option>
 </options>
 </tool>
 <tool name="Linker">
@@ -228,7 +232,7 @@
 <option name="map" type="boolean" change-action="none">true</option>
 <option name="maxhexlen" type="integer" change-action="build">64</option>
 <option name="objlibmods" type="string" change-action="build"></option>
-<option name="of" type="string" change-action="build">Release\DemoAgonP</option>
+<option name="of" type="string" change-action="build">Release\DemoMOS</option>
 <option name="quiet" type="boolean" change-action="none">true</option>
 <option name="relist" type="boolean" change-action="build">false</option>
 <option name="startuptype" type="string" change-action="build">Standard</option>

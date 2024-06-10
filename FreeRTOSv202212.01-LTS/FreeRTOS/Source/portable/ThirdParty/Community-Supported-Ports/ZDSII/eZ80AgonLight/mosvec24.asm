@@ -39,16 +39,8 @@
 ;*****************************************************************************
 include "mos_api.inc"
 
-    ;xref __init                   ; performed by MOS
-    ;xdef _reset                   ; performed by MOS
-    ;xdef __default_nmi_handler    ; MOS src_startup/vectors16.asm
-    ;xdef __default_mi_handler     ; MOS src_startup/vectors16.asm
-
     xdef __nvectors
-    ;xdef _init_default_vectors    ; deprectaed in favour of MOS vectors
-    ;xdef __init_default_vectors
-    ;xdef __vector_table
-    xdef _mos_setintvector
+    xdef _mos_setpitvector         ; a version of mos_setintvector without guards
 
 
 NVECTORS EQU 102      ; number of potential interrupt vectors (00h to 66h)
@@ -70,67 +62,14 @@ NVECTORS EQU 102      ; number of potential interrupt vectors (00h to 66h)
 
 
 ;*****************************************************************************
-;*  Default Non-Maskable Interrupt handler
-;*
-;* defined in MOS src_startup/vectors16.asm::__default_nmi_handler
-
-
-;*****************************************************************************
-;*  Default Maskable Interrupt handler
-;*
-;* defined in MOS src_startup/vectors16.asm::__default_mi_handler
-
-
-;*****************************************************************************
-;*  void _init_default_vectors( void );
-;*
-;*  initialize all potential interrupt vector locations with a known
-;*  default handler.
-;*
-;*  This would be called from zsldevinit.asm (or a similar init file)
-;*
-;*  The interrupt vectors are contained in the Agon MOS software 
-;*  and we leave them unchanged in FreeRTOS
-;*   MOS src_startup/vectors16.asm::_init_default_vectors
-
-
-;*****************************************************************************
-;*  int _set_vector( unsigned short vector, void( *handler )( void ) );
-;*
-;*  installs a user interrupt handler in the vector table
-;*
-;*  (IX+9)  handler - address of user interrupt handler
-;*  (IX+6)  vector  - vector offset
-;*
-;* __set_vector:
-;* _set_vector:
-;*     push ix                    ; Standard prologue
-;*     ld ix,0
-;*     add ix,sp           
-;*     push af
-;*     di
-;*     
-;*     ld hl, 0
-;*     ld hl, (ix+6)              ; load vector offset
-;*     ld bc, __vector_table      ; load base address for vector table
-;*     add hl, bc                 ; calculate vector location
-;*     ld bc, (ix+9)              ; handler
-;*     ld (hl), bc                ; store new vector address
-;*         
-;*     ei
-;*     pop af                     ; Standard epilogue
-;*     ld sp, ix
-;*     pop ix
-;*     ret
-
-
-;*****************************************************************************
-;* void *mos_setintvector( unsigned short vector, void( *handler )( void ));
+;* void *mos_setpitvector( unsigned short vector, void( *handler )( void ));
 ;*
 ;*  (IX+9)  handler - address of user interrupt handler
 ;*  (IX+6)  vector  - interrupt vector
 ;*
-;* Purpose: install a user interrupt handler in the MOS interrupt vector table
+;* Purpose: install the pit interrupt handler in the MOS interrupt vector table
+;*          (a version of mos_setinthandler without _portEnterMOS..._portExitMOS
+;*           guards, as that hasn't been initialised yet)
 ;*
 ;* Method:
 ;*   https://agonconsole8.github.io/agon-docs/MOS-API/#0x14-mos_setintvector
@@ -155,22 +94,19 @@ NVECTORS EQU 102      ; number of potential interrupt vectors (00h to 66h)
 ;* Returns:
 ;*     HL(U): Address of the previous interrupt vector (24-bit pointer)
 ;* 
-_mos_setintvector:
+_mos_setpitvector:
     push ix                    ; Standard prologue
     ld ix, 0
     add ix, sp
-    push af
-     
-    ld de, 0                   ; construct parameters for mos_setintvector
+                               ; construct parameters for mos_setintvector
     ld de, (ix+6)              ; load vector number, first function call parameter
-    ld hl, 0
     ld hl, (ix+9)              ; load pointer to handler
     MOSCALL mos_setintvector   ; function number defined in mos_api.inc
                                ; returns old handler in HLU
 
-    pop af                     ; Standard epilogue
-    ld sp, ix                  ;   restore stack pointer
+    ld sp, ix                  ; Standard epilogue
     pop ix
+
     ret
 
 

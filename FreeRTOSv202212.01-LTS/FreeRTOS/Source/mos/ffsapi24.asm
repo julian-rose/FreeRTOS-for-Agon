@@ -131,9 +131,9 @@ _ffs_fopen:
     ld HL, 0                    ; clear HL (now HLU=0)
     ld L, A                     ; get errno from A into int HL (int return)
     
-    push HL                     ; preserve HL reg (file handle) over call to portExitMOS
+    push HL                     ; preserve HL reg (errno) over call to portExitMOS
     call _portExitMOS           ; MOS critical exit
-    pop HL                      ; recover HL reg
+    pop HL                      ; recover HL reg (errno)
 
     ld sp, ix                   ; Standard epilogue
     pop ix
@@ -179,15 +179,15 @@ _ffs_fclose:
     call _portEnterMOS          ; MOS critical enter
 
     ld HL, (IX+6)               ; filbuf, passed from C on the stack (1st arg)
-    MOSCALL mos_fclose          ; function value in mos_api.inc
+    MOSCALL ffs_fclose          ; function value in mos_api.inc
                                 ; returns count of remaining open files in A reg
     SET_HLU24 0                 ; ld 0 (clear) HLU upper byte
     ld HL, 0                    ; clear HL (now HLU=0)
-    ld L, A                     ; get char return value from A into int HL (int return)
+    ld L, A                     ; get char errno return value from A into int HL (int return)
     
-    push HL                     ; preserve HL reg (file handle) over call to portExitMOS
+    push HL                     ; preserve HL reg (errno) over call to portExitMOS
     call _portExitMOS           ; MOS critical exit
-    pop HL                      ; recover HL reg
+    pop HL                      ; recover HL reg (errno)
 
     ld sp, ix                   ; Standard epilogue
     pop ix

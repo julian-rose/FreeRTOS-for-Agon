@@ -60,7 +60,6 @@
 #include "task.h"
 #include "semphr.h"
 #include "portmacro.h"
-#include "mosapi.h"
 
 
 /*----- Global Names --------------------------------------------------------*/
@@ -69,6 +68,10 @@
        but don't need to know its type. */
 typedef void tskTCB;
 extern tskTCB * volatile pxCurrentTCB;
+extern void * mos_setpitvector( 
+                 unsigned int, 
+                 void ( *intr_hndlr )( void )
+              );
 
 
 /*----- Private Variables ---------------------------------------------------*/
@@ -505,7 +508,7 @@ static BaseType_t prvSetupTimerInterrupt( void )
 
     /* Assign PRT1 for FreeRTOS */
     portTmr = 1;
-    portPrevprev = mos_setintvector(( PRT0_IVECT +( portTmr * 2 )), timer_isr );
+    portPrevprev = mos_setpitvector(( PRT0_IVECT +( portTmr * 2 )), timer_isr );
         
         /* Applications are free to use PRT2 or PRT3 */
 
@@ -596,7 +599,7 @@ static void portTeardownTimerInterrupt( void )
     
     if( NULL != portPrevprev )
     {
-        mos_setintvector(( PRT0_IVECT +( portTmr * 2 )), portPrevprev );        
+        mos_setpitvector(( PRT0_IVECT +( portTmr * 2 )), portPrevprev );        
     }
 
     portTmr = -1;
