@@ -33,6 +33,7 @@
 ;*   FFS API functions defined at https://agonconsole8.github.io/agon-docs/MOS-API
 ;*   Created 07/Jun/2024 by Julian Rose for Agon Light port
 ;*
+;* These functions should not normally be application-user altered.
 ;*****************************************************************************
 include "mosConfig.inc"
 include "mos_api.inc"

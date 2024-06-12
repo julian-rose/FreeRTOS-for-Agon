@@ -35,7 +35,9 @@
 ;*  Modified for the Agon Light port
 ;*    from .\ZDSII_eZ80Acclaim!_5.3.5\src\rtl\common\vectors24.asm
 ;*    refer to eZ80F92 Product Specification "PS015317-0120"
+;*   Created 10/May/2024 by Julian Rose for Agon Light port
 ;*
+;* These functions should not normally be application-user altered.
 ;*****************************************************************************
 include "mos_api.inc"
 

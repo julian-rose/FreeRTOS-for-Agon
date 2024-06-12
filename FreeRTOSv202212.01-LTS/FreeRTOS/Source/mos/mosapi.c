@@ -40,6 +40,7 @@
  * The definitions in this file support the MOS API
  * for Agon Light (and comptaibles) and the ZDSII compiler
  * Zilog eZ80 ANSI C Compiler Version 3.4 (19101101).
+ * Created May/2024 by Julian Rose for Agon Light port
  *
  * These functions should not normally be application-user altered.
 */
@@ -52,16 +53,12 @@
 #include "mosapi.h"
 
 
-/*----- Global Names --------------------------------------------------------*/
-
-
-/*----- Private functions ---------------------------------------------------*/
-
-
 /*----- Function definitions ------------------------------------------------*/
-/* doGetError
- *   Try out MOS function 0Fh "mos_getError".
- *   Routine will call mos_getError to retrieve a range of system error messages
+/* mos_printerr
+ *   Invoke MOS function 0Fh "mos_getError".
+ *   Parameters:
+ *     callstr - a text string to precede the error string
+ *     err - a MOS_ERRNO number
 */
 void mos_printerr( char const * const callstr, MOS_ERRNO const err )
 {
@@ -69,8 +66,7 @@ void mos_printerr( char const * const callstr, MOS_ERRNO const err )
     
 #   if( 1 == configSUPPORT_DYNAMIC_ALLOCATION )
     {
-        /* remember when we call Zilog library functions 
-           to safeguard from concurrent access */
+        /* Safeguard Zilog library function calls from concurrent access */
         portENTER_CRITICAL( );
         {
             buf = malloc( 128 );     
@@ -86,7 +82,7 @@ void mos_printerr( char const * const callstr, MOS_ERRNO const err )
 
     if( NULL != buf )
     {
-        /* safeguard Zilog library functions from concurrent access */
+        /* safeguard Zilog library function calls from concurrent access */
         portENTER_CRITICAL( );
         {
             ( void )memset( buf, 0, 128 );
@@ -98,7 +94,7 @@ void mos_printerr( char const * const callstr, MOS_ERRNO const err )
 
 #       if( 1 == configSUPPORT_DYNAMIC_ALLOCATION )
         {        
-            /* safeguard Zilog library functions from concurrent access */
+            /* safeguard Zilog library function calls from concurrent access */
             portENTER_CRITICAL( );
             {
                 free( buf );  // return mallocated memory to the heap
@@ -112,5 +108,6 @@ void mos_printerr( char const * const callstr, MOS_ERRNO const err )
         ( void )printf( "\r\n%s > Err : %d\r\n", callstr, err );
     }
 }
+
 
 /*---------------------------------------------------------------------------*/

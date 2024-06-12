@@ -35,7 +35,7 @@
 ;* MOS Configuration for FreeRTOS for Agon Light by Julian Rose, 2024, 
 ;* with copyright assigned to Amazon Web Services as for FreeRTOS version 10.5.
 ;*
-;* MOS application-specific definitions.  
+;* MOS application-specific Assembly function definitions.  
 ;* Target:  Agon Light (eZ80)
 ;* Compiler: Zilog eZ80 ANSI C Compiler Version 3.4 (19101101) 
 ;*           ZDSII in ADL mode
@@ -46,30 +46,30 @@
 ;*  in the build
 ;* Omitting unnecessary operations reduces the built code size
 ;
-IFDEF MOSCONFIG_H
+IFDEF MOSCONFIG_INC
 
 ELSE
 
-MOSCONFIG_H:
+MOSCONFIG_INC:
 
 ; File and Directory function group
 ;
-configUSE_MOS_FILE_OPS                   EQU 1
-configUSE_MOS_DIR_OPS                    EQU 1
-configUSE_MOS_BUFFERED_FILE_OPS          EQU 1
-configUSE_MOS_SYSVARS                    EQU 1
+configUSE_MOS_FILE_OPS                      EQU 1
+configUSE_MOS_DIR_OPS                       EQU 1
+configUSE_MOS_BUFFERED_FILE_OPS             EQU 1
+configUSE_MOS_SYSVARS                       EQU 1
 
 ; FAT File and Directory function group
 ;
-configUSE_FFS_FILE_OPS                   EQU 1
-configUSE_FFS_DIR_OPS                    EQU 1
+configUSE_FFS_FILE_OPS                      EQU 1
+configUSE_FFS_DIR_OPS                       EQU 1
 
 ; Devices function group
 ;
-configUSE_MOS_KEYBOARD_OPS               EQU 1
-configUSE_MOS_DEVICE_RTC                 EQU 1
-configUSE_MOS_DEVICE_UART                EQU 1
-configUSE_MOS_DEVICE_I2C                 EQU 1
+configUSE_MOS_KEYBOARD_OPS                  EQU 1
+configUSE_MOS_DEVICE_RTC                    EQU 1
+configUSE_MOS_DEVICE_UART                   EQU 1
+configUSE_MOS_DEVICE_I2C                    EQU 1
 
 
-ENDIF ;MOSCONFIG_H
+ENDIF ;MOSCONFIG_INC

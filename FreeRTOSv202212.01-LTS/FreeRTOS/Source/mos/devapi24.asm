@@ -33,6 +33,7 @@
 ;*   MOS API Device functions defined at https://agonconsole8.github.io/agon-docs/MOS-API
 ;*   Created 24/May/2024 by Julian Rose for Agon Light port
 ;*
+;* These functions should not normally be application-user altered.
 ;*****************************************************************************
 include "mosConfig.inc"
 include "mos_api.inc"
@@ -45,12 +46,26 @@ include "mos_api.inc"
 IF( 1 == configUSE_MOS_KEYBOARD_OPS )
     xdef _mos_getkey            ; implement call to MOS API function 00h
     xdef _mos_setkbvector       ; implement call to MOS API function 1Dh
-    ;xdef _mos_kbmap            ; implement call to MOS API function 1Dh
+    xdef _mos_getkbmap          ; implement call to MOS API function 1Eh
 ENDIF
 
 IF( 1 == configUSE_MOS_DEVICE_RTC )
     xdef _mos_getrtc            ; implement call to MOS API function 12h
     xdef _mos_setrtc            ; implement call to MOS API function 13h
+ENDIF
+
+IF( 1 == configUSE_MOS_DEVICE_UART )
+    xdef _mos_uopen             ; implement call to MOS API function 15h
+    xdef _mos_uclose            ; implement call to MOS API function 16h
+    xdef _mos_ugetc             ; implement call to MOS API function 17h
+    xdef _mos_uputc             ; implement call to MOS API function 18h
+ENDIF
+
+IF( 1 == configUSE_MOS_DEVICE_I2C )
+    xdef _mos_i2c_open          ; implement call to MOS API function 1Fh
+    xdef _mos_i2c_close         ; implement call to MOS API function 20h
+    xdef _mos_i2c_read          ; implement call to MOS API function 21h
+    xdef _mos_i2c_write         ; implement call to MOS API function 22h
 ENDIF
 
 
@@ -75,11 +90,26 @@ __mosapi_kbvect: DS 3           ; Pointer to keyboard callback
 SET_HLU24: MACRO uval
     push AF
     ld A, uval
-    push HL            
+    push HL
     ld HL, 2
     add HL, SP
     ld (HL), A
     pop HL
+    pop AF
+ENDMACRO     
+
+
+; Macro for setting the upper byte in BCU
+; Parameters:
+;   uval: The value to set in BC upper byte U
+SET_BCU24: MACRO uval
+    push AF
+    ld A, uval
+    push BC
+    ld BC, 2
+    add BC, SP
+    ld (BC), A
+    pop BC
     pop AF
 ENDMACRO     
 
@@ -154,16 +184,15 @@ ENDIF
 ;*
 ;*   Invoke a MOS function call, through RST 8, passing in function number:
 ;*     0x14: mos_setintvector 
-;*     Set an interrupt vector (Requires MOS 1.03 or above)
-;*     Implemented in MOS:
-;*       vectors16.asm::_rst_08_handler -> call mos_api
-;*       mos_api.asm::mos_api -> switch-like call to mos_api_setintvector
-;*       mos_api.asm::mos_api_setintvector call to _mos_SETINTVECTOR
-;*       mos.c::_mos_SETINTVECTOR call to set_vector 
-;*       vectors16.asm::set_vector, 
-;*         https://github.com/breakintoprogram/agon-mos/blob/main/src_startup/vectors16.asm
-;*         which installs a user interrupt handler in the 2nd interrupt 
-;*         vector jump table
+;*   Implemented in MOS:
+;*     vectors16.asm::_rst_08_handler -> call mos_api
+;*     mos_api.asm::mos_api -> switch-like call to mos_api_setintvector
+;*     mos_api.asm::mos_api_setintvector call to _mos_SETINTVECTOR
+;*     mos.c::_mos_SETINTVECTOR call to set_vector 
+;*     vectors16.asm::set_vector, 
+;*       https://github.com/breakintoprogram/agon-mos/blob/main/src_startup/vectors16.asm
+;*       which installs a user interrupt handler in the 2nd interrupt 
+;*       vector jump table
 ;* 
 ;* Parameters:
 ;*     E: Interrupt vector number to set
@@ -183,8 +212,10 @@ _mos_setintvector:
     ld hl, (ix+9)               ; load pointer to handler
     MOSCALL mos_setintvector    ; function number defined in mos_api.inc
                                 ; returns old handler in HLU
+    push HL                     ; preserve HL over call to portExitMOS
     call _portExitMOS           ; MOS critical exit
-	
+    pop HL                      ; restore HL after call to portExitMOS
+    
     ld sp, ix                   ; Standard epilogue
     pop ix
 
@@ -288,9 +319,66 @@ ENDIF
 
 
 ;*****************************************************************************
-;* unsigned int mos_getrtc( 
-;*                MOS_RTC_STRING_R const buffer, 
-;*              )
+;* KEYMAP * mos_getkbmap( 
+;*              void 
+;*          );
+;*
+;* Purpose: Get a pointer to the virtual keyboard map, a bitmap of pressed keys
+;*          char keymap[ 16 ];  /* declared in src/globals.asm */
+;*          representing 16*8 bits, 1 bit for each unique key press
+;*
+;* Method:
+;*   https://agonconsole8.github.io/agon-docs/MOS-API/#0x1e-mos_getkbmap
+;*
+;*   Invoke a MOS function call, through RST 8, passing in function number:
+;*     0x1E: mos_getkbmap 
+;*   Implemented in MOS:
+;*     vectors16.asm::_rst_08_handler -> call mos_api
+;*     mos_api.asm::mos_api -> switch-like call to mos_api_getkbmap
+;*       https://github.com/breakintoprogram/agon-mos/blob/main/src_startup/vectors16.asm
+;*       https://github.com/breakintoprogram/agon-mos/blob/main/src/mos_api.c
+;*       https://github.com/breakintoprogram/agon-mos/blob/main/src/keyboard.asm
+;* 
+;* Parameters:
+;*     n/a
+;*
+;* Returns:
+;*     HL reg: Pointer to virtual keyboard map
+;*     Refer to ...src/keyboard.asm for virtual keyboard codes
+;*     Refer to AN033301 table 2 for registers containing different return types
+;* 
+IF( 1 == configUSE_MOS_KEYBOARD_OPS )
+
+_mos_getkbmap:
+
+    push ix                     ; Standard prologue
+    ld ix, 0
+    add ix, sp
+
+    call _portEnterMOS          ; MOS critical enter
+
+    push ix                     ; preserve IX over call to MOS
+    MOSCALL mos_getkbmap        ; function value in mos_api.inc
+    push ix                     ; returns pointer to virtual kb map in IX reg
+    pop hl                      ; get virtual kb map pointer into HL
+    pop ix                      ; restor IX after call to MOS
+
+    push hl                     ; save HL over call to MOS critical exit
+    call _portExitMOS           ; MOS critical exit
+    pop hl                      ; retrieve pointer to vitual kb map into HL reg
+
+    ld sp, ix                   ; Standard epilogue
+    pop ix
+
+    ret
+
+ENDIF
+
+
+;*****************************************************************************
+;* void mos_getrtc( 
+;*          MOS_RTC_STRING_R const buffer, 
+;*      )
 ;*
 ;* Purpose: Get the Real Time Clock data via MOS API from the VDP
 ;*
@@ -337,9 +425,9 @@ ENDIF
 
 
 ;*****************************************************************************
-;* unsigned int mos_setrtc( 
-;*                MOS_RTC_STRING_W const buffer, 
-;*              )
+;* void mos_setrtc( 
+;*          MOS_RTC_STRING_W const buffer, 
+;*      )
 ;*
 ;* Purpose: Set the Real Time Clock data via MOS API from the VDP
 ;*
@@ -385,7 +473,460 @@ ENDIF
 
 
 ;*****************************************************************************
-;*        library data is placed in linked section DATA
+;* MOS_ERRNO mos_uopen(
+;*               MOS_UART const * const pUART 
+;*           )
+;*
+;* Purpose: Open the hardware UART1 device
+;*
+;* Method:
+;*   https://agonconsole8.github.io/agon-docs/MOS-API/#0x15-mos_uopen
+;*
+;*   Invoke a MOS function call, through RST 8, passing in function number:
+;*     15h: mos_uopen
+;*   Implemented in MOS vectors16.asm::_rst_08_handler -> call mos_api
+;*     mos_api.asm::mos_api -> switch-like call to mos_api_uopen
+;*     https://github.com/breakintoprogram/agon-mos/blob/main/src_startup/vectors16.asm
+;*     https://github.com/breakintoprogram/agon-mos/blob/main/src/mos_api.asm
+;*     https://github.com/breakintoprogram/agon-mos/blob/main/src/uart.c
+;* 
+;* Parameters:
+;*     (IX+6)  - Pointer to a MOS_UART structure, into HL
+;*
+;* Returns:
+;*     UART_ERR_NONE (int) in HL
+;*     Refer to AN033301 table 2 for registers containing different return types
+; 
+IF( 1 == configUSE_MOS_DEVICE_UART )
+
+_mos_uopen:
+
+    push ix                     ; Standard prologue
+    ld ix, 0
+    add ix, sp
+
+    call _portEnterMOS          ; MOS critical enter
+
+    ld HL, (IX+6)               ; pUART, passed from C on the stack (1st arg)
+    MOSCALL mos_uopen           ; function value in mos_api.inc
+                                ; returns UART_ERR_NONE in A reg
+    SET_HLU24 0                 ; ld 0 (clear) HLU upper byte
+    ld HL, 0                    ; clear HL (now HLU=0)
+    ld L, A                     ; get char return value from A into HL (int return)
+
+    push HL                     ; preserve HL reg over call to portExitMOS
+    call _portExitMOS           ; MOS critical exit
+    pop HL                      ; restore UART_ERR_NONE in HL reg
+
+    ld sp, ix                   ; Standard epilogue
+    pop ix
+
+    ret
+
+ENDIF
+
+
+;*****************************************************************************
+;* void mos_uclose(
+;*          void 
+;*      )
+;*
+;* Purpose: Close UART1
+;*
+;* Method:
+;*   https://agonconsole8.github.io/agon-docs/MOS-API/#0x16-mos_uclose
+;*
+;*   Invoke a MOS function call, through RST 8, passing in function number:
+;*     16h: mos_uclose
+;*   Implemented in MOS vectors16.asm::_rst_08_handler -> call mos_api
+;*     mos_api.asm::mos_api -> switch-like call to mos_api_uclose
+;*     https://github.com/breakintoprogram/agon-mos/blob/main/src_startup/vectors16.asm
+;*     https://github.com/breakintoprogram/agon-mos/blob/main/src/mos_api.asm
+;*     https://github.com/breakintoprogram/agon-mos/blob/main/src/uart.c
+;* 
+;* Parameters:
+;*     None
+;*
+;* Returns:
+;*     None
+;*     Refer to AN033301 table 2 for registers containing different return types
+; 
+IF( 1 == configUSE_MOS_DEVICE_UART )
+
+_mos_uclose:
+
+    push ix                     ; Standard prologue
+    ld ix, 0
+    add ix, sp
+
+    call _portEnterMOS          ; MOS critical enter
+
+    MOSCALL mos_uclose          ; function value in mos_api.inc
+                                ; no return value
+    call _portExitMOS           ; MOS critical exit
+
+    ld sp, ix                   ; Standard epilogue
+    pop ix
+
+    ret
+
+ENDIF
+
+
+;*****************************************************************************
+;* unsigned char mos_ugetc(
+;*                   void 
+;*               )
+;*
+;* Purpose: Read a byte from UART1 RxD, blocking
+;*
+;* Method:
+;*   https://agonconsole8.github.io/agon-docs/MOS-API/#0x17-mos_ugetc
+;*
+;*   Invoke a MOS function call, through RST 8, passing in function number:
+;*     17h: mos_ugetc
+;*   Implemented in MOS vectors16.asm::_rst_08_handler -> call mos_api
+;*     mos_api.asm::mos_api -> switch-like call to mos_api_ugetc
+;*     https://github.com/breakintoprogram/agon-mos/blob/main/src_startup/vectors16.asm
+;*     https://github.com/breakintoprogram/agon-mos/blob/main/src/mos_api.asm
+;*     https://github.com/breakintoprogram/agon-mos/blob/main/src/serial.asm
+;* 
+;* Parameters:
+;*     None
+;*
+;* Returns:
+;*     Byte in A reg on Success
+;*     Fail (device not open) 0 in A reg
+;*     Refer to AN033301 table 2 for registers containing different return types
+; 
+IF( 1 == configUSE_MOS_DEVICE_UART )
+
+_mos_ugetc:
+
+    push ix                     ; Standard prologue
+    ld ix, 0
+    add ix, sp
+
+    call _portEnterMOS          ; MOS critical enter
+
+    MOSCALL mos_ugetc           ; function value in mos_api.inc
+                                ; returns a byte in A reg on Success (F.C set)
+    jr c, _mos_ugetc_1          ; If Carry set, continue
+    ld a, %0                    ; Else Carry clear on Fail, set A reg = 0
+_mos_ugetc_1:
+
+    push AF                     ; preserve A reg over call to portExitMOS
+    call _portExitMOS           ; MOS critical exit
+    pop AF                      ; recover read byte in A reg
+
+    ld sp, ix                   ; Standard epilogue
+    pop ix
+
+    ret
+ 
+ENDIF
+
+
+;*****************************************************************************
+;* MOS_ERRNO mos_uputc(
+;*              unsigned char const ch
+;*           )
+;*
+;* Purpose: Write a byte to UART1 TxD, blocking
+;*
+;* Method:
+;*   https://agonconsole8.github.io/agon-docs/MOS-API/#0x18-mos_uputc
+;*
+;*   Invoke a MOS function call, through RST 8, passing in function number:
+;*     18h: mos_uputc
+;*   Implemented in MOS vectors16.asm::_rst_08_handler -> call mos_api
+;*     mos_api.asm::mos_api -> switch-like call to mos_api_uputc
+;*     https://github.com/breakintoprogram/agon-mos/blob/main/src_startup/vectors16.asm
+;*     https://github.com/breakintoprogram/agon-mos/blob/main/src/mos_api.asm
+;*     https://github.com/breakintoprogram/agon-mos/blob/main/src/serial.asm
+;* 
+;* Parameters:
+;*     (IX+6)  - Character to write, into C reg
+;*
+;* Returns:
+;*     Success : MOS_ERR_OK in HL reg
+;*     Fail (device not open) MOS_ERR_COMMAND_INVALID in HL reg
+;*     Refer to AN033301 table 2 for registers containing different return types
+; 
+IF( 1 == configUSE_MOS_DEVICE_UART )
+
+_mos_uputc:
+
+    push ix                     ; Standard prologue
+    ld ix, 0
+    add ix, sp
+
+    call _portEnterMOS          ; MOS critical enter
+
+    MOSCALL mos_uputc           ; function value in mos_api.inc
+                                ; returns Carry Flag in F reg (set on success)
+    SET_HLU24 0                 ; ld 0 (clear) HLU upper byte
+    ld hl, 0                    ; assume Carry Flag set, set HL reg = MOS_ERR_OK
+    jr c, _mos_uputc_1          ; If Carry Flag is set, continue
+    ld l, 20                    ; Else Carry Flag is clear, set HL reg = MOS_ERR_COMMAND_INVALID
+
+_mos_uputc_1:
+    push HL                     ; preserve HL reg over call to portExitMOS
+    call _portExitMOS           ; MOS critical exit
+    pop HL                      ; recover errno in HL reg
+
+    ld sp, ix                   ; Standard epilogue
+    pop ix
+
+    ret
+
+ENDIF
+
+
+;*****************************************************************************
+;* MOS_ERRNO mos_i2c_open(
+;*               MOS_I2C_FREQ const frequency
+;*           )
+;*
+;* Purpose: Open the I2C hardware bus device
+;*
+;* Method:
+;*   https://agonconsole8.github.io/agon-docs/MOS-API/#0x1f-mos_i2c_open
+;*
+;*   Invoke a MOS function call, through RST 8, passing in function number:
+;*     1fh: mos_i2c_open
+;*   Implemented in MOS vectors16.asm::_rst_08_handler -> call mos_api
+;*     mos_api.asm::mos_api -> switch-like call to mos_api_i2c_open
+;*     https://github.com/breakintoprogram/agon-mos/blob/main/src_startup/vectors16.asm
+;*     https://github.com/breakintoprogram/agon-mos/blob/main/src/mos_api.asm
+;*     https://github.com/breakintoprogram/agon-mos/blob/main/src/i2c.c
+;* 
+;* Parameters:
+;*     (IX+6)  - MOS_I2C_FREQ constant, into HL
+;*
+;* Returns:
+;*     None
+;*     Refer to AN033301 table 2 for registers containing different return types
+; 
+IF( 1 == configUSE_MOS_DEVICE_I2C )
+
+_mos_i2c_open:
+
+    push ix                     ; Standard prologue
+    ld ix, 0
+    add ix, sp
+
+    call _portEnterMOS          ; MOS critical enter
+
+    ld HL, (IX+6)               ; frequency, passed from C on the stack (1st arg)
+    MOSCALL mos_i2c_open        ; function value in mos_api.inc
+                                ; no return value
+    call _portExitMOS           ; MOS critical exit
+
+    ld sp, ix                   ; Standard epilogue
+    pop ix
+
+    ret
+
+ENDIF
+
+
+;*****************************************************************************
+;* MOS_ERRNO mos_i2c_close(
+;*               void
+;*           )
+;*
+;* Purpose: Close the I2C bus device
+;*
+;* Method:
+;*   https://agonconsole8.github.io/agon-docs/MOS-API/#0x20-mos_i2c_close
+;*
+;*   Invoke a MOS function call, through RST 8, passing in function number:
+;*     20h: mos_i2c_close
+;*   Implemented in MOS vectors16.asm::_rst_08_handler -> call mos_api
+;*     mos_api.asm::mos_api -> switch-like call to mos_api_i2c_close
+;*     https://github.com/breakintoprogram/agon-mos/blob/main/src_startup/vectors16.asm
+;*     https://github.com/breakintoprogram/agon-mos/blob/main/src/mos_api.asm
+;*     https://github.com/breakintoprogram/agon-mos/blob/main/src/i2c.c
+;* 
+;* Parameters:
+;*     None
+;*
+;* Returns:
+;*     None
+;*     Refer to AN033301 table 2 for registers containing different return types
+; 
+IF( 1 == configUSE_MOS_DEVICE_I2C )
+
+_mos_i2c_close:
+
+    push ix                     ; Standard prologue
+    ld ix, 0
+    add ix, sp
+
+    call _portEnterMOS          ; MOS critical enter
+
+    MOSCALL mos_i2c_close       ; function value in mos_api.inc
+                                ; no return value
+    call _portExitMOS           ; MOS critical exit
+
+    ld sp, ix                   ; Standard epilogue
+    pop ix
+
+    ret
+
+ENDIF
+
+
+;*****************************************************************************
+;* MOS_ERRNO mos_i2c_write(
+;*               unsigned char const i2c_address, 
+;*               void const * const buffer,
+;*               size_t const num_bytes_to_write    // max 32
+;*           )
+;*
+;* Purpose: Write buffer content to the addressed device on the previously 
+;*          opened I2C bus
+;*
+;* Method:
+;*   https://agonconsole8.github.io/agon-docs/MOS-API/#0x21-mos_i2c_write
+;*
+;*   Invoke a MOS function call, through RST 8, passing in function number:
+;*     21h: mos_i2c_write
+;*   Implemented in MOS vectors16.asm::_rst_08_handler -> call mos_api
+;*     mos_api.asm::mos_api -> switch-like call to mos_api_i2c_write
+;*     https://github.com/breakintoprogram/agon-mos/blob/main/src_startup/vectors16.asm
+;*     https://github.com/breakintoprogram/agon-mos/blob/main/src/mos_api.asm
+;*     https://github.com/breakintoprogram/agon-mos/blob/main/src/i2c.c
+;* 
+;* Parameters:
+;*     (IX+6)  - i2c_address, identify which I2C bus device to access, into C reg
+;*     (IX+9)  - buffer, pointer to data bytes to be written, into HL reg
+;*     (IX+12) - num_bytes_to_write, into B reg [max 32]
+;*
+;* Returns:
+;*     MOS_I2C_RESULT, in HL reg
+;*     Refer to AN033301 table 2 for registers containing different return types
+; 
+IF( 1 == configUSE_MOS_DEVICE_I2C )
+
+_mos_i2c_write:
+
+    push ix                     ; Standard prologue
+    ld ix, 0
+    add ix, sp
+
+    call _portEnterMOS          ; MOS critical enter
+
+    ld BC, (IX+6)               ; i2c_address, passed from C on the stack (1st arg)
+    ld HL, (IX+12)              ; num_bytes_to_write, passed from C on the stack (3rd arg)
+    ld A, L                     ;   MOS will truncate to I2C_MAX_BUFFERLENGTH=32
+    ld B, A                     ; num_bytes_to_write, into B reg
+    ld HL, (IX+9)               ; buffer, passed from C on the stack (2nd arg)
+    MOSCALL mos_i2c_write       ; function value in mos_api.inc
+                                ; MOS_I2C_RESULT in A reg
+    SET_HLU24 0                 ; ld 0 (clear) HLU upper byte
+    ld HL, 0                    ; clear HL (now HLU=0)
+    ld L, A                     ; get MOS_I2C_RESULT return value from A into HL (int return)
+
+    push HL                     ; preserve HL reg over call to portExitMOS
+    call _portExitMOS           ; MOS critical exit
+    pop HL                      ; retrieve MOS_I2C_RESULT after call to portExitMOS
+
+    ld sp, ix                   ; Standard epilogue
+    pop ix
+
+    ret
+
+ENDIF
+
+
+;*****************************************************************************
+;* MOS_ERRNO mos_i2c_read(
+;*               unsigned char const i2c_address, 
+;*               void * const buffer,
+;*               size_t const num_bytes_to_read
+;*           )
+;*
+;* Purpose: Read data into buffer from the addressed device on the previously 
+;*          opened I2C bus
+;*
+;* Method:
+;*   https://agonconsole8.github.io/agon-docs/MOS-API/#0x22-mos_i2c_read
+;*
+;*   Invoke a MOS function call, through RST 8, passing in function number:
+;*     22h: mos_i2c_read
+;*   Implemented in MOS vectors16.asm::_rst_08_handler -> call mos_api
+;*     mos_api.asm::mos_api -> switch-like call to mos_api_i2c_read
+;*     https://github.com/breakintoprogram/agon-mos/blob/main/src_startup/vectors16.asm
+;*     https://github.com/breakintoprogram/agon-mos/blob/main/src/mos_api.asm
+;*     https://github.com/breakintoprogram/agon-mos/blob/main/src/i2c.c
+;* 
+;* Parameters:
+;*     (IX+6)  - i2c_address, identify which I2C bus device to access, into C reg
+;*     (IX+9)  - buffer, pointer to where data will be received, into HL reg
+;*     (IX+12) - num_bytes_to_read, into B reg [max 32]
+;*
+;* Returns:
+;*     MOS_I2C_RESULT, in A reg
+;*     Refer to AN033301 table 2 for registers containing different return types
+; 
+IF( 1 == configUSE_MOS_DEVICE_I2C )
+
+_mos_i2c_read:
+
+    push ix                     ; Standard prologue
+    ld ix, 0
+    add ix, sp
+
+    call _portEnterMOS          ; MOS critical enter
+
+    ld BC, (IX+6)               ; i2c_address, passed from C on the stack (1st arg)
+    ld HL, (IX+12)              ; num_bytes_to_read, passed from C on the stack (3rd arg)
+    ld A, L                     ;   MOS will truncate to I2C_MAX_BUFFERLENGTH=32
+    ld B, A                     ; num_bytes_to_read, into B reg
+;push BC
+;  LD    BC, L__BC_EQUALS
+;  PUSH    BC
+;  CALL    _printf
+;  POP    BC
+;pop BC
+    ld HL, (IX+9)               ; buffer, passed from C on the stack (2nd arg)
+    MOSCALL mos_i2c_read        ; function value in mos_api.inc
+                                ; MOS_I2C_RESULT in A reg
+    SET_HLU24 0                 ; ld 0 (clear) HLU upper byte
+    ld HL, 0                    ; clear HL (now HLU=0)
+    ld L, A                     ; get MOS_I2C_RESULT return value from A into HL (int return)
+
+    push HL                     ; preserve HL reg over call to portExitMOS
+    call _portExitMOS           ; MOS critical exit
+    pop HL                      ; retrieve MOS_I2C_RESULT after call to portExitMOS
+
+    ld sp, ix                   ; Standard epilogue
+    pop ix
+
+    ret
+
+ENDIF
+
+
+;*****************************************************************************
+;* Debug printfs
+    SEGMENT STRSECT
+
+L__BC_EQUALS:
+    DB    13,10
+    DB    "BC = %d"
+    DB    13,10,0
+
+L__HL_EQUALS:
+    DB    13,10
+    DB    "HL = %d"
+    DB    13,10,0
+
+
+;*****************************************************************************
+;* library data is placed in linked section DATA
     segment DATA
 
     end

@@ -37,6 +37,7 @@
 ;*   above the heap. This is not the cse for FreeRTOS, as each task has its
 ;*   own stack allocated within the heap.
 ;*
+;* These functions should not normally be application-user altered.
 ;*****************************************************************************
 
 

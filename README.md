@@ -14,24 +14,25 @@ greatest. For a detailed description of the Agon port, refer to the README in
 ./FreeRTOSv202212.01-LTS/FreeRTOS/Source/portable/Community-Supported-Ports/ZDSII/eZ80AgonLight/
 
 <h3>What is FreeRTOS?</h3>
-FreeRTOS is a real-time software development kernel and library; an application 
-development framework which allows a C language application to be arranged into 
-a number of pre-emptive concurrent tasks. This follows the good engineering 
-practice of simplicity through divide and conquer. The core of FreeRTOS (and 
-indeed any RTOS) is its kernel; refer to https://www.freertos.org/RTOS.html. 
-And to https://www.freertos.org/features.html for the API.
+FreeRTOS is a real-time software development kernel and library. It provides an 
+application development framework that allows a C language application to be 
+arranged into a number of concurrent tasks. The core of FreeRTOS (and indeed 
+any RTOS) is its kernel; refer to https://www.freertos.org/RTOS.html. And to 
+https://www.freertos.org/features.html for the API.
 <p>
 
 FreeRTOS is not an operating system in the sense of MOS or CP/M, which provide
 a command console interpreter and long-term storage. Instead, FreeRTOS for Agon 
-applications run on MOS to access its services. FreeRTOS, while a general
-framework, is of particular interest for using Agon as a micro-controller.
+applications run on MOS to access its services. No re-Flashing is required -
+you just build and link a C language application together with the FreeRTOS 
+software into a MOS executable. FreeRTOS, while a general framework, is of 
+particular interest for using Agon as a micro-controller.
 
 <h4>Why do we care about concurrency and time?</h4>
-In a nutshell, because they are in the real world. A micro-controller interacts 
-with the real world, through sensors and actuators. So we need to embrace ideas 
-of time and the order of events (concurrency) in our software, for it to 
-function well. 
+In a nutshell, because they are in the real world. And a micro-controller 
+interacts with the real world, through sensors and actuators. So we need to 
+embrace time and the order of events (concurrency) into our software for it 
+to function well. 
 
 <h3>What is Agon?</h3>
 Agon Light™ is a fully open-source 8-bit microcomputer and microcontroller in 
@@ -47,36 +48,58 @@ interfaces including the VDP terminal co-processor, and long-term file storage
 through SD-cards. Refer to https://agonconsole8.github.io/agon-docs/MOS/.
 <p>
 
-We have built against MOS version 1.04. All recent versions of MOS may work, 
-but they have not been tested and there are a small number of tightly coupled 
-dependencies in some parts of the code (such as the keyboard read functions) 
-which may fail if differences exist between versions of the MOS code.
+<h4>MOS versions</h4>
+FreeRTOS for Agon is built to MOS version 1.04. Version 1.03 may work, but has 
+not been tested. Likewise newer Console8 versions of MOS should work, but have 
+not been tested. Console8-specific MOS and VDP functions are not yet supported. 
+There are a small number of tightly coupled dependencies in parts of the code 
+(such as the keyboard read functions) which may fail if differences exist 
+between versions of the MOS code.
 
 <h2>Project</h2>
-FreeRTOS / MOS for Agon Light is a multi-versioned project. "Alpha" is the 
-essential port of FreeRTOS as proof of concept running in eZ80 ADL mode. The 
-alpha port supports all the FreeRTOS functions; and a minimal number of MOS 
-services, namely putch (printf) and getch (scanf), and MOS function 14 
-setIntVector needed to attach the tick ISR.
-<p>
+FreeRTOS / MOS for Agon Light is a highly configurable, multi-capability 
+project. "Alpha" is the essential capability (and the initial port of FreeRTOS 
+as proof of concept running in eZ80 ADL mode). The Alpha capability supports 
+all the FreeRTOS functions; and a minimal number of MOS services, namely putch 
+(printf) and getch (scanf), and MOS function 14 setIntVector needed to attach 
+the tick ISR.
 
-You can already use "alpha" to develop full FreeRTOS applications that will run 
-on Agon. Though there are no library routine access to any of the MOS services.
-
-<h3>Versions</h3>
+<h3>Capabilities</h3>
 <ul>
-  <li>alpha:     provide all FreeRTOS with a minimal MOS in ADL mode</li>
-  <li>beta:      provide a full library for the MOS (and a subset of the FFS) API</li>
-  <li>gamma:     provide a full library for the VDP API</li>
-  <li>epsilon:   provide a real-time library inspired by the posix-4 API</li>
+  <li>alpha:     FreeRTOS API, with a minimal MOS API, in eZ80 ADL mode</li>
+  <li>beta:      MOS API (MOS 1.04 subset of the FFS API), plus a DEV API</li>
+  <li>gamma:     VDP API (MOS 1.04 subset)</li>
+  <li>delta:     Console8 MOS & VDP extended API (only if i buy a second Agon)</li>
+  <li>epsilon:   a real-time library inspired by the posix-4 API</li>
   <li>omega:     a safer version with Z80-mode tasks and the ADL-mode kernel</li>
 </ul>
 
-"Beta" is currently being developed, with the sources located in 
-./FreeRTOSv202212.01-LTS/FreeRTOS/Source/mos/
+Each capability is configurable through user-settable definitions in config 
+header files. In this way each application only need include the capabilities 
+it requires, such that the FreeRTOS code and the built executable occupy the 
+least RAM footprint possible.
+<p>
+
+<h4>Alpha</h4>
+The "Alpha" capability is already provided, with the FreeRTOS source located in 
+./FreeRTOSv202212.01-LTS/FreeRTOS/Source/ and the eZ80 portable code in
+./FreeRTOSv202212.01-LTS/FreeRTOS/Source/portable/Community-Supported-Ports/ZDSII/eZ80AgonLight/.
+You can already use "Alpha" to develop full FreeRTOS applications that will run 
+on Agon. 
+<p>
+
+<h4>Beta</h4>
+The "Beta" capability is currently being developed, with the sources located in 
+./FreeRTOSv202212.01-LTS/FreeRTOS/Source/mos/. This capability adds support for
+for most of the MOS API defined in
+https://agonconsole8.github.io/agon-docs/MOS-API/#the-mos-api
 The MOS command line functions (mos_dir, mos_oscli, mos_ediline) are not 
-provided. Presently only the subset of FFS that does not require Console8 
-MOS 2.2.0 are provided (that means no ffs_dopen, ffs_dclose, ffs_dread). 
+provided; and only the subset of FFS that does not require Console8 MOS 2.2.0 
+or greater are provided (that means no ffs_dopen, ffs_dclose, ffs_dread).
+<p>
+
+In addition to the MOS API, an extended DEV API is provided for safeguarded 
+access to SPI, UART, I2C and GPIO.
 
 <h3>Demos</h3>
 The FreeRTOS / MOS for Agon port provides the source and binaries to 'Demo'
@@ -96,26 +119,25 @@ files in ZDSII. You can find the pre-built executable files in
 DemoAgonP uses pre-emptive multi-tasking. Two tasks run without knowledge of 
 each other, each making MOS calls. The CPU (and MOS) is shared between them. 
 Although they have no knowledge of each other, MOS in non-reentrant so that a 
-second task will be blocked in making a MOS call until a first completes a MOS 
-call. These example tasks also make time delay calls, such that task1 runs once 
-per second, and task runs 3.3 times per second, to better demonstrate the
-pre-emptive execution model.
+second task will be blocked in making a MOS call (such as printf) until a 
+first completes a MOS call. These example tasks also make time delay calls, 
+such that task1 runs once per second, and task runs 3.3 times per second, to 
+better demonstrate the pre-emptive execution model.
 <p>
 
 DemoAgonC uses cooperative multi-tasking. Two tasks run without explicit 
 knowledge of each other, but in the knowledge other tasks also need CPU time. 
 Since they complete a MOS call before yielding, neither will be blocked by the 
-other doing similar. 
-These example tasks do not make time delay calls, to better demonstrate the 
-speed of FreeRTOS / MOS on Agon.
+other doing similar. The DemoAgonC tasks do not make time delay calls, to 
+better demonstrate the speed of FreeRTOS / MOS on Agon.
 <p>
 
 <h4>Beta Demos</h4>
 A Beta demo is found in ./FreeRTOSv202212.01-LTS/FreeRTOS/Demo/DemoMOS/.
 DemoMOS uses the MOS API to access MOS services, including files, directory,
-and devices including the keyboard, Uart and I2C serial interfaces. Beta
-projects include the configuration file mosConfig.inc, to select which APIs 
-should be linked into the executable, mirroring the FreeRTOSConfig.h file;
+and devices including the keyboard, Uart, I2C, SPI and GPIO serial interfaces. 
+Beta projects include the configuration file mosConfig.inc, to select which 
+APIs should be linked into the executable, mirroring the FreeRTOSConfig.h file;
 and the API library files too.
 
 <h3>License</h3>

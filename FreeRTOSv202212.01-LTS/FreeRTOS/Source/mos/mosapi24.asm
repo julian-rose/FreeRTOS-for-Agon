@@ -33,6 +33,7 @@
 ;*   MOS API functions defined at https://agonconsole8.github.io/agon-docs/MOS-API
 ;*   Created 24/May/2024 by Julian Rose for Agon Light port
 ;*
+;* These functions should not normally be application-user altered.
 ;*****************************************************************************
 include "mosConfig.inc"
 include "mos_api.inc"
@@ -148,7 +149,7 @@ _mos_load:
                                 ; returns errno byte in A reg (0=ok)
     SET_HLU24 0                 ; ld 0 (clear) HLU upper byte
     ld HL, 0                    ; clear HL (now HLU=0)
-    ld L, A                     ; get char return value from A into int HL (int return)
+    ld L, A                     ; get char return value from A into HL (int return)
     
     push HL                     ; preserve HL reg (errno) over call to portExitMOS
     call _portExitMOS           ; MOS critical exit

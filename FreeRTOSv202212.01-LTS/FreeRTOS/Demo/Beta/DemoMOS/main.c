@@ -87,8 +87,16 @@ void kbHndl( void );
 
 static void * menu( void );
 static char const * const getName( void );
+
+    /* Device tests */
 static void doKeyboardTest( void );
 static void doKeyboardCallback( void );
+static void doKBmap( void );
+static void doRTC( void );
+static void doUart( void );
+static void doI2C( void );
+
+    /* File tests */
 static void doLoadFile( void );
 static void doSaveFile( void );
 static void doChangeDirectory( void );
@@ -102,10 +110,11 @@ static void doFopsB( void );
 static void doFopsS( void );
 static void doGetError( void );
 static void doGetFil( void );
+
+    /* FatFS tests */
 static void doFFopsR( void );
 static void doFFopsS( void );
 static void doFFopsW( void );
-static void doRTC( void );
 
 
 /*----- Function Definitions ------------------------------------------------*/
@@ -166,21 +175,23 @@ static void * menu( void )
         { '7', "Test MOS function 07h \"mos_mkdir\"", doMakeDirectory },
         { '8', "Test MOS function 11h \"mos_copy\"", doCopyFile },
         { '9', "Test MOS function 08h \"mos_sysvar\"", doSysVars },
-        { 'a', "Test MOS function 0Ah..0Eh \"mos_fgetc, fputc fileops\"", doFopsC },
-        { 'b', "Test MOS function 1Ah..1Bh \"mos_fread, mos_fwrite fileops\"", doFopsB },
+        { 'a', "Test MOS function 0Ah..0Eh \"mos_fgetc..fputc fileops\"", doFopsC },
+        { 'b', "Test MOS function 1Ah..1Bh \"mos_fread..mos_fwrite fileops\"", doFopsB },
         { 'c', "Test MOS function 1Ch \"mos_flseek\"", doFopsS },
         { 'd', "Test MOS function 0Fh \"mos_getError\"", doGetError },
         { 'e', "Test MOS function 19h \"mos_getFil\"", doGetFil },
-        { 'f', "Test MOS function 80h..82h \"ffs_read\"", doFFopsR },
+        { 'f', "Test MOS function 80h..82h \"ffs_fopen..ffs_fread\"", doFFopsR },
         { 'g', "Test MOS function 83h \"ffs_fwrite\"", doFFopsW },
         { 'h', "Test MOS function 84h \"ffs_flseek\"", doFFopsS },
-        { 'i', "Test MOS function 12h..13h \"mos_getrtc, mos_setrtc\"", doRTC },
+        { 'i', "Test MOS function 12h..13h \"mos_getrtc..mos_setrtc\"", doRTC },
+        { 'j', "Test MOS function 1Eh \"mos_getkbmap\"", doKBmap },
+        { 'k', "Test MOS function 15h..18h \"mos_uopen..mos_uputc\"", doUart },
+        { 'l', "Test MOS function 1Fh..22h \"mos_i2c_open..mos_i2c_read\"", doI2C },
         { 'q', "End tests", NULL }
     };
     void ( *ret )( void )=( void* )-1;  /* any non-NULL value */
     char ch;
     int i;
-
     
     ( void )printf( "\r\n\r\nEnter required test number:\r\n" );
     ( void )printf( "\r\n" );
@@ -1579,6 +1590,136 @@ static void doRTC( void )
     doingRTCtest = 1;
     doSysVars( );
     doingRTCtest = 0; */
+}
+
+
+/* doKBmap
+ *   Try out MOS functions 1Eh "mos_getkbmap"
+ *   Routine will call mos_getkbmap to get the virtual keyboard map
+ *   Then iterate over pressed keys, until key 'ESC' VKEY=113 is pressed
+ *   Refer to 
+ *     https://github.com/breakintoprogram/agon-mos/blob/main/src/keyboard.asm 
+ *     for virtual keyboard codes
+*/
+static void doKBmap( void )
+{
+    KEYMAP *kbmap;
+    int const escbyte =((( 113 - 1 )& 0xF8 )>> 3 );
+    int const escbit =  (( 113 - 1 )& 0x07 );
+    int i;
+
+    ( void )printf( "\r\nRunning Keyboard Map test\r\n" );
+    ( void )printf( "Press individual keys or key chords\r\n" );
+    ( void )printf( "Press 'ESC' key to exit scan loop\r\n" );
+
+    kbmap = mos_getkbmap( );  // only need do this once at startup
+
+    ( void )printf( "Starting scan loop in 5 seconds...\r\n" );
+    vTaskDelay( 50 );  // wait 5 seconds at 10 ticks/sec
+
+    for( ;; )
+    {
+        for( i = 0; sizeof( KEYMAP )> i; i++ )
+        {
+            ( void )printf( "%2x ", (( char* )kbmap )[ i ]);
+        }
+        ( void )printf( "\r\n" );
+
+        if((( char* )kbmap )[ escbyte ]&( 1 << escbit ))
+        {
+            break;
+        }
+    }
+}
+
+
+/* doUart
+ *   Try out MOS functions 15h..18h "mos_uopen".."mos_uputc"
+ *   Routine will call mos_uopen to open UART1 with a suitable MOS_UART configuration
+ *   Then call mos_uclose, mos_uread and mos_uwrite so as not to block
+ *   Note there is a bug in MOS 1.04 src/serial.asm::UART1_serial_GETCH:189
+ *     should be TST 10h. The upshot is mos_ugetc always tests uart1 'open', 
+ *     once uart.c::open_UART0 has been run (as used for the VDP).
+*/
+static void doUart( void )
+{
+    MOS_UART const mu={ 9600, 8, 1, 0x3, 0, 0 };
+    MOS_ERRNO res;
+    char ch;
+
+    ( void )printf( "\r\nRunning Uart test (non-blocking)\r\n" );
+
+    ( void )printf( "Calling uart open\r\n" );
+    res = mos_uopen( &mu );
+    if( MOS_ERR_OK == res )
+    {
+        /* mos_ugetc and mos_uputc are blocking, so we don't want to do that in 
+           a test with nothing physically connected to uart1 */
+        ( void )printf( "Calling uart close\r\n" );
+        mos_uclose( );
+
+        /* but calling mos_uputc when the uart is closed should return an error 
+           code*/
+        ( void )printf( "Calling uart putc\r\n" );
+        res = mos_uputc( 'A' );
+        mos_printerr( "mos_ugetc returned error", res );
+
+        /* calling mos_ugetc when the uart is closed should return an error code;
+           but it always tests open because of the TST 10h bug;
+           It does, however, busy wait forever. So that is a kind of successful
+           test. */
+        //( void )printf( "Calling uart getc\r\n" );
+        //ch = mos_ugetc( );
+        //( void )printf( "mos_ugetc returned %d\r\n", ch );
+        ( void )printf( "mos_ugetc test not performed due to bug in "
+                        "MOS 1.04 src/serial.asm::UART1_serial_GETCH:189\r\n"
+                        "Should be TST 10h.\r\n" );
+    }
+    else
+    {
+        mos_printerr( "Uart open returned error", res );
+    }
+}
+
+
+/* doI2C
+ *   Try out MOS functions 1Fh..23h "mos_i2c_open".."mos_i2c_read"
+ *   Routine will call mos_i2c_open to open I2C bus
+ *   Then call mos_i2c_close, mos_i2c_read and mos_i2c_write to test function returns
+*/
+static void doI2C( void )
+{
+    MOS_I2C_FREQ const freq = MOS_I2C_FREQ_57600;
+    MOS_I2C_RESULT res;
+    char buf[ 32 ];
+    size_t len;
+
+    ( void )printf( "\r\nRunning I2C test\r\n" );
+
+    ( void )printf( "Calling I2C open\r\n" );
+    mos_i2c_open( freq );
+
+    ( void )printf( "Calling I2C read with valid address, " );
+    res = mos_i2c_read( 1, buf, sizeof( buf ));
+    ( void )printf( " returned : %d\r\n", res );
+
+    ( void )printf( "Calling I2C read with invalid address, " );
+    res = mos_i2c_read( 128, buf, sizeof( buf ));
+    ( void )printf( " returned : %d\r\n", res );
+
+    ( void )printf( "Calling I2C write with valid address, " );
+    // safeguard Zilog library from concurrent access
+    portENTER_CRITICAL( );
+    {
+        memcpy( buf, "Hello I2C from Agon", strlen( buf ));
+        len = strlen( buf );
+    }
+    portEXIT_CRITICAL( );
+    res = mos_i2c_write( 1, buf, len );
+    ( void )printf( " returned : %d\r\n", res );
+
+    ( void )printf( "Calling I2C close\r\n" );
+    mos_i2c_close( );
 }
 
 

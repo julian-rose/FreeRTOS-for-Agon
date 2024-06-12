@@ -109,7 +109,28 @@ typedef enum _mos_file_access_modes    // MOS FAT file access modes
         // extra definitions
     MOS_FAM_OPEN_APPEND    = 0x30,     // (following http://elm-chan.org/fsw/ff/doc/open.html)
     MOS_FAM_OPEN_EXISTING  = 0x00      // (following http://elm-chan.org/fsw/ff/doc/open.html)
+
 } MOS_FILE_MODE;
+
+
+typedef enum _mos_i2c_freq       // defined in MOS src/i2c.h
+{
+    MOS_I2C_FREQ_57600     = 1,
+    MOS_I2C_FREQ_115200    = 2,
+    MOS_I2C_FREQ_230400    = 3
+
+} MOS_I2C_FREQ;
+
+
+typedef enum _mos_i2c_result
+{
+    MOS_I2C_OK      = 0,         // Transfer succeeded
+    MOS_I2C_NO_RESP = 1,         // if 127 < address or if addressed device nacks
+    MOS_I2C_NACK =    2,         // if device does not acknowledge data receipt
+    MOS_I2C_ARB =     3,         // if I2C bus handshake times-out during transfer
+    MOS_I2C_BUSERR =  4          // if I2C bus has been reset
+
+} MOS_I2C_RESULT;
 
 
 /*----- Type Definitions ----------------------------------------------------*/
@@ -159,15 +180,19 @@ typedef struct _vdp_kb_packet    // VDP Keyboard Packet
 } VDP_KB_PACKET;
 
 
-typedef struct _uart             // UART descriptor
+typedef char KEYMAP[ 16 ];       // Virtual Keyboard map (16*8 bits, each bit a unique key)
+
+
+typedef struct _mos_uart         // UART descriptor
 {
     unsigned int  baudRate;      // baudrate (bits per sec) 
     unsigned char dataBits;      // number of databits per character to be used (in range 5..8)
     unsigned char stopBits;      // number of stopbits to be used (in range 1..2)
     unsigned char parity;        // parity bit option to be used (00b=none, 01b=odd, 11b=even)
     unsigned char flowControl;   // flow control option (0: None, 1: Hardware)
-    unsigned char interrupts;    // enabled interrupts (1h=receive, 2h=transmit, 4h=line, 8h=modem, 10h=sent)
-} UART;
+    unsigned char interrupts;    // enabled interrupts (1h=receive, 2h=transmit, 4h=line, 
+                                 //                     8h=modem, 10h=sent)
+} MOS_UART;
 
 
 typedef char MOS_RTC_STRING_R[ 32 ];   // String output from mos_GETRTC::rtc_unpack needs 31 bytes
@@ -349,29 +374,32 @@ void mos_setrtc(
        Defined in mosvec24.asm as it is used by the FreeRTOS port to bind the
        PIT timer */
 void * mos_setintvector( 
-                unsigned int, 
-                void ( *intr_hndlr )( void )
+           unsigned int, 
+           void ( *intr_hndlr )( void )
        );
 
 
     /* MOS_API: mos_uopen:           EQU    15h
        Open UART1 device
+         Call mos_setintvector to assign an interrupt handler
        Defined in devapi24.asm */
-unsigned char open_uart1(
-                UART const * const pUART
-              );
+MOS_ERRNO mos_uopen(
+              MOS_UART const * const pUART
+          );
 
 
     /* MOS_API: mos_uclose:          EQU    16h
        Close UART1 device
        Defined in devapi24.asm */
-void close_uart1( 
-                void
+void mos_uclose( 
+         void
      );
 
 
     /* MOS_API: mos_ugetc:           EQU    17h
-       Read a character from UART1
+       Read a character from UART1 (blocking)
+         Use mos_setintvector and an ISR with mos_uopen for non-blocking reads
+         Returns 0x0 char on failure (and when received)
        Defined in devapi24.asm */
 unsigned char mos_ugetc( 
                 void
@@ -432,48 +460,51 @@ void mos_setkbvector(
 
 
     /* MOS_API: mos_getkbmap:        EQU    1Eh
-       Get a pointer to the keyboard map
+       Get a pointer to the keyboard map of pressed keys
        Defined in devapi24.asm */
-void * mos_getkbmap( 
-           void
-       );
+KEYMAP * mos_getkbmap( 
+             void
+         );
 
 
     /* MOS_API: mos_i2c_open:        EQU    1Fh
        Open the I2C device as a bus controller
-       frequency: 1=57600, 2=115200, 3=230400
+       The device is "connectionless", this re-initialises the MOS driver
        Defined in devapi24.asm */
-void mos_i2copen(
-         unsigned char const frequency
+void mos_i2c_open(
+         MOS_I2C_FREQ const frequency
      );
 
 
     /* MOS_API: mos_i2c_close:       EQU    20h
        Close the i2c device
+       The device is "connectionless", this halts the MOS driver activity
        Defined in devapi24.asm */
-void mos_i2cclose(
+void mos_i2c_close(
          void
      );
 
 
     /* MOS_API: mos_i2c_write:       EQU    21h
-       Write a stream (between 1..32) of bytes to target i2c device with address (0..127)
+       Write a stream (between 1..32) of bytes to target i2c device with 
+         address (0..127)
        Defined in devapi24.asm */
-unsigned int mos_i2cwrite(
-                 unsigned char const i2c_address, 
-                 size_t const num_bytes_to_write, 
-                 unsigned char const * const buffer
-             );
+MOS_I2C_RESULT mos_i2c_write(
+                   unsigned char const i2c_address, 
+                   void const * const buffer,
+                   size_t const num_bytes_to_write 
+               );
 
 
     /* MOS_API: mos_i2c_read:        EQU    22h
-       Load a file from SD card
+       Read a stream (between 1..32) of bytes from target i2c device with 
+         address (0..127)
        Defined in devapi24.asm */
-unsigned int mos_i2cread(
-                 unsigned char const i2c_Address,
-                 size_t const num_bytes_to_read,
-                 unsigned char * buffer
-             );
+MOS_I2C_RESULT mos_i2c_read(
+                   unsigned char const i2c_address,
+                   void * const buffer,
+                   size_t const num_bytes_to_read
+               );
 
 
 #endif /* MOSAPI_H */
