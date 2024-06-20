@@ -52,19 +52,19 @@ ELSE
 
 MOSCONFIG_INC:
 
-; MOS File and Directory function group
+; File and Directory function group
 ;
 configUSE_MOS_FILE_OPS                      EQU 1
 configUSE_MOS_DIR_OPS                       EQU 1
 configUSE_MOS_BUFFERED_FILE_OPS             EQU 1
 configUSE_MOS_SYSVARS                       EQU 1
 
-; MOS FAT File and Directory function group
+; FAT File and Directory function group
 ;
 configUSE_FFS_FILE_OPS                      EQU 1
 configUSE_FFS_DIR_OPS                       EQU 1
 
-; MOS Devices function group
+; Devices function group
 ;
 configUSE_MOS_KEYBOARD_OPS                  EQU 1
 configUSE_MOS_DEVICE_RTC                    EQU 1

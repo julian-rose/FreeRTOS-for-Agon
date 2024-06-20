@@ -66,12 +66,11 @@ DEFINE __heapbot =( highaddr of RAM + 1 )- $030000
  ".\init.obj", \
  ".\mosvec24.obj", \
  ".\mosapi24.obj", \
- ".\devapi24.obj", \
+ ".\mosdapi24.obj", \
  ".\ffsapi24.obj", \
  ".\FPDUMY.obj", \
  ".\main.obj", \
  ".\mosapi.obj", \
- ".\devapi.obj", \
   ".\croutine.obj", \
  ".\event_groups.obj", \
  ".\list.obj", \

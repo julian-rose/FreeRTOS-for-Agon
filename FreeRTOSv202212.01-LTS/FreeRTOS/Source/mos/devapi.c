@@ -40,7 +40,7 @@
  * The definitions in this file support the DEV API
  * for Agon Light (and comptaibles) and the ZDSII compiler
  * Zilog eZ80 ANSI C Compiler Version 3.4 (19101101).
- * Created 11/Jun/2024 by Julian Rose for Agon Light port
+ * Created 11.Jun.2024 by Julian Rose for Agon Light port
  *
  * These functions should not normally be application-user altered.
 */
@@ -49,163 +49,735 @@
 #include <string.h>
 #include <stdio.h>
 
+#include <eZ80F92.h>
+
 #include "FreeRTOS.h"
 #include "devConfig.h"
 #include "devapi.h"
-
-
-/*----- Constants -----------------------------------------------------------*/
-#define configUSE_DEV_DEVICE_DRIVERS                   \
-            ( configUSE_DRV_UART | configUSE_DRV_SPI | \
-              configUSE_DRV_I2C | configUSE_DRV_GPIO )
-
-
-/*----- Enumeration Types ---------------------------------------------------*/
-/*  Connector pinout
-      Extended enumeration of GPIO_PIN_NUM.
-      Pin numbers follow Agon Light2; and Agon Origins. 
-      (Different pin numbers are used on Console8.)
-      Unenumerated pins 1..5 are power
-                   pins 6..12 are ESP32 GPIO (not yet accessible through VDP protocol
-                   pins 33..34 are power
-*/
-typedef enum _pin_num
-{
-    /* Pin Name      Pin#     Function      Ez80 pin name
-    --------------   ----     -----------   -------------*/
-    GPIO_13        = 13,   // GPIO pin 13   (PD4)
-    UART_0_DTR     = 13,   // UART0 DTR     (PD4)
-    GPIO_14        = 14,   // GPIO pin 14   (PD5)
-    UART_0_DSR     = 14,   // UART0 DSR     (PD5)
-    GPIO_15        = 15,   // GPIO pin 15   (PD6)
-    UART_0_DCD     = 15,   // UART0 DCD     (PD6)
-    GPIO_16        = 16,   // GPIO pin 16   (PD7)
-    UART_0_RI      = 16,   // UART0 RI      (PD7)
-    GPIO_17        = 17,   // GPIO pin 17   (PC0)
-    UART_1_TXD     = 17,   // UART1 TxD     (PC0)
-    GPIO_18        = 18,   // GPIO pin 18   (PC1)
-    UART_1_RXD     = 18,   // UART1 RxD     (PC1)
-    GPIO_19        = 19,   // GPIO pin 19   (PC2)
-    UART_1_RTS     = 19,   // UART1 RTS     (PC2)
-    GPIO_20        = 20,   // GPIO pin 20   (PC3)
-    UART_1_CTS     = 20,   // UART1 CTS     (PC3)
-    GPIO_21        = 21,   // GPIO pin 21   (PC4)
-    UART_1_DTR     = 21,   // UART1 DTR     (PC4)
-    GPIO_22        = 22,   // GPIO pin 22   (PC5)
-    UART_1_DSR     = 22,   // UART1 DSR     (PC5)
-    GPIO_23        = 23,   // GPIO pin 23   (PC6)
-    UART_1_DCD     = 23,   // UART1 DCD     (PC6)
-    GPIO_24        = 24,   // GPIO pin 24   (PC7)
-    UART_1_RI      = 24,   // UART1 RI      (PC7)
-    GPIO_25        = 25,   // GPIO pin 25   (PB2)
-    SPI_SS         = 25,   // SPI SS        (PB2)
-    GPIO_26        = 26,   // GPIO pin 26   (PB5)
-    SPI_MISO       = 27,   // SPI MISO      (PB6)
-    SYS_CLKOUT     = 28,   // SYSCLK        (PHI)
-    I2C_SDA        = 29,   // I2C SDA       (SDA)
-    I2C_SCL        = 30,   // I2C SCL       (SCL)
-    SPI_CLK        = 31,   // SPI CLK       (PB3)
-    SPI_MOSI       = 32,   // SPI MOSI      (PB7)
-
-    PIN_NUM_END
-
-} PIN_NUM;
-
-
-typedef enum _gpio_state
-{
-    GPIO_STATE_FREE = 0,
-    GPIO_STATE_INUSE
-
-} GPIO_STATE;
-
-
-typedef enum _dev_num_major
-{
-    DEV_NUM_GPIO = 1,
-    DEV_NUM_UART = 2,
-    DEV_NUM_SPI = 3,
-    DEV_NUM_I2C = 4
-
-} DEV_NUM_MAJOR;
-
-
-/*----- Type Definitions ----------------------------------------------------*/
-typedef struct _dev_pin
-{
-    DEV_NUM_MAJOR majnum;
-    GPIO_PIN_NUM pinnum;  // same as device minor number
-    GPIO_STATE state;
-
-} DEV_PIN;
+#include "devapil.h"
 
 
 /*----- Global Names --------------------------------------------------------*/
-static DEV_PIN devpin[ GPIO_PIN_NUM_END ];
+#if( 1 == configUSE_DEV_DEVICE_DRIVERS )
+
+#if( 1 == configUSE_DEV_SAFEGUARDS )
+
+PIN_NUM const assigned_pins[ NUM_DEV_MAJOR ]
+                           [ NUM_DEV_MINOR ]=
+{
+    { /* DEV_NUM_GPIO */
+      GPIO_13, GPIO_14, GPIO_15, GPIO_16, 
+      GPIO_17, GPIO_18, GPIO_19, GPIO_20,
+      GPIO_21, GPIO_22, GPIO_23, GPIO_24, 
+      0, GPIO_26, 0, 0,                   // GPIO_25 cannot be assigned
+      0, 0, 0, 0
+    },
+
+    { /* DEV_NUM_UART */
+      0, 0, 0, 0, 
+      UART_1_TXD, UART_1_RXD, UART_1_RTS, UART_1_CTS,
+      UART_1_DTR, UART_1_DSR, UART_1_DCD, UART_1_RI,
+      0, 0, 0, 0, 
+      0, 0, 0, 0
+    },
+
+    { /* DEV_NUM_SPI */
+      0, 0, 0, 0, 
+      0, 0, 0, 0,
+      0, 0, 0, 0,
+      SPI_SS, 0, SPI_MISO, 0,
+      0, 0, SPI_CLK, SPI_MOSI
+    },
+
+    { /* DEV_NUM_I2C */
+      0, 0, 0, 0, 
+      0, 0, 0, 0,
+      0, 0, 0, 0,
+      0, 0, 0, 0, 
+      I2C_SDA, I2C_SCL, 0, 0
+    }
+};
+
+#endif  /*( 1 == configUSE_DEV_SAFEGUARDS )*/
+
+
+PORT_BITMAP const portmap[ NUM_DEV_MINOR ]=
+{
+    {  PORT_D, 4 },  // GPIO_13
+    {  PORT_D, 5 },  // GPIO_14
+    {  PORT_D, 6 },  // GPIO_15
+    {  PORT_D, 7 },  // GPIO_16 
+    {  PORT_C, 0 },  // GPIO_17
+    {  PORT_C, 1 },  // GPIO_18
+    {  PORT_C, 2 },  // GPIO_19
+    {  PORT_C, 3 },  // GPIO_20 
+    {  PORT_C, 4 },  // GPIO_21
+    {  PORT_C, 5 },  // GPIO_22
+    {  PORT_C, 6 },  // GPIO_23
+    {  PORT_C, 7 },  // GPIO_24 
+    {  PORT_B, 2 },  // GPIO_25 cannot be assigned
+    {  PORT_B, 5 },  // GPIO_26 
+};
+
+
+/*---- Global Variables -----------------------------------------------------*/
+/* Changing any global variable needs to be done within
+    portENTER_CRITICAL( );
+    {
+    }
+    portEXIT_CRITICAL( );
+*/
+#if( 1 == configUSE_DEV_SAFEGUARDS )
+
+PIN_STATE pinstate[ NUM_DEV_MINOR ]=
+{
+    PIN_STATE_FREE, PIN_STATE_FREE, PIN_STATE_FREE, PIN_STATE_FREE,
+    PIN_STATE_FREE, PIN_STATE_FREE, PIN_STATE_FREE, PIN_STATE_FREE,
+    PIN_STATE_FREE, PIN_STATE_FREE, PIN_STATE_FREE, PIN_STATE_FREE,
+    PIN_STATE_FREE, PIN_STATE_FREE, PIN_STATE_FREE, PIN_STATE_FREE,
+    PIN_STATE_FREE, PIN_STATE_FREE, PIN_STATE_FREE, PIN_STATE_FREE
+};
+
+DEV_MODE pinmode[ NUM_DEV_MINOR ]=
+{
+    DEV_MODE_UNBUFFERED, DEV_MODE_UNBUFFERED, DEV_MODE_UNBUFFERED,
+    DEV_MODE_UNBUFFERED, DEV_MODE_UNBUFFERED, DEV_MODE_UNBUFFERED,
+    DEV_MODE_UNBUFFERED, DEV_MODE_UNBUFFERED, DEV_MODE_UNBUFFERED,
+    DEV_MODE_UNBUFFERED, DEV_MODE_UNBUFFERED, DEV_MODE_UNBUFFERED,
+    DEV_MODE_UNBUFFERED, DEV_MODE_UNBUFFERED, DEV_MODE_UNBUFFERED,
+    DEV_MODE_UNBUFFERED, DEV_MODE_UNBUFFERED, DEV_MODE_UNBUFFERED,
+    DEV_MODE_UNBUFFERED, DEV_MODE_UNBUFFERED
+};
+
+#endif  /* ( 1 == configUSE_DEV_SAFEGUARDS ) */
+
+#endif  /* ( 1 == configUSE_DEV_DEVICE_DRIVERS ) */
 
 
 /*----- Private functions ---------------------------------------------------*/
 #if( 1 == configUSE_DEV_DEVICE_DRIVERS )
 
-/* DEV_API: dev_open
-       Open a device for i/o
-       Defined in mosapi.c */
 
+/*------ Generic Pin allocation and free functions --------------------------*/
+#if( 1 == configUSE_DEV_SAFEGUARDS )
+
+static POSIX_ERRNO pins_alloc(
+                       DEV_NUM_MAJOR const major,
+                       DEV_NUM_MINOR const minor,
+                       DEV_MODE const mode 
+				   )
+{
+    POSIX_ERRNO ret = POSIX_ERRNO_ENONE;
+    unsigned int const mnr =( minor - PIN_NUM_START );
+	int i;
+
+    switch( major )
+    {
+        case DEV_NUM_GPIO:
+        {
+			if(( GPIO_13 > minor )||( GPIO_26 < minor ))
+            {
+                ret = POSIX_ERRNO_ENODEV;
+            }
+            else
+            if( GPIO_25 == minor )   // PB2 (cannot be assigned due to MOS SPI software)
+            {
+                ret = POSIX_ERRNO_EADDRINUSE;
+            }
+            else
+			if( 0 == assigned_pins[ DEV_NUM_GPIO ][ mnr ])
+            {
+                ret = POSIX_ERRNO_ENODEV;
+            }
+            else
+            if( PIN_STATE_FREE != pinstate[ mnr ])
+            {
+                ret = POSIX_ERRNO_EBUSY;
+            }
+            else
+            {
+                pinstate[ mnr ]= PIN_STATE_INUSE;
+                pinmode[ mnr ]= mode;
+            }
+        }
+        break;
+
+        case DEV_NUM_SPI:
+        case DEV_NUM_I2C:  // same code as i2c pin numbers lie within limits of spi
+        {
+            for( i = SPI_SS; SPI_MOSI > i; i++ )
+            {
+                unsigned int const mnri =( i - PIN_NUM_START );
+
+                if(( assigned_pins[ DEV_NUM_GPIO ][ mnri ])&&
+                   ( PIN_STATE_FREE != pinstate[ mnri ]))
+				{
+                    ret = POSIX_ERRNO_EBUSY;
+					break;
+				}
+            }
+			
+			if( POSIX_ERRNO_EBUSY != ret )
+			{
+                for( i = SPI_SS; SPI_MOSI > i; i++ )
+                {
+                    unsigned int const mnri =( i - PIN_NUM_START );
+
+                    if( assigned_pins[ DEV_NUM_GPIO ][ mnri ])
+			    	{
+                        pinstate[ mnri ]= PIN_STATE_INUSE;
+                        pinmode[ mnri ]= mode;
+    				}
+                }
+			}
+        }
+        break;
+
+        case DEV_NUM_UART:
+		{
+			if( 0 == minor )
+            {
+                ret = POSIX_ERRNO_EBUSY;  /* eZ80 - VDP link */
+            }
+			else
+			if( 1 == minor )
+            {
+				PIN_NUM end = UART_1_RI;
+			
+				if( DEV_MODE_UART_HW_FLOWCTRL & mode ) end = UART_1_CTS;
+				if( DEV_MODE_UART_MOD_FLOWCTRL & mode ) end = UART_1_RI;
+			
+				for( i = UART_1_TXD; end > i; i++ )
+                {
+                    unsigned int const mnri =( i - PIN_NUM_START );
+
+                    if( PIN_STATE_FREE != pinstate[ mnri ])
+			    	{
+                        ret = POSIX_ERRNO_EBUSY;
+					    break;
+    				}
+                }
+			
+		    	if( POSIX_ERRNO_EBUSY != ret )
+			    {
+                    for( i = UART_1_TXD; end > i; i++ )
+                    {
+                        unsigned int const mnri =( i - PIN_NUM_START );
+
+                        pinstate[ mnri ]= PIN_STATE_INUSE;
+                        pinmode[ mnri ]= mode;
+                    }
+	    		}
+			}
+			else
+            {
+                ret = POSIX_ERRNO_ENODEV;
+            }
+		}
+		break;
+		
+        default:
+        {
+            ret = POSIX_ERRNO_ENODEV;
+        }
+        break;
+    }
+
+    return( ret );
+}
+
+
+static POSIX_ERRNO pins_free(
+                       DEV_NUM_MAJOR const major,
+                       DEV_NUM_MINOR const minor
+				   )
+{
+    POSIX_ERRNO ret = POSIX_ERRNO_ENONE;
+    unsigned int const mnr =( minor - PIN_NUM_START );
+	int i;
+
+    switch( major )
+    {
+        case DEV_NUM_GPIO:
+        {
+			if( 0 == assigned_pins[ major ][ mnr ])
+            {
+                ret = POSIX_ERRNO_ENODEV;
+            }
+            else
+            if( PIN_STATE_FREE == pinstate[ mnr ])
+            {
+                ret = POSIX_ERRNO_ENOTCONN;
+            }
+            else
+            {
+                pinstate[ mnr ]= PIN_STATE_FREE;
+                pinmode[ mnr ]= DEV_MODE_UNBUFFERED;
+            }
+        }
+        break;
+
+        case DEV_NUM_SPI:
+        case DEV_NUM_I2C:  // same code as i2c pin numbers lie within limits of spi
+        {
+            for( i = SPI_SS; SPI_MOSI > i; i++ )
+            {
+                unsigned int const mnri =( i - PIN_NUM_START );
+
+                if(( assigned_pins[ major ][ mnri ])&&
+                   ( PIN_STATE_FREE == pinstate[ mnri ]))
+				{
+                    ret = POSIX_ERRNO_ENOTCONN;
+					break;
+				}
+            }
+			
+			if( POSIX_ERRNO_ENOTCONN != ret )
+			{
+                for( i = SPI_SS; SPI_MOSI > i; i++ )
+                {
+                    unsigned int const mnri =( i - PIN_NUM_START );
+
+                    if( assigned_pins[ major ][ mnri ])
+			    	{
+                        pinstate[ mnri ]= PIN_STATE_FREE;
+                        pinmode[ mnri ]= DEV_MODE_UNBUFFERED;
+    				}
+                }
+			}
+        }
+        break;
+
+        case DEV_NUM_UART:
+		{
+			if( 0 == minor )
+            {
+                ret = POSIX_ERRNO_EBUSY;  /* eZ80 - VDP link */
+            }
+			else
+			if( 1 == minor )
+            {
+				PIN_NUM end = UART_1_RI;
+			
+				if( DEV_MODE_UART_HW_FLOWCTRL & pinmode[ major ]) end = UART_1_CTS;
+				if( DEV_MODE_UART_MOD_FLOWCTRL & pinmode[ major ]) end = UART_1_RI;
+			
+				for( i = UART_1_TXD; end > i; i++ )
+                {
+                    unsigned int const mnri =( i - PIN_NUM_START );
+
+                    if( PIN_STATE_FREE == pinstate[ mnri ])
+			    	{
+                        ret = POSIX_ERRNO_ENOTCONN;
+					    break;
+    				}
+                }
+			
+		    	if( POSIX_ERRNO_ENOTCONN != ret )
+			    {
+                    for( i = UART_1_TXD; end > i; i++ )
+                    {
+                        unsigned int const mnri =( i - PIN_NUM_START );
+
+                        pinstate[ mnri ]= PIN_STATE_FREE;
+                        pinmode[ mnri ]= DEV_MODE_UNBUFFERED;
+                    }
+	    		}
+			}
+			else
+            {
+                ret = POSIX_ERRNO_ENODEV;
+            }
+		}
+		break;
+		
+        default:
+        {
+            ret = POSIX_ERRNO_ENODEV;
+        }
+        break;
+    }
+
+    return( ret );
+}
+
+#endif  /*( 1 == configUSE_DEV_SAFEGUARDS )*/
+
+
+/*------ Generic Driver Functions -------------------------------------------*/
+
+#if( 1 == configUSE_DEV_SAFEGUARDS )
+
+/* dev_open
+   Generic function to Open a device for i/o
+   Checks the major and mionor device numbers range
+   Checks that the required minor device pins are free
+   Invokes the device-specific open function for minor device configuration */
 static POSIX_ERRNO dev_open( 
                        DEV_NUM_MAJOR const major,
-                       unsigned short const minor,  // used by gpio, 0 otherwise
+                       DEV_NUM_MINOR const minor,
                        DEV_MODE const mode
                    )
 {
-    return( POSIX_ERRNO_ENONE );
+    POSIX_ERRNO ret = POSIX_ERRNO_ENONE;
+
+    /* 1. allocate the device pins; 
+          this also tests major, minor numbers,
+	      and if the device is already open */
+    portENTER_CRITICAL( );
+    {
+        ret = pins_alloc( major, minor, mode );
+    }
+    portEXIT_CRITICAL( );
+
+#   if defined( _DEBUG )
+        ( void )printf( "%s : %d : ret = 0x%x\r\n", __FILE__, __LINE__, ret );
+#   endif
+
+    /* 2. open the device */
+    if( POSIX_ERRNO_ENONE == ret )
+    {
+        switch( major )
+        {
+            case DEV_NUM_GPIO:
+            {
+#   if defined( _DEBUG )
+        ( void )printf( "%s : %d\r\n", __FILE__, __LINE__ );
+#   endif
+                ret = gpio_dev_open( minor, mode );
+            }
+            break;
+
+            case DEV_NUM_UART:
+            {
+                ret = uart_dev_open( mode );
+            }
+            break;
+
+            case DEV_NUM_SPI:
+            {
+                ret = spi_dev_open( mode );
+            }
+            break;
+
+            case DEV_NUM_I2C:
+            {
+                ret = i2c_dev_open( mode );
+            }
+            break;
+
+            default:  /* not needed; already tested major number in pins_assign */
+            break;
+        }
+
+        if( POSIX_ERRNO_ENONE != ret )
+		{
+            portENTER_CRITICAL( );
+            {
+			    pins_free( major, minor );
+			}
+			portEXIT_CRITICAL( );
+		}
+    }
+
+    return( ret );
 }
 
 
-    /* DEV_API: dev_close
-       Close a previously opened device
-       Defined in mosapi.c */
+/* dev_close
+   Generic function to Close a previously opened device
+   Checks the major and minor device numbers range
+   Checks that the required minor device pins are free
+   Invokes the device-specific close function for minor device closure */
 static void dev_close( 
                 DEV_NUM_MAJOR const major,
-                unsigned short const minor
+                DEV_NUM_MINOR const minor
             )
 {
+    POSIX_ERRNO ret = POSIX_ERRNO_ENONE;
+
+    /* 1. close the device and detach any interrupt handlers */
+    switch( major )
+    {
+        case DEV_NUM_GPIO:
+        {
+            if(( GPIO_13 > minor )||( GPIO_26 < minor ))
+            {
+                ret = POSIX_ERRNO_ENODEV;
+            }
+            else
+            if( GPIO_25 == minor )   // PB2 (cannot be assigned due to MOS SPI software)
+            {
+                ret = POSIX_ERRNO_EADDRINUSE;
+            }
+            else
+            if( DEV_MODE_UNBUFFERED == pinmode[( minor - PIN_NUM_START )])
+            {
+                ret = POSIX_ERRNO_ENSRCH;
+            }
+            else
+            {
+                gpio_dev_close( minor );
+            }
+        }
+        break;
+
+        case DEV_NUM_UART:
+        {
+            if( DEV_MODE_UNBUFFERED == pinmode[( UART_1_TXD - PIN_NUM_START )])
+            {
+                ret = POSIX_ERRNO_ENSRCH;
+            }
+            else
+            {
+                uart_dev_close( );
+			}
+        }
+        break;
+
+        case DEV_NUM_SPI:
+        {
+            if( DEV_MODE_UNBUFFERED == pinmode[( SPI_SS - PIN_NUM_START )])
+            {
+                ret = POSIX_ERRNO_ENSRCH;
+            }
+            else
+            {
+                spi_dev_close( );
+            }
+        }
+        break;
+
+        case DEV_NUM_I2C:
+        {
+            if( DEV_MODE_UNBUFFERED == pinmode[( I2C_SDA - PIN_NUM_START )])
+            {
+                ret = POSIX_ERRNO_ENSRCH;
+            }
+            else
+            {
+                i2c_dev_close( );
+			}
+        }
+        break;
+
+        default:
+        {
+            ret = POSIX_ERRNO_ENODEV;
+        }
+        break;
+    }
+
+    /* 2. Free the allocated pins */
+    if(( POSIX_ERRNO_ENODEV != ret )&&
+       ( POSIX_ERRNO_EADDRINUSE != ret )&&
+       ( POSIX_ERRNO_ENSRCH != ret ))
+    {
+        portENTER_CRITICAL( );
+        {
+            pins_free( major, minor );
+        }
+        portEXIT_CRITICAL( );
+    }
 }
 
 
-    /* DEV_API: dev_read
-       Read data from a previously opened device
-       Calling task may block if opened in UART_MODE_UNBUFFERED
-       Defined in mosapi.c */
+/* dev_read
+   Read data from a previously opened device
+   Calling task may block if opened in UART_MODE_UNBUFFERED */
 static POSIX_ERRNO dev_read( 
                        DEV_NUM_MAJOR const major,
-                       unsigned short const minor,
+                       DEV_NUM_MINOR const minor,
                        void * const buffer,
                        size_t const num_bytes_to_read,
-                       size_t * const num_bytes_read
+                       size_t * num_bytes_read
                    )
 {
-    return( POSIX_ERRNO_ENONE );
+    POSIX_ERRNO ret = POSIX_ERRNO_ENONE;
+
+    switch( major )
+    {
+        case DEV_NUM_GPIO:
+        {
+            if(( GPIO_13 > minor )||( GPIO_26 < minor ))
+            {
+                ret = POSIX_ERRNO_ENODEV;
+            }
+            else
+            if( GPIO_25 == minor )   // PB2 (cannot be assigned due to MOS SPI software)
+            {
+                ret = POSIX_ERRNO_EADDRINUSE;
+            }
+            else
+            if( DEV_MODE_UNBUFFERED == pinmode[( minor - PIN_NUM_START )])
+            {
+                ret = POSIX_ERRNO_ENSRCH;
+            }
+            else
+            {
+                ret = gpio_dev_read( minor, buffer );
+            }
+        }
+        break;
+
+        case DEV_NUM_UART:
+        {
+            if( DEV_MODE_UNBUFFERED == pinmode[( UART_1_TXD - PIN_NUM_START )])
+            {
+                ret = POSIX_ERRNO_ENSRCH;
+            }
+            else
+            {
+                ret = uart_dev_read(
+                          buffer, 
+                          num_bytes_to_read,
+                          num_bytes_read );
+			}
+        }
+        break;
+
+        case DEV_NUM_SPI:
+        {
+            if( DEV_MODE_UNBUFFERED == pinmode[( SPI_SS - PIN_NUM_START )])
+            {
+                ret = POSIX_ERRNO_ENSRCH;
+            }
+            else
+            {
+                ret = spi_dev_read(
+                          buffer, 
+                          num_bytes_to_read,
+                          num_bytes_read );
+            }
+        }
+        break;
+
+        case DEV_NUM_I2C:
+        {
+            if( DEV_MODE_UNBUFFERED == pinmode[( I2C_SDA - PIN_NUM_START )])
+            {
+                ret = POSIX_ERRNO_ENSRCH;
+            }
+            else
+            {
+                ret = i2c_dev_read(
+                          buffer, 
+                          num_bytes_to_read,
+                          num_bytes_read );
+			}
+        }
+        break;
+
+        default:
+        {
+            ret = POSIX_ERRNO_ENODEV;
+        }
+        break;
+    }
+
+    return( ret );
 }
 
 
-    /* DEV_API: dev_write
-       Write data to a previously opened device
-       Calling task may block if opened in UART_MODE_UNBUFFERED
-       Defined in mosapi.c */
+/* dev_write
+   Write data to a previously opened device
+   Calling task may block if opened in UART_MODE_UNBUFFERED */
 static POSIX_ERRNO dev_write( 
                        DEV_NUM_MAJOR const major,
-                       unsigned short const minor,
+                       DEV_NUM_MINOR const minor,
                        void * const buffer,
                        size_t const num_bytes_to_write,
                        size_t * const num_bytes_written
                    )
 {
-    return( POSIX_ERRNO_ENONE );
+    POSIX_ERRNO ret = POSIX_ERRNO_ENONE;
+
+    switch( major )
+    {
+        case DEV_NUM_GPIO:
+        {
+            if(( GPIO_13 > minor )||( GPIO_26 < minor ))
+            {
+                ret = POSIX_ERRNO_ENODEV;
+            }
+            else
+            if( GPIO_25 == minor )   // PB2 (cannot be assigned due to MOS SPI software)
+            {
+                ret = POSIX_ERRNO_EADDRINUSE;
+            }
+            else
+            if( DEV_MODE_UNBUFFERED == pinmode[( minor - PIN_NUM_START )])
+            {
+                ret = POSIX_ERRNO_ENSRCH;
+            }
+            else
+            {
+                ret = gpio_dev_write( minor, *(( unsigned char * )buffer ));
+            }
+        }
+        break;
+
+        case DEV_NUM_UART:
+        {
+            if( DEV_MODE_UNBUFFERED == pinmode[( UART_1_TXD - PIN_NUM_START )])
+            {
+                ret = POSIX_ERRNO_ENSRCH;
+            }
+            else
+            {
+                ret = uart_dev_write(
+                          buffer, 
+                          num_bytes_to_write,
+                          num_bytes_written );
+			}
+        }
+        break;
+
+        case DEV_NUM_SPI:
+        {
+            if( DEV_MODE_UNBUFFERED == pinmode[( SPI_SS - PIN_NUM_START )])
+            {
+                ret = POSIX_ERRNO_ENSRCH;
+            }
+            else
+            {
+                ret = spi_dev_write(
+                          buffer, 
+                          num_bytes_to_write,
+                          num_bytes_written );
+            }
+        }
+        break;
+
+        case DEV_NUM_I2C:
+        {
+            if( DEV_MODE_UNBUFFERED == pinmode[( I2C_SDA - PIN_NUM_START )])
+            {
+                ret = POSIX_ERRNO_ENSRCH;
+            }
+            else
+            {
+                ret = i2c_dev_write(
+                          buffer, 
+                          num_bytes_to_write,
+                          num_bytes_written );
+			}
+        }
+        break;
+
+        default:
+        {
+            ret = POSIX_ERRNO_ENODEV;
+        }
+        break;
+    }
+
+    return( ret );
 }
 
 
-    /* DEV_API: dev_poll
-       Retrieve buffers state in previously opened device */
+/* dev_poll
+   Retrieve buffers state in previously opened device */
 static POSIX_ERRNO dev_poll( 
                        DEV_NUM_MAJOR const major,
                        unsigned short const minor,
@@ -216,16 +788,17 @@ static POSIX_ERRNO dev_poll(
     return( POSIX_ERRNO_ENONE );
 }
 
-#endif /* configUSE_DEV_DEVICE_DRIVERS */
+#endif  /*( 1 == configUSE_DEV_SAFEGUARDS )*/
+
+#endif  /* configUSE_DEV_DEVICE_DRIVERS */
 
 
-/*----- Function definitions ------------------------------------------------*/
+/*----- DEV API User Function definitions -----------------------------------*/
 #if( 1 == configUSE_DRV_UART )
-    /* DEV_API: uart_open
-       Open UART1 for i/o
-       Defined in devapi.c */
+/* DEV_API: uart_open
+   Open UART1 for i/o */
 POSIX_ERRNO uart_open( 
-                void 
+                DEV_MODE const mode 
             )
 {
 //             To enable interrupts assign a handler
@@ -234,9 +807,8 @@ POSIX_ERRNO uart_open(
 }
 
 
-    /* DEV_API: uart_close
-       Close previously opened UART1
-       Defined in devapi.c */
+/* DEV_API: uart_close
+   Close previously opened UART1 */
 POSIX_ERRNO uart_close( 
                 void 
             )
@@ -245,9 +817,8 @@ POSIX_ERRNO uart_close(
 }
 
 
-    /* DEV_API: uart_read
-       Read data from previously opened UART1
-       Defined in devapi.c */
+/* DEV_API: uart_read
+   Read data from previously opened UART1 */
 POSIX_ERRNO uart_read(
                 void * const buffer,
                 size_t const num_bytes_to_read
@@ -257,9 +828,8 @@ POSIX_ERRNO uart_read(
 }
 
 
-    /* DEV_API: uart_write
-       Read data from previously opened UART1
-       Defined in devapi.c */
+/* DEV_API: uart_write
+   Write data to previously opened UART1 */
 POSIX_ERRNO uart_write(
                 void * const buffer,
                 size_t const num_bytes_to_write,
@@ -271,8 +841,7 @@ POSIX_ERRNO uart_write(
 
 
 /* DEV_API: uart_poll
-       Poll previously opened UART1
-       Defined in devapi.c */
+   Poll previously opened UART1 */
 POSIX_ERRNO uart_poll(
                 size_t * num_bytes_to_read,    // content of uart input buffer
                 size_t * num_bytes_to_write    // free space in uart output buffer
@@ -284,20 +853,18 @@ POSIX_ERRNO uart_poll(
 
 
 #if( 1 == configUSE_DRV_I2C )
-    /* DEV_API: i2c_open
-       Open I2C for i/o
-       Defined in devapi.c */
+/* DEV_API: i2c_open
+   Open I2C for i/o */
 POSIX_ERRNO i2c_open( 
-                void 
+                DEV_MODE const frequency 
             )
 {
     return( POSIX_ERRNO_ENONE );
 }
 
 
-    /* DEV_API: i2c_close
-       Close previously opened I2C
-       Defined in devapi.c */
+/* DEV_API: i2c_close
+   Close previously opened I2C */
 POSIX_ERRNO i2c_close( 
                 void 
             )
@@ -306,9 +873,8 @@ POSIX_ERRNO i2c_close(
 }
 
 
-    /* DEV_API: i2c_read
-       Read data from previously opened I2C
-       Defined in devapi.c */
+/* DEV_API: i2c_read
+   Read data from previously opened I2C */
 POSIX_ERRNO i2c_read(
                 void * const buffer,
                 size_t const num_bytes_to_read
@@ -318,9 +884,8 @@ POSIX_ERRNO i2c_read(
 }
 
 
-    /* DEV_API: i2c_write
-       Read data from previously opened I2C
-       Defined in devapi.c */
+/* DEV_API: i2c_write
+   Write data to a previously opened I2C */
 POSIX_ERRNO i2c_write(
                 void * const buffer,
                 size_t const num_bytes_to_write
@@ -332,20 +897,18 @@ POSIX_ERRNO i2c_write(
 
 
 #if( 1 == configUSE_DRV_SPI )
-    /* DEV_API: spi_open
-       Open SPI for i/o
-       Defined in devapi.c */
+/* DEV_API: spi_open
+   Open SPI for i/o */
 POSIX_ERRNO spi_open( 
-                void 
+                DEV_MODE const mode 
             )
 {
     return( POSIX_ERRNO_ENONE );
 }
 
 
-    /* DEV_API: spi_close
-       Close previously opened SPI
-       Defined in devapi.c */
+/* DEV_API: spi_close
+   Close previously opened SPI */
 POSIX_ERRNO spi_close( 
                 void 
             )
@@ -354,9 +917,8 @@ POSIX_ERRNO spi_close(
 }
 
 
-    /* DEV_API: spi_read
-       Read data from previously opened SPI
-       Defined in devapi.c */
+/* DEV_API: spi_read
+   Read data from previously opened SPI */
 POSIX_ERRNO spi_read(
                 void * const buffer,
                 size_t const num_bytes_to_read
@@ -366,9 +928,8 @@ POSIX_ERRNO spi_read(
 }
 
 
-    /* DEV_API: spi_write
-       Read data from previously opened SPI
-       Defined in devapi.c */
+/* DEV_API: spi_write
+   Write data to a previously opened SPI */
 POSIX_ERRNO spi_write(
                 void * const buffer,
                 size_t const num_bytes_to_write
@@ -384,10 +945,29 @@ POSIX_ERRNO spi_write(
        Open GPIO for i/o
        Defined in devapi.c */
 POSIX_ERRNO gpio_open( 
-                GPIO_PIN_NUM const pin 
+                GPIO_PIN_NUM const pin,
+                DEV_MODE const mode,
+                unsigned char const init
             )
 {
-    return( POSIX_ERRNO_ENONE );
+    POSIX_ERRNO res;
+	
+    gpio_initial_output_value[ pin - PIN_NUM_START ]= init;
+
+#   if( 1 == configUSE_DEV_SAFEGUARDS )
+	{
+#       if defined( _DEBUG )
+            ( void )printf( "%s : %d : mode = 0x%x\r\n", __FILE__, __LINE__, mode );
+#       endif
+        res = dev_open( DEV_NUM_GPIO, pin, mode );
+    }
+#   else
+	{
+        res = gpio_dev_open( pin, mode );
+    }
+#   endif
+
+    return( res );
 }
 
 
@@ -395,9 +975,19 @@ POSIX_ERRNO gpio_open(
        Close previously opened GPIO
        Defined in devapi.c */
 POSIX_ERRNO gpio_close( 
-                void 
+                GPIO_PIN_NUM const pin
             )
 {
+#   if( 1 == configUSE_DEV_SAFEGUARDS )
+	{
+        dev_close( DEV_NUM_GPIO, pin );
+    }
+#   else
+	{
+        gpio_dev_close( pin );
+    }
+#   endif
+
     return( POSIX_ERRNO_ENONE );
 }
 
@@ -406,20 +996,44 @@ POSIX_ERRNO gpio_close(
        Read data from previously opened GPIO
        Defined in devapi.c */
 POSIX_ERRNO gpio_read(
-                void * const buffer
+                GPIO_PIN_NUM const pin,
+                unsigned char * const buffer
             )
 {
+#   if( 1 == configUSE_DEV_SAFEGUARDS )
+	{
+        dev_read( DEV_NUM_GPIO, pin, buffer, 1, NULL );
+    }
+#   else
+	{
+        gpio_dev_read( pin, buffer );
+    }
+#   endif
+
     return( POSIX_ERRNO_ENONE );
 }
 
 
     /* DEV_API: gpio_write
-       Read data from previously opened GPIO
+       Write data to previously opened GPIO
        Defined in devapi.c */
 POSIX_ERRNO gpio_write(
-                void * const buffer
+                GPIO_PIN_NUM const pin,
+                unsigned char const val
             )
 {
+#   if( 1 == configUSE_DEV_SAFEGUARDS )
+	{
+        dev_write( DEV_NUM_GPIO, pin, &val, 1, NULL );
+    }
+#   else
+	{
+        gpio_dev_write( pin, val );
+    }
+#   endif
+
     return( POSIX_ERRNO_ENONE );
 }
+
+
 #endif  /* 1 == configUSE_DRV_GPIO */

@@ -62,7 +62,7 @@ DEFINE __heaptop =( highaddr of RAM + 1 )- $010000
 DEFINE __heapbot =( highaddr of RAM + 1 )- $020000
 
 
-"DemoMOS"= \
+"DemoDEV"= \
  ".\init.obj", \
  ".\mosvec24.obj", \
  ".\mosapi24.obj", \
@@ -71,6 +71,11 @@ DEFINE __heapbot =( highaddr of RAM + 1 )- $020000
  ".\FPDUMY.obj", \
  ".\main.obj", \
  ".\mosapi.obj", \
+ ".\devapi.obj", \
+ ".\devgpio.obj", \
+ ".\devi2c.obj", \
+ ".\devspi.obj", \
+ ".\devuart.obj", \
  ".\croutine.obj", \
  ".\event_groups.obj", \
  ".\list.obj", \

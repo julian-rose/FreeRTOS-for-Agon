@@ -65,7 +65,7 @@ typedef enum _posix_errno
     POSIX_ERRNO_ENSRCH          =(   3 << 8 ),  /* No such process */
     POSIX_ERRNO_EINTR           =(   4 << 8 ),  /* Interrupted system call */
     POSIX_ERRNO_EIO             =(   5 << 8 ),  /* I/O error */
-    POSIX_ERRNO_ENXIO           =(   6 << 8 ),  /* No such device or address */
+    POSIX_ERRNO_ENXIO           =(   6 << 8 ),  /* Extended I/O error */
     POSIX_ERRNO_ETOOBIG         =(   7 << 8 ),  /* Argument too long */
     POSIX_ERRNO_NOEXEC          =(   8 << 8 ),  /* Exec format error */
     POSIX_ERRNO_EBADF           =(   9 << 8 ),  /* Bad file number */
@@ -75,7 +75,7 @@ typedef enum _posix_errno
     POSIX_ERRNO_EACCES          =(  13 << 8 ),  /* Permission denied */
     POSIX_ERRNO_EFAULT          =(  14 << 8 ),  /* Bad address */
     POSIX_ERRNO_NOTBLK          =(  15 << 8 ),  /* Not a block device */
-    POSIX_ERRNO_EBUSY           =(  16 << 8 ),  /* Mount device busy */
+    POSIX_ERRNO_EBUSY           =(  16 << 8 ),  /* Device busy */
     POSIX_ERRNO_EEXIST          =(  17 << 8 ),  /* File exists */
     POSIX_ERRNO_EXDEV           =(  18 << 8 ),  /* Cross-device link */
     POSIX_ERRNO_ENODEV          =(  19 << 8 ),  /* No such device */
@@ -153,8 +153,37 @@ typedef enum _posix_errno
 
 typedef enum _dev_mode
 {
-    DEV_MODE_UNBUFFERED = 0,   // blocking mode, calling task may block
-    DEV_MODE_BUFFERED   = 1    // non-blocking mode, calling task will not block
+    /* generic modes */
+    DEV_MODE_UNBUFFERED        =( 0x0 << 0 ),  // blocking mode, calling task may block
+    DEV_MODE_BUFFERED          =( 0x1 << 0 ),  // non-blocking mode, calling task will not block
+    DEV_MODE_BUFFERED_MASK     =( 0x1 << 0 ),
+
+    /* GPIO modes (as per Zilog PS015317 table 6) */
+    DEV_MODE_GPIO_OUT          =( 0x1 << 1 ),  // Mode 1 - standard digital output
+    DEV_MODE_GPIO_IN           =( 0x2 << 1 ),  // Mode 2 - standard digital input
+    DEV_MODE_GPIO_DIO          =( 0x3 << 1 ),  // Mode 3 - Open Drain I/O (needs external pullup)
+    DEV_MODE_GPIO_SIO          =( 0x4 << 1 ),  // Mode 4 - Open Source I/O (needs external pulldown)
+    DEV_MODE_GPIO_INTRDE       =( 0x6 << 1 ),  // Mode 6 - Input Dual-Edge triggered INTR
+    DEV_MODE_GPIO_ALTFUNC      =( 0x7 << 1 ),  // Mode 7 - Alternate hardware function
+    DEV_MODE_GPIO_INTRLOW      =( 0x8 << 1 ),  // Mode 8 - Input Interrupt active level low
+    DEV_MODE_GPIO_INTRHIGH     =( 0x9 << 1 ),  // Mode 8 - Input Interrupt active level high
+    DEV_MODE_GPIO_INTRFALL     =( 0xA << 1 ),  // Mode 9 - Input Interrupt active falling edge
+    DEV_MODE_GPIO_INTRRISE     =( 0xB << 1 ),  // Mode 9 - Input Interrupt active rising edge
+    DEV_MODE_GPIO_MASK         =( 0xF << 1 ),
+
+    /* UART modes */
+    DEV_MODE_UART_NO_FLOWCTRL  =( 0x1 << 5 ),  // no hardware flow control (uart= only rx, tx)
+    DEV_MODE_UART_HW_FLOWCTRL  =( 0x2 << 5 ),  // hardware flow control (uart += rts,cts)
+    DEV_MODE_UART_MOD_FLOWCTRL =( 0x3 << 5 ),  // modem hardware flow control (uart += dsr,dtr,ri,dcd)
+    DEV_MODE_UART_MASK         =( 0x3 << 5 ),
+
+    /* I2C modes */
+    DEV_MODE_I2C_FREQ_DEFAULT  =( 0x1 << 7 ),  // I2C frequency 57600 bps
+    DEV_MODE_I2C_FREQ_57600    =( 0x1 << 7 ),  // I2C frequency 57600 bps
+    DEV_MODE_I2C_FREQ_115200   =( 0x2 << 7 ),  // I2C frequency 115200 bps
+    DEV_MODE_I2C_FREQ_230400   =( 0x3 << 7 ),  // I2C frequency 230400 bps
+    DEV_MODE_I2C_MASK          =( 0x3 << 7 ),
+
 } DEV_MODE;
 
 
@@ -183,9 +212,7 @@ typedef enum _gpio_pin_num
     GPIO_23        = 23,   // GPIO pin 23   (PC6)
     GPIO_24        = 24,   // GPIO pin 24   (PC7)
     GPIO_25        = 25,   // GPIO pin 25   (PB2)
-    GPIO_26        = 26,   // GPIO pin 26   (PB5)
-
-    GPIO_PIN_NUM_END
+    GPIO_26        = 26    // GPIO pin 26   (PB5)
 
 } GPIO_PIN_NUM;
 
@@ -198,7 +225,7 @@ typedef enum _gpio_pin_num
        Open UART1 for i/o
        Defined in devapi.c */
 POSIX_ERRNO uart_open( 
-                void 
+                DEV_MODE const mode 
             );
 
 
@@ -220,7 +247,7 @@ POSIX_ERRNO uart_read(
 
 
     /* DEV_API: uart_write
-       Read data from previously opened UART1
+       Write data to a previously opened UART1
        Defined in devapi.c */
 POSIX_ERRNO uart_write(
                 void * const buffer,
@@ -240,9 +267,13 @@ POSIX_ERRNO uart_poll(
 
     /* DEV_API: i2c_open
        Open I2C for i/o
+	   Frequency is one of 
+	     DEV_MODE_I2C_FREQ_57600, 
+		 DEV_MODE_I2C_FREQ_115200,
+         DEV_MODE_I2C_FREQ_230400.
        Defined in devapi.c */
 POSIX_ERRNO i2c_open( 
-                void 
+                DEV_MODE const frequency 
             );
 
 
@@ -264,7 +295,7 @@ POSIX_ERRNO i2c_read(
 
 
     /* DEV_API: i2c_write
-       Read data from previously opened I2C
+       Write data to a previously opened I2C
        Defined in devapi.c */
 POSIX_ERRNO i2c_write(
                 void * const buffer,
@@ -276,7 +307,7 @@ POSIX_ERRNO i2c_write(
        Open SPI for i/o
        Defined in devapi.c */
 POSIX_ERRNO spi_open( 
-                void 
+                DEV_MODE const mode
             );
 
 
@@ -298,7 +329,7 @@ POSIX_ERRNO spi_read(
 
 
     /* DEV_API: spi_write
-       Read data from previously opened SPI
+       Write data to a previously opened SPI
        Defined in devapi.c */
 POSIX_ERRNO spi_write(
                 void * const buffer,
@@ -310,7 +341,9 @@ POSIX_ERRNO spi_write(
        Open GPIO for i/o
        Defined in devapi.c */
 POSIX_ERRNO gpio_open( 
-                GPIO_PIN_NUM const pin 
+                GPIO_PIN_NUM const pin, 
+                DEV_MODE const mode,
+                unsigned char const init
             );
 
 
@@ -318,7 +351,7 @@ POSIX_ERRNO gpio_open(
        Close previously opened GPIO
        Defined in devapi.c */
 POSIX_ERRNO gpio_close( 
-                void 
+                GPIO_PIN_NUM const pin
             );
 
 
@@ -326,15 +359,17 @@ POSIX_ERRNO gpio_close(
        Read data from previously opened GPIO
        Defined in devapi.c */
 POSIX_ERRNO gpio_read(
-                void * const buffer
+                GPIO_PIN_NUM const pin,
+                unsigned char * const val
             );
 
 
     /* DEV_API: gpio_write
-       Read data from previously opened GPIO
+       Write data to a previously opened GPIO
        Defined in devapi.c */
 POSIX_ERRNO gpio_write(
-                void * const buffer
+                GPIO_PIN_NUM const pin,
+                unsigned char const val
             );
 
 

@@ -2,9 +2,10 @@
 
 
 <h2>Description</h2>
-FreeRTOS port for the Zilog eZ80-based Agon Light (and compatibles) running MOS.
-The concept is very much FreeRTOS over MOS, reflected in the project name.
-FreeRTOS provides concurrency and time, and MOS provides the system services.
+Targetting Agon as a Micro-controller, FreeRTOS port for the Zilog eZ80-based 
+Agon Light (and compatibles) running MOS. The concept is very much FreeRTOS 
+over MOS, reflected in the project name. FreeRTOS provides concurrency and 
+time, and MOS provides the system services.
 <p>
 
 This Agon Light port integrates FreeRTOS version 20221201-LTS (10.5.1) with 
@@ -25,8 +26,7 @@ FreeRTOS is not an operating system in the sense of MOS or CP/M, which provide
 a command console interpreter and long-term storage. Instead, FreeRTOS for Agon 
 applications run on MOS to access its services. No re-Flashing is required -
 you just build and link a C language application together with the FreeRTOS 
-software into a MOS executable. FreeRTOS, while a general framework, is of 
-particular interest for using Agon as a micro-controller.
+software into a MOS executable. 
 
 <h4>Why do we care about concurrency and time?</h4>
 In a nutshell, because they are in the real world. And a micro-controller 
@@ -40,6 +40,12 @@ one small, low-cost board. Refer to https://github.com/TheByteAttic/AgonLight.
 It embeds two processor sub-systems: the eZ80-based main processor, which runs 
 MOS (and where FreeRTOS programs will run); and the ESP32-based VDP terminal 
 processor, which primarily performs I/O functions.
+<p>
+
+Agon is well-suited to the role of micro-controller through the Extensions
+Interface, providing UART, SPI, I2C and GPIO connectivity. Moreover, with its
+tightly integrated VDP, users can develop a GUI to visualise the system under 
+control, or to graph I/O. 
 
 <h3>What is MOS?</h3>
 MOS is the Machine Operating System for Agon Light and compatibles. It runs on 
@@ -50,19 +56,15 @@ through SD-cards. Refer to https://agonconsole8.github.io/agon-docs/MOS/.
 
 <h4>MOS versions</h4>
 FreeRTOS for Agon is built to MOS version 1.04. Version 1.03 may work, but has 
-not been tested. Likewise newer Console8 versions of MOS should work, but have 
+not been tested. Likewise newer Console8 versions of MOS will work, but have 
 not been tested. Console8-specific MOS and VDP functions are not yet supported. 
 There are a small number of tightly coupled dependencies in parts of the code 
-(such as the keyboard read functions) which may fail if differences exist 
-between versions of the MOS code.
+(such as the keyboard read functions) which may fail if differences start to
+emerge between forks of the MOS code.
 
 <h2>Project</h2>
 FreeRTOS / MOS for Agon Light is a highly configurable, multi-capability 
-project. "Alpha" is the essential capability (and the initial port of FreeRTOS 
-as proof of concept running in eZ80 ADL mode). The Alpha capability supports 
-all the FreeRTOS functions; and a minimal number of MOS services, namely putch 
-(printf) and getch (scanf), and MOS function 14 setIntVector needed to attach 
-the tick ISR.
+project. 
 
 <h3>Capabilities</h3>
 <ul>
@@ -74,13 +76,21 @@ the tick ISR.
   <li>omega:     a safer version with Z80-mode tasks and the ADL-mode kernel</li>
 </ul>
 
-Each capability is configurable through user-settable definitions in config 
-header files. In this way each application only need include the capabilities 
-it requires, such that the FreeRTOS code and the built executable occupy the 
+Each capability is configurable through user-settable definitions in 
+application-specific config header files. The different capabilities are not 
+mutually exclusive; a user-application can be configured to include the exact 
+mix of capabilities it requires. In this way the built executable occupies the 
 least RAM footprint possible.
 <p>
 
 <h4>Alpha</h4>
+"Alpha" is the essential capability (and the initial port of FreeRTOS 
+as proof of concept running in eZ80 ADL mode). The Alpha capability supports 
+all the FreeRTOS functions; and a minimal number of MOS services, namely putch 
+(printf) and getch (scanf), and MOS function 14 setIntVector needed to attach 
+the tick ISR.
+<p>
+
 The "Alpha" capability is already provided, with the FreeRTOS source located in 
 ./FreeRTOSv202212.01-LTS/FreeRTOS/Source/ and the eZ80 portable code in
 ./FreeRTOSv202212.01-LTS/FreeRTOS/Source/portable/Community-Supported-Ports/ZDSII/eZ80AgonLight/.
@@ -88,18 +98,37 @@ You can already use "Alpha" to develop full FreeRTOS applications that will run
 on Agon. 
 <p>
 
+Alpha capabilities are configured in the usual FreeRTOS way, through the
+header file FreeRTOSConfig.h, customised for each user application.
+
 <h4>Beta</h4>
 The "Beta" capability is currently being developed, with the sources located in 
-./FreeRTOSv202212.01-LTS/FreeRTOS/Source/mos/. This capability adds support for
-for most of the MOS API defined in
-https://agonconsole8.github.io/agon-docs/MOS-API/#the-mos-api
+./FreeRTOSv202212.01-LTS/FreeRTOS/Source/mos/. 
+This capability adds support for most of the MOS API defined in
+https://agonconsole8.github.io/agon-docs/MOS-API/#the-mos-api, as well as
+an additonal DEV API. 
+<p>
+
 The MOS command line functions (mos_dir, mos_oscli, mos_ediline) are not 
-provided; and only the subset of FFS that does not require Console8 MOS 2.2.0 
+supported; and only the subset of FFS that does not require Console8 MOS 2.2.0 
 or greater are provided (that means no ffs_dopen, ffs_dclose, ffs_dread).
 <p>
 
-In addition to the MOS API, an extended DEV API is provided for safeguarded 
-access to SPI, UART, I2C and GPIO.
+The MOS API is implemented in Assembly language for best performance. In 
+addition to FreeRTOSConfig.h used to configure Alpha capabilities, users 
+configure MOS API capabilities through an application-specific mosConfig.inc 
+header file, to select which MOS APIs should be linked into the executable.
+<p>
+
+In addition to the MOS API, Beta capabilties include a new DEV API. This 
+extends the MOS services to access the Agon Extensions Interface directly. It 
+provides a safeguarded API for SPI, UART, I2C and GPIO; and through them to 
+connected devices. The DEV API enhances the Uart and I2C capability of MOS, 
+and provides APIs for GPIO and SPI that are absent in the MOS API. 
+<p>
+
+Users configure the DEV API through an application-specific devConfig.h file, 
+to select the extended interfaces for linking into the executable. 
 
 <h3>Demos</h3>
 The FreeRTOS / MOS for Agon port provides the source and binaries to 'Demo'
@@ -135,10 +164,11 @@ better demonstrate the speed of FreeRTOS / MOS on Agon.
 <h4>Beta Demos</h4>
 A Beta demo is found in ./FreeRTOSv202212.01-LTS/FreeRTOS/Demo/DemoMOS/.
 DemoMOS uses the MOS API to access MOS services, including files, directory,
-and devices including the keyboard, Uart, I2C, SPI and GPIO serial interfaces. 
-Beta projects include the configuration file mosConfig.inc, to select which 
-APIs should be linked into the executable, mirroring the FreeRTOSConfig.h file;
-and the API library files too.
+and MOS devices including the keyboard, Uart, and I2C interfaces. 
+<p>
+
+A second Beta demo is found in ./FreeRTOSv202212.01-LTS/FreeRTOS/Demo/DemoDEV/.
+This demonstrates the new DEV API capabilities. 
 
 <h3>License</h3>
 FreeRTOS / MOS for Agon is released under the MIT license. This is done mainly
@@ -177,21 +207,15 @@ To catch those elusive resets (refer to UM007715 Illegal Instruction Traps)
 in case of stack corruption or other bugs, I now possess a $100 ZUSBASC0200ZADG 
 debug device from
 https://www.mouser.com/datasheet/2/240/Littelfuse_ZUSBASC0200ZACG_Data_Sheet-3078266.pdf
-At the moment it doesn't work on my (Windows 11) laptop :-(  ticket is with
-Zilog.
+At the moment it doesn't work on my (Windows 11) laptop as the device driver 
+fails to install :-(  ticket is with Zilog.
 <p>
 
 To use the ZUSBASC0200ZADG Acclaim! smart cable hardware debugger, you will need 
 version 5.3.5 of the ZDSII tools. Though, in general, you will not need the 
 debugger to build applications, it may speed-up your development time if you do 
-use it. FreeRTOS / MOS "alpha" was made running without a debugger, but it gave 
-my brain a workout in doing so at times. 
-
-<h3>Compiler Bugs</h3>
-There are bugs in the ZDS tools. Rather than dismiss the compiler, I would like 
-to see the Zilog tools rescued from their current maintenance contract and made 
-Open Source. What is there is fundamentally useful - and would be better off in 
-more careful hands.
+use it. FreeRTOS / MOS "alpha" and "beta" were made running without a debugger, 
+but it gave my brain a workout in doing so at times. 
 
 <h3>Re-entrancy</h3>
 I will point out, because you will run into it, that the Zilog libraries are

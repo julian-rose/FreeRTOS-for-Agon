@@ -30,7 +30,7 @@
  *  http://www.FreeRTOS.org - Documentation, latest information, license and
  *  contact details.
  *
- *  Demo application for EZ80 Agon Light
+ *  Demo application for EZ80 Agon Light FreeRTOS "Beta" capabilities (MOS API)
 */
 
 /***** Memory Regions *****/
@@ -1752,6 +1752,7 @@ void Task1( void *pvParameters )
  *   IDLE must always be in either the READY or the RUN state, and no other. 
  *   Typically used to do a heartbeat LED, or perform heap garbage collection.
 */
+#pragma asm "\tSEGMENT TASKS"
 void vApplicationIdleHook( void )
 {
     //Machen mit ein blinken light would be excellent
