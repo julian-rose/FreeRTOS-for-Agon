@@ -73,6 +73,8 @@
 
 
 /*------ UART low-level functions -------------------------------------------*/
+/* These routines normally called from devapi.c                              */
+
 /* uart_dev_open
    Device-specific uart1 open function device configuration */
 POSIX_ERRNO uart_dev_open(

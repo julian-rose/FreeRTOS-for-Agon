@@ -73,14 +73,6 @@ ENDIF
     xdef _mos_geterror          ; implement call to MOS API function 0Fh
 
 
-;******************** Globals ************************************************
-;* globals are placed in linked section BSS
-    segment BSS
-
-; Userspace hooks
-__mosapi_kbvect: DS 3           ; Pointer to keyboard callback
-
-
 ;*****************************************************************************
 ;*        library code is placed in linked section CODE
     segment CODE

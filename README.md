@@ -43,9 +43,9 @@ processor, which primarily performs I/O functions.
 <p>
 
 Agon is well-suited to the role of micro-controller through the Extensions
-Interface, providing UART, SPI, I2C and GPIO connectivity. Moreover, with its
-tightly integrated VDP, users can develop a GUI to visualise the system under 
-control, or to graph I/O. 
+Interface, providing UART, SPI, I2C and GPIO connectivity. Moreover, with its 
+integrated VDP, applications can include a sophisticated GUI to visualise the 
+system under control, or to graph I/O in real-time. 
 
 <h3>What is MOS?</h3>
 MOS is the Machine Operating System for Agon Light and compatibles. It runs on 

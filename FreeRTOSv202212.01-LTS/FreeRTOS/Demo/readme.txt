@@ -35,6 +35,8 @@ demo illustrates the speed with which FreeRTOS can run on Agon Light.
 Beta:
 DemoMOS demonstrates the MOS API provided in the Agon Light port.
 
+DemoDEV demonstrates the extended DEV API provided in the Agon Light port.
+
 -----------------------------------------------------------------
 
 Refer to https://www.freertos.org/Creating-a-new-FreeRTOS-project.html

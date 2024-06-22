@@ -287,33 +287,14 @@ void kbHndlr( VDP_KB_PACKET *keyboard_packet )
 */
 static void doKeyboardCallback( void )
 {
-    extern volatile int _mosapi_kbvect;
     int i;
     int x = 0;
-
-#   if defined( _DEBUG )&& 0
-    {
-        ( void )printf( "kbHndlr = %p\r\n", &kbHndlr );    
-    }
-#   endif
 
     ( void )printf( "\r\n\r\nRunning keyboard callback test. "
                     "Type some keys. "
                     "Press CRET to exit test\r\n" );
 
-#   if defined( _DEBUG )&& 0
-    {
-        ( void )printf( "before _mosapi_kbvect = %p\r\n", _mosapi_kbvect );
-    }
-#   endif
-
     mos_setkbvector( &kbHndlr );
-
-#   if defined( _DEBUG )&& 0
-    {
-        ( void )printf( "after _mosapi_kbvect = %p\r\n", _mosapi_kbvect );
-    }
-#   endif
 
     for( ;; )
     {
@@ -338,19 +319,7 @@ static void doKeyboardCallback( void )
         }
     }
 
-#   if defined( _DEBUG )&& 0
-    {
-        ( void )printf( "\r\nbefore 2nd _mosapi_kbvect = %p\r\n", _mosapi_kbvect );
-    }
-#   endif
-    
     mos_setkbvector( NULL );
-
-#   if defined( _DEBUG )&& 0
-    {
-        ( void )printf( "after 2nd _mosapi_kbvect = %p\r\n", _mosapi_kbvect );
-    }
-#   endif
 
     ( void )printf( "kbhcnt = %d\r\n", kbhcnt );
     if( 0 < kbidx )

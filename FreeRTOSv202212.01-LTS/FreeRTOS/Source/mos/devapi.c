@@ -48,6 +48,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdarg.h>
 
 #include <eZ80F92.h>
 
@@ -165,17 +166,17 @@ static POSIX_ERRNO pins_alloc(
                        DEV_NUM_MAJOR const major,
                        DEV_NUM_MINOR const minor,
                        DEV_MODE const mode 
-				   )
+                   )
 {
     POSIX_ERRNO ret = POSIX_ERRNO_ENONE;
     unsigned int const mnr =( minor - PIN_NUM_START );
-	int i;
+    int i;
 
     switch( major )
     {
         case DEV_NUM_GPIO:
         {
-			if(( GPIO_13 > minor )||( GPIO_26 < minor ))
+            if(( GPIO_13 > minor )||( GPIO_26 < minor ))
             {
                 ret = POSIX_ERRNO_ENODEV;
             }
@@ -185,7 +186,7 @@ static POSIX_ERRNO pins_alloc(
                 ret = POSIX_ERRNO_EADDRINUSE;
             }
             else
-			if( 0 == assigned_pins[ DEV_NUM_GPIO ][ mnr ])
+            if( 0 == assigned_pins[ DEV_NUM_GPIO ][ mnr ])
             {
                 ret = POSIX_ERRNO_ENODEV;
             }
@@ -211,55 +212,55 @@ static POSIX_ERRNO pins_alloc(
 
                 if(( assigned_pins[ DEV_NUM_GPIO ][ mnri ])&&
                    ( PIN_STATE_FREE != pinstate[ mnri ]))
-				{
+                {
                     ret = POSIX_ERRNO_EBUSY;
-					break;
-				}
+                    break;
+                }
             }
-			
-			if( POSIX_ERRNO_EBUSY != ret )
-			{
+            
+            if( POSIX_ERRNO_EBUSY != ret )
+            {
                 for( i = SPI_SS; SPI_MOSI > i; i++ )
                 {
                     unsigned int const mnri =( i - PIN_NUM_START );
 
                     if( assigned_pins[ DEV_NUM_GPIO ][ mnri ])
-			    	{
+                    {
                         pinstate[ mnri ]= PIN_STATE_INUSE;
                         pinmode[ mnri ]= mode;
-    				}
+                    }
                 }
-			}
+            }
         }
         break;
 
         case DEV_NUM_UART:
-		{
-			if( 0 == minor )
+        {
+            if( 0 == minor )
             {
                 ret = POSIX_ERRNO_EBUSY;  /* eZ80 - VDP link */
             }
-			else
-			if( 1 == minor )
+            else
+            if( 1 == minor )
             {
-				PIN_NUM end = UART_1_RI;
-			
-				if( DEV_MODE_UART_HW_FLOWCTRL & mode ) end = UART_1_CTS;
-				if( DEV_MODE_UART_MOD_FLOWCTRL & mode ) end = UART_1_RI;
-			
-				for( i = UART_1_TXD; end > i; i++ )
+                PIN_NUM end = UART_1_RI;
+            
+                if( DEV_MODE_UART_HW_FLOWCTRL & mode ) end = UART_1_CTS;
+                if( DEV_MODE_UART_MODEM_FLOWCTRL & mode ) end = UART_1_RI;
+            
+                for( i = UART_1_TXD; end > i; i++ )
                 {
                     unsigned int const mnri =( i - PIN_NUM_START );
 
                     if( PIN_STATE_FREE != pinstate[ mnri ])
-			    	{
+                    {
                         ret = POSIX_ERRNO_EBUSY;
-					    break;
-    				}
+                        break;
+                    }
                 }
-			
-		    	if( POSIX_ERRNO_EBUSY != ret )
-			    {
+            
+                if( POSIX_ERRNO_EBUSY != ret )
+                {
                     for( i = UART_1_TXD; end > i; i++ )
                     {
                         unsigned int const mnri =( i - PIN_NUM_START );
@@ -267,15 +268,15 @@ static POSIX_ERRNO pins_alloc(
                         pinstate[ mnri ]= PIN_STATE_INUSE;
                         pinmode[ mnri ]= mode;
                     }
-	    		}
-			}
-			else
+                }
+            }
+            else
             {
                 ret = POSIX_ERRNO_ENODEV;
             }
-		}
-		break;
-		
+        }
+        break;
+        
         default:
         {
             ret = POSIX_ERRNO_ENODEV;
@@ -290,17 +291,17 @@ static POSIX_ERRNO pins_alloc(
 static POSIX_ERRNO pins_free(
                        DEV_NUM_MAJOR const major,
                        DEV_NUM_MINOR const minor
-				   )
+                   )
 {
     POSIX_ERRNO ret = POSIX_ERRNO_ENONE;
     unsigned int const mnr =( minor - PIN_NUM_START );
-	int i;
+    int i;
 
     switch( major )
     {
         case DEV_NUM_GPIO:
         {
-			if( 0 == assigned_pins[ major ][ mnr ])
+            if( 0 == assigned_pins[ major ][ mnr ])
             {
                 ret = POSIX_ERRNO_ENODEV;
             }
@@ -326,55 +327,55 @@ static POSIX_ERRNO pins_free(
 
                 if(( assigned_pins[ major ][ mnri ])&&
                    ( PIN_STATE_FREE == pinstate[ mnri ]))
-				{
+                {
                     ret = POSIX_ERRNO_ENOTCONN;
-					break;
-				}
+                    break;
+                }
             }
-			
-			if( POSIX_ERRNO_ENOTCONN != ret )
-			{
+            
+            if( POSIX_ERRNO_ENOTCONN != ret )
+            {
                 for( i = SPI_SS; SPI_MOSI > i; i++ )
                 {
                     unsigned int const mnri =( i - PIN_NUM_START );
 
                     if( assigned_pins[ major ][ mnri ])
-			    	{
+                    {
                         pinstate[ mnri ]= PIN_STATE_FREE;
                         pinmode[ mnri ]= DEV_MODE_UNBUFFERED;
-    				}
+                    }
                 }
-			}
+            }
         }
         break;
 
         case DEV_NUM_UART:
-		{
-			if( 0 == minor )
+        {
+            if( 0 == minor )
             {
                 ret = POSIX_ERRNO_EBUSY;  /* eZ80 - VDP link */
             }
-			else
-			if( 1 == minor )
+            else
+            if( 1 == minor )
             {
-				PIN_NUM end = UART_1_RI;
-			
-				if( DEV_MODE_UART_HW_FLOWCTRL & pinmode[ major ]) end = UART_1_CTS;
-				if( DEV_MODE_UART_MOD_FLOWCTRL & pinmode[ major ]) end = UART_1_RI;
-			
-				for( i = UART_1_TXD; end > i; i++ )
+                PIN_NUM end = UART_1_RI;
+            
+                if( DEV_MODE_UART_HW_FLOWCTRL & pinmode[ major ]) end = UART_1_CTS;
+                if( DEV_MODE_UART_MODEM_FLOWCTRL & pinmode[ major ]) end = UART_1_RI;
+            
+                for( i = UART_1_TXD; end > i; i++ )
                 {
                     unsigned int const mnri =( i - PIN_NUM_START );
 
                     if( PIN_STATE_FREE == pinstate[ mnri ])
-			    	{
+                    {
                         ret = POSIX_ERRNO_ENOTCONN;
-					    break;
-    				}
+                        break;
+                    }
                 }
-			
-		    	if( POSIX_ERRNO_ENOTCONN != ret )
-			    {
+            
+                if( POSIX_ERRNO_ENOTCONN != ret )
+                {
                     for( i = UART_1_TXD; end > i; i++ )
                     {
                         unsigned int const mnri =( i - PIN_NUM_START );
@@ -382,15 +383,15 @@ static POSIX_ERRNO pins_free(
                         pinstate[ mnri ]= PIN_STATE_FREE;
                         pinmode[ mnri ]= DEV_MODE_UNBUFFERED;
                     }
-	    		}
-			}
-			else
+                }
+            }
+            else
             {
                 ret = POSIX_ERRNO_ENODEV;
             }
-		}
-		break;
-		
+        }
+        break;
+        
         default:
         {
             ret = POSIX_ERRNO_ENODEV;
@@ -404,80 +405,90 @@ static POSIX_ERRNO pins_free(
 #endif  /*( 1 == configUSE_DEV_SAFEGUARDS )*/
 
 
-/*------ Generic Driver Functions -------------------------------------------*/
+/*------ Private Generic Driver Functions -----------------------------------*/
 
 #if( 1 == configUSE_DEV_SAFEGUARDS )
 
 /* dev_open
    Generic function to Open a device for i/o
-   Checks the major and mionor device numbers range
+   Checks the major and minor device numbers range
    Checks that the required minor device pins are free
    Invokes the device-specific open function for minor device configuration */
 static POSIX_ERRNO dev_open( 
                        DEV_NUM_MAJOR const major,
                        DEV_NUM_MINOR const minor,
-                       DEV_MODE const mode
+                       DEV_MODE const mode,
+                       ...
                    )
 {
     POSIX_ERRNO ret = POSIX_ERRNO_ENONE;
+    va_list args;
 
     /* 1. allocate the device pins; 
           this also tests major, minor numbers,
-	      and if the device is already open */
+          and if the device is already open */
     portENTER_CRITICAL( );
     {
         ret = pins_alloc( major, minor, mode );
     }
     portEXIT_CRITICAL( );
 
-#   if defined( _DEBUG )
-        ( void )printf( "%s : %d : ret = 0x%x\r\n", __FILE__, __LINE__, ret );
-#   endif
-
     /* 2. open the device */
     if( POSIX_ERRNO_ENONE == ret )
     {
+        va_start( args, mode );
+
         switch( major )
         {
             case DEV_NUM_GPIO:
             {
-#   if defined( _DEBUG )
-        ( void )printf( "%s : %d\r\n", __FILE__, __LINE__ );
-#   endif
-                ret = gpio_dev_open( minor, mode );
+                void * genarg;  // 24-bit int-sized argument (including pointers)
+                genarg = va_arg( args, void * );
+                va_end( args );
+
+                ret = gpio_dev_open( minor, mode, genarg );
             }
             break;
 
             case DEV_NUM_UART:
             {
+                va_end( args );
+
                 ret = uart_dev_open( mode );
             }
             break;
 
             case DEV_NUM_SPI:
             {
+                va_end( args );
+
                 ret = spi_dev_open( mode );
             }
             break;
 
             case DEV_NUM_I2C:
             {
+                va_end( args );
+
                 ret = i2c_dev_open( mode );
             }
             break;
 
-            default:  /* not needed; already tested major number in pins_assign */
+            default:  /* already tested major number in pins_assign */
+            {
+                va_end( args );
+            }
             break;
         }
 
         if( POSIX_ERRNO_ENONE != ret )
-		{
+        {
             portENTER_CRITICAL( );
             {
-			    pins_free( major, minor );
-			}
-			portEXIT_CRITICAL( );
-		}
+                pins_free( major, minor );
+            }
+            portEXIT_CRITICAL( );
+        }
     }
 
     return( ret );
@@ -531,7 +542,7 @@ static void dev_close(
             else
             {
                 uart_dev_close( );
-			}
+            }
         }
         break;
 
@@ -557,7 +568,7 @@ static void dev_close(
             else
             {
                 i2c_dev_close( );
-			}
+            }
         }
         break;
 
@@ -632,7 +643,7 @@ static POSIX_ERRNO dev_read(
                           buffer, 
                           num_bytes_to_read,
                           num_bytes_read );
-			}
+            }
         }
         break;
 
@@ -664,7 +675,7 @@ static POSIX_ERRNO dev_read(
                           buffer, 
                           num_bytes_to_read,
                           num_bytes_read );
-			}
+            }
         }
         break;
 
@@ -729,7 +740,7 @@ static POSIX_ERRNO dev_write(
                           buffer, 
                           num_bytes_to_write,
                           num_bytes_written );
-			}
+            }
         }
         break;
 
@@ -761,7 +772,7 @@ static POSIX_ERRNO dev_write(
                           buffer, 
                           num_bytes_to_write,
                           num_bytes_written );
-			}
+            }
         }
         break;
 
@@ -943,29 +954,100 @@ POSIX_ERRNO spi_write(
 #if( 1 == configUSE_DRV_GPIO )
     /* DEV_API: gpio_open
        Open GPIO for i/o
-       Defined in devapi.c */
+       Get any mode-specific parameters
+       Invoke either generic or low-level driver as configured */
 POSIX_ERRNO gpio_open( 
-                GPIO_PIN_NUM const pin,
+                GPIO_PIN_NUM const pin, 
                 DEV_MODE const mode,
-                unsigned char const init
+                ...
             )
 {
     POSIX_ERRNO res;
-	
-    gpio_initial_output_value[ pin - PIN_NUM_START ]= init;
+    va_list args;
 
-#   if( 1 == configUSE_DEV_SAFEGUARDS )
-	{
-#       if defined( _DEBUG )
-            ( void )printf( "%s : %d : mode = 0x%x\r\n", __FILE__, __LINE__, mode );
-#       endif
-        res = dev_open( DEV_NUM_GPIO, pin, mode );
-    }
-#   else
-	{
-        res = gpio_dev_open( pin, mode );
-    }
+    
+#   if defined( _DEBUG )&& 0
+        ( void )printf( "%s : %d : mode = 0x%x\r\n", __FILE__, __LINE__, mode );
 #   endif
+    
+    va_start( args, mode );
+
+    switch( mode )
+    {
+        case DEV_MODE_GPIO_INTRDE:
+        case DEV_MODE_GPIO_INTRLOW:
+        case DEV_MODE_GPIO_INTRHIGH:
+        case DEV_MODE_GPIO_INTRFALL:
+        case DEV_MODE_GPIO_INTRRISE:
+        {
+            void * interrupt_handler;
+
+            interrupt_handler = va_arg( args, void* );
+            va_end( args );
+
+#           if defined( _DEBUG )&& 0
+            {
+                ( void )printf( "%s : %d : interrupt_handler = %p\r\n", 
+                                __FILE__, __LINE__, interrupt_handler );    
+            }
+#           endif
+#           if( 1 == configUSE_DEV_SAFEGUARDS )
+            {
+                res = dev_open( DEV_NUM_GPIO, pin, mode, interrupt_handler );
+            }
+#           else
+            {
+                res = gpio_dev_open( pin, mode, interrupt_handler );
+            }
+#           endif
+        }
+        break;
+
+        case DEV_MODE_GPIO_OUT:
+        {
+            int init_value;
+
+            init_value = va_arg( args, int );
+            va_end( args );
+
+#           if( 1 == configUSE_DEV_SAFEGUARDS )
+            {
+                res = dev_open( DEV_NUM_GPIO, pin, mode, init_value );
+            }
+#           else
+            {
+                res = gpio_dev_open( pin, mode, init_value );
+            }
+#           endif
+        }
+        break;
+
+        case DEV_MODE_GPIO_IN:
+        case DEV_MODE_GPIO_DIO:
+        case DEV_MODE_GPIO_SIO:
+        case DEV_MODE_GPIO_ALTFUNC:
+        {
+            va_end( args );
+
+#           if( 1 == configUSE_DEV_SAFEGUARDS )
+            {
+                res = dev_open( DEV_NUM_GPIO, pin, mode, NULL );
+            }
+#           else
+            {
+                res = gpio_dev_open( pin, mode );
+            }
+#           endif
+        }
+        break;
+
+        default:
+        {
+            va_end( args );
+            res = POSIX_ERRNO_ENODEV;
+        }
+        break;
+    }
 
     return( res );
 }
@@ -979,11 +1061,11 @@ POSIX_ERRNO gpio_close(
             )
 {
 #   if( 1 == configUSE_DEV_SAFEGUARDS )
-	{
+    {
         dev_close( DEV_NUM_GPIO, pin );
     }
 #   else
-	{
+    {
         gpio_dev_close( pin );
     }
 #   endif
@@ -1001,11 +1083,11 @@ POSIX_ERRNO gpio_read(
             )
 {
 #   if( 1 == configUSE_DEV_SAFEGUARDS )
-	{
+    {
         dev_read( DEV_NUM_GPIO, pin, buffer, 1, NULL );
     }
 #   else
-	{
+    {
         gpio_dev_read( pin, buffer );
     }
 #   endif
@@ -1023,11 +1105,11 @@ POSIX_ERRNO gpio_write(
             )
 {
 #   if( 1 == configUSE_DEV_SAFEGUARDS )
-	{
+    {
         dev_write( DEV_NUM_GPIO, pin, &val, 1, NULL );
     }
 #   else
-	{
+    {
         gpio_dev_write( pin, val );
     }
 #   endif

@@ -116,7 +116,7 @@
    I2C:
         #define I2C_IVECT       0x1C
    UART1:
-        #define UART1_IVECT	    0x1A
+        #define UART1_IVECT        0x1A
 */
 #define CLR_MASK( bit )\
             ( unsigned char )( 0xff -( 1 <<( bit )))
@@ -194,27 +194,13 @@ typedef enum _pin_state
 } PIN_STATE;
 
 
-typedef enum _dev_num_major
-{
-    DEV_NUM_GPIO = 0,
-    DEV_NUM_UART = 1,
-    DEV_NUM_SPI = 2,
-    DEV_NUM_I2C = 3,
-	
-	NUM_DEV_MAJOR = 4
-
-} DEV_NUM_MAJOR;
-
-typedef PIN_NUM DEV_NUM_MINOR;
-
-
 typedef enum _port
 {
     PORT_A = 0,    // unused
     PORT_B = 1,
     PORT_C = 2,
     PORT_D = 3
-	
+    
 } PORT;
 
 
@@ -249,12 +235,12 @@ extern POSIX_ERRNO pins_alloc(
                        DEV_NUM_MAJOR const major,
                        DEV_NUM_MINOR const minor,
                        DEV_MODE const mode 
-				   );
+                   );
 
 extern POSIX_ERRNO pins_free(
                        DEV_NUM_MAJOR const major,
                        DEV_NUM_MINOR const minor
-				   );
+                   );
 
 
 /*------ GPIO low-level functions -------------------------------------------*/
@@ -264,7 +250,8 @@ extern POSIX_ERRNO pins_free(
    2. Attach any interrupt handler */
 extern POSIX_ERRNO gpio_dev_open(
                        DEV_NUM_MINOR const minor,
-                       DEV_MODE const mode
+                       DEV_MODE const mode,
+                       ...
                    );
 
 /* gpio_dev_close
@@ -394,7 +381,8 @@ extern POSIX_ERRNO uart_dev_write(
 extern POSIX_ERRNO dev_open( 
                        DEV_NUM_MAJOR const major,
                        DEV_NUM_MINOR const minor,
-                       DEV_MODE const mode
+                       DEV_MODE const mode,
+                       ...
                    );
 
 /* dev_close

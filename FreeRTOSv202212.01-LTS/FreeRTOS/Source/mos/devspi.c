@@ -73,6 +73,8 @@
 
 
 /*------ SPI low-level functions -------------------------------------------*/
+/* These routines normally called from devapi.c                              */
+
 /* i2c_dev_open
    Device-specific i2c open function for minor device configuration */
 /* spi_dev_open

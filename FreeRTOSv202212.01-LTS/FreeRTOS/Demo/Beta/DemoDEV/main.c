@@ -51,6 +51,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <eZ80F92.h>
+
 #include "FreeRTOS.h"
 #include "task.h"
 #include "devapi.h"
@@ -79,15 +81,15 @@ static volatile unsigned int gpiocnt = 0;
 /*----- Local Declarations --------------------------------------------------*/
 void Task1( void *pvParameters );
 void vApplicationIdleHook( void );
-void gpioHndlr( void );
+void /* INTERRUPT_HANDLER */ myGpioHndlr( DEV_NUM_MAJOR const, DEV_NUM_MINOR const );
 
 
 static void * menu( void );
-static char const * const getName( void );
 
     /* Device tests */
 static void doGPIOWriteTest( void );
 static void doGPIOReadWriteTest( void );
+static void doGpioCallback( void );
 
 
 /*----- Function Definitions ------------------------------------------------*/
@@ -140,6 +142,7 @@ static void * menu( void )
     {
         { '0', "Test DEV GPIO write", doGPIOWriteTest },
         { '1', "Test DEV GPIO read write", doGPIOReadWriteTest },
+        { '2', "Test DEV GPIO ISR", doGpioCallback },
         { 'q', "End tests", NULL }
     };
     void ( *ret )( void )=( void* )-1;  /* any non-NULL value */
@@ -154,11 +157,11 @@ static void * menu( void )
     }
 
     ( void )printf( "\r\n>" );
-	do
-	{
+    do
+    {
         ch = getchar( );
-	}
-	while( ESC == ch );
+    }
+    while( ESC == ch );
 
     ( void )printf( "%c\r\n\r\n", ch );
     for( i = 0;( sizeof( tests )/sizeof( tests[ 0 ]))> i; i++ )
@@ -199,7 +202,7 @@ static void doGPIOWriteTest( void )
     int const escbyte =((( 113 - 1 )& 0xF8 )>> 3 );
     int const escbit =  (( 113 - 1 )& 0x07 );
     int i;
-	
+    
     ( void )printf( "\r\n\r\nRunning GPIO write test.\r\n" );
 
     // open GPIO:13 as an output, initial value 0
@@ -246,8 +249,7 @@ static void doGPIOReadWriteTest( void )
     int const escbit =  (( 113 - 1 )& 0x07 );
     int i;
     unsigned char ch;
-
-	
+    
     ( void )printf( "\r\n\r\nRunning GPIO write test.\r\n" );
 
     // open GPIO:13 as an output, initial value 0
@@ -255,7 +257,7 @@ static void doGPIOReadWriteTest( void )
     ( void )printf( "gpio_open(13) returns : %d\r\n", res );
 
     // open GPIO:16 as an input
-    res = gpio_open( GPIO_16, DEV_MODE_GPIO_IN, 0 );
+    res = gpio_open( GPIO_16, DEV_MODE_GPIO_IN );
     ( void )printf( "gpio_open(16) returns : %d\r\n", res );
 
     ( void )printf( "Toggling GPIO pin 13\r\n" );
@@ -287,11 +289,13 @@ static void doGPIOReadWriteTest( void )
 
 
 /*
- * gpioHndlr is a callback within context of the DEV API GPIO event ISR.
+ * myGpioHndlr is an INTERRUPT_HANDLER
+ * It will be invoked in context of a DEV API GPIO ISR
  * It must not call any blocking functions, and avoid calls to MOS;
  * It must not disable interrupts, but may itself be interrupted
+ *  version for 0 == configUSE_FAST_INTERRUPTS
  */
-void gpioHndlr( void )
+void myGpioHndlr( DEV_NUM_MAJOR const major, DEV_NUM_MINOR const minor )
 {
     gpiocnt++;
 
@@ -300,100 +304,86 @@ void gpioHndlr( void )
         putchar( '*' );
     }
 #   endif
+
+#   if( 1 == configUSE_FAST_INTERRUPTS )
+    {
+        /* This conditional block is provided as a template for writing your 
+           own FAST ISR. It is not required for the simpler Interrupt Handler,
+           configured with 0 == configUSE_FAST_INTERRUPTS, when similar is done
+           in devgpio::gpioisr for you. */
+
+        ( void )major;  // not accessible
+        ( void )minor;  // not accessible
+
+        /* clear down interrupt */
+        // user TODO
+
+        /* return from intrrupt */
+        asm( "\t pop ix      ; epilogue, restore IX pushed in prolog");
+        asm( "               ; like github.com/breakintoprogram/agon-mos/blob/main/src_startup/vectors16.asm" );
+        asm( "               ;   __default_mi_handler" );
+        asm( "\t ei          ; re-enable interrupts (on completion of following ret)" );
+        asm( "\t reti.l      ; need reti.L as per UM007715 table 25 for IM 2 ADL=1 MADL=1");
+    }
+#   endif /*( 1 == configUSE_FAST_INTERRUPTS )*/
 }
 
-
-/* doKeyboardCallback
- *   Try out MOS function 1Dh "setkbvector".
- *   An alternative to MOS fucntion 0, bypass the MOS key input buffer and 
- *   attach directly to the VDP ISR in MOS to buffer our own input. This API 
- *   design is well-suited to real-time systems as it treats the keyboard 
- *   like a device. 
+/* doGpioCallback
+ *   Try out DEV API GPIO functions with interrupt
+ *   Set an output that can be seen with a LED or a multimeter probe
+ *   To test this I used a breadboard as per doGPIOWriteTest; and 
+ *    in addition Pin 16 is wired to Pin 13 on the breadboard.
+ *    GPIO 16 is opened using DEV_MODE_GPIO_INTRDE mode supplying the handler
+ *    All LED state changes should result in the handler being run
 */
 static void doGpioCallback( void )
 {
-    extern volatile int _mosapi_kbvect;
+    POSIX_ERRNO res;
+    KEYMAP *kbmap;
+    int const escbyte =((( 113 - 1 )& 0xF8 )>> 3 );
+    int const escbit =  (( 113 - 1 )& 0x07 );
     int i;
-    int x = 0;
 
+    ( void )printf( "\r\n\r\nRunning gpio callback test\r\n" );
 #   if defined( _DEBUG )&& 0
     {
-        ( void )printf( "gpioHndlr = %p\r\n", &gpioHndlr );    
+        ( void )printf( "myGpioHndlr = %p\r\n", &myGpioHndlr );    
     }
 #   endif
 
-    ( void )printf( "\r\n\r\nRunning gpio callback test. "
-                    "Type some keys. "
-                    "Press CRET to exit test\r\n" );
+    // open GPIO:13 as an output, initial value 0
+    res = gpio_open( GPIO_13, DEV_MODE_GPIO_OUT, 0 );
+    ( void )printf( "gpio_open(13) output returns : %d\r\n", res );
 
-#   if defined( _DEBUG )&& 0
+    // open GPIO:18 as an interrupt input
+    res = gpio_open( GPIO_18, DEV_MODE_GPIO_INTRDE, myGpioHndlr );
+    ( void )printf( "gpio_open(18) interrupt returns : %d\r\n", res );
+
+    ( void )printf( "Toggling GPIO pin 13\r\n" );
+    ( void )printf( "Press 'ESC' key to exit test\r\n" );
+    kbmap = mos_getkbmap( );  // only need do this once at startup
+
+    // toggle the output until user-halted
+    for( i = 1; ; i = 1 - i )
     {
-        ( void )printf( "before _mosapi_kbvect = %p\r\n", _mosapi_kbvect );
-    }
-#   endif
+        ( void )printf( "gpio_write(13) %d\r\n", i );
+        res = gpio_write( GPIO_13, i );
 
-//    mos_setkbvector( &gpioHndlr );
+        vTaskDelay( 5 );  // delay 0.5s
 
-#   if defined( _DEBUG )&& 0
-    {
-        ( void )printf( "after _mosapi_kbvect = %p\r\n", _mosapi_kbvect );
-    }
-#   endif
-
-#   if defined( _DEBUG )&& 0
-    {
-        ( void )printf( "\r\nbefore 2nd _mosapi_kbvect = %p\r\n", _mosapi_kbvect );
-    }
-#   endif
-    
-//    mos_setkbvector( NULL );
-
-#   if defined( _DEBUG )&& 0
-    {
-        ( void )printf( "after 2nd _mosapi_kbvect = %p\r\n", _mosapi_kbvect );
-    }
-#   endif
-
-    ( void )printf( "gpiocnt = %d\r\n", gpiocnt );
-}
-
-
-/* getName
- *   Enter a file or path name
- *     Common routine for load_file, save_file, cd, ....
-*/
-static char const * const getName( void )
-{
-    static char fn[ configMAX_TASK_NAME_LEN ];
-    int i;
-    unsigned char ch;
-
-    ( void )memset( fn, 0, configMAX_TASK_NAME_LEN );   // fill buffer with 0s
-
-    for( i = 0; configMAX_TASK_NAME_LEN > i; i++ )
-    {
-        while( 0 ==( ch = mos_getkey( )))
-            ;  /*busy wait for a key press */
-
-        if( CRET == ch )
-           {
-            fn[ i ]= 0;   // string terminator
+        /* scan keyboard for ESC */
+        if((( char* )kbmap )[ escbyte ]&( 1 << escbit ))
+        {
             break;
         }
-           if( BS == ch )
-        {
-            fn[ --i ]= 0;
-            putchar( BS );
-            putchar( ' ' );
-            putchar( BS );
-            continue;
-           }
-
-        fn[ i ]= ch;
-        putchar( ch );
     }
-    
-    return( fn );
+
+    ( void )printf( "gpio_close\r\n" );
+    gpio_close( GPIO_13 );
+    gpio_close( GPIO_18 );
+
+    // finish up
+    ( void )printf( "gpiocnt = %d\r\n", gpiocnt );
 }
 
 

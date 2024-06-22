@@ -9,8 +9,7 @@ for latest and greatest.
 
 The Agon Light port of FreeRTOS runs in ADL mode, on top of MOS to have access 
 to its services, and hence through to the on-board (ESP32) VDP Terminal 
-Processor services. In its initial incarnation only putch and MOS function 0x14 
-mos_setintvector are supported. Others will follow...
+Processor services. 
 
 <h3>Origin</h3>
 The origin of the EZ80 port dates from 2010 and is found here: 
@@ -111,6 +110,3 @@ This started life as the Zilog vectors24.asm file, but is much changed.
 It now contains the timer ISR code. This file is located in the 
 ./Source/portable/ThirdParty/Community-Supported-Ports/ZDS II/eZ80AgonLight/
 folder, because it is used by the portable code.
-
-<h3>mosapi.asm</h3>
-Other MOS functions are located in the ./Source/mos/mosapi.asm file.

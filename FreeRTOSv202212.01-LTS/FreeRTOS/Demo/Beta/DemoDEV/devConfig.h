@@ -74,12 +74,22 @@
 
 /* Safeguarding
      configUSE_DEV_SAFEGUARDS  1 = check the pin number range 
-	                               check alloction of pins does not overlap
+                                   check alloction of pins does not overlap
                                    you might opt for this in a debug build
                                0 = smaller and faster code, but unsafeguarded
                                    you might opt for this in a release build
 */
 #define configUSE_DEV_SAFEGUARDS  1
+
+/* Interrupts
+     configUSE_FAST_INTERRUPTS 1 = Application-sourced FAST_INTERRUPT_HANDLER ISR is stored in IVT
+                                   No DEV_MAJOR, DEV_MINOR params, need a dedicated ISR per device
+                                   ISR exit with a RETI.L epilogue (refer to devgpio::gpioisr)
+                               0 = Application-sourced INTERRUPT_HANDLER is called from DEV API ISR
+                                   DEV_MAJOR, DEV_MINOR params, devices may share a common handler
+                                   All in C language
+*/
+#define configUSE_FAST_INTERRUPTS 0
 
 
 #endif /* DEVCONFIG_H */

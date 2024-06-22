@@ -154,35 +154,35 @@ typedef enum _posix_errno
 typedef enum _dev_mode
 {
     /* generic modes */
-    DEV_MODE_UNBUFFERED        =( 0x0 << 0 ),  // blocking mode, calling task may block
-    DEV_MODE_BUFFERED          =( 0x1 << 0 ),  // non-blocking mode, calling task will not block
-    DEV_MODE_BUFFERED_MASK     =( 0x1 << 0 ),
+    DEV_MODE_UNBUFFERED          =( 0x0 << 0 ),  // blocking mode, calling task may block
+    DEV_MODE_BUFFERED            =( 0x1 << 0 ),  // non-blocking mode, calling task will not block
+    DEV_MODE_BUFFERED_MASK       =( 0x1 << 0 ),
 
-    /* GPIO modes (as per Zilog PS015317 table 6) */
-    DEV_MODE_GPIO_OUT          =( 0x1 << 1 ),  // Mode 1 - standard digital output
-    DEV_MODE_GPIO_IN           =( 0x2 << 1 ),  // Mode 2 - standard digital input
-    DEV_MODE_GPIO_DIO          =( 0x3 << 1 ),  // Mode 3 - Open Drain I/O (needs external pullup)
-    DEV_MODE_GPIO_SIO          =( 0x4 << 1 ),  // Mode 4 - Open Source I/O (needs external pulldown)
-    DEV_MODE_GPIO_INTRDE       =( 0x6 << 1 ),  // Mode 6 - Input Dual-Edge triggered INTR
-    DEV_MODE_GPIO_ALTFUNC      =( 0x7 << 1 ),  // Mode 7 - Alternate hardware function
-    DEV_MODE_GPIO_INTRLOW      =( 0x8 << 1 ),  // Mode 8 - Input Interrupt active level low
-    DEV_MODE_GPIO_INTRHIGH     =( 0x9 << 1 ),  // Mode 8 - Input Interrupt active level high
-    DEV_MODE_GPIO_INTRFALL     =( 0xA << 1 ),  // Mode 9 - Input Interrupt active falling edge
-    DEV_MODE_GPIO_INTRRISE     =( 0xB << 1 ),  // Mode 9 - Input Interrupt active rising edge
-    DEV_MODE_GPIO_MASK         =( 0xF << 1 ),
+    /* GPIO modes (refer to Zilog PS015317 table 6) */
+    DEV_MODE_GPIO_OUT            =( 0x1 << 1 ),  // Mode 1 - standard digital output
+    DEV_MODE_GPIO_IN             =( 0x2 << 1 ),  // Mode 2 - standard digital input
+    DEV_MODE_GPIO_DIO            =( 0x3 << 1 ),  // Mode 3 - Open Drain I/O (needs external pullup)
+    DEV_MODE_GPIO_SIO            =( 0x4 << 1 ),  // Mode 4 - Open Source I/O (needs external pulldown)
+    DEV_MODE_GPIO_INTRDE         =( 0x6 << 1 ),  // Mode 6 - Input Dual-Edge triggered INTR
+    DEV_MODE_GPIO_ALTFUNC        =( 0x7 << 1 ),  // Mode 7 - Alternate hardware function
+    DEV_MODE_GPIO_INTRLOW        =( 0x8 << 1 ),  // Mode 8 - Input Interrupt active level low
+    DEV_MODE_GPIO_INTRHIGH       =( 0x9 << 1 ),  // Mode 8 - Input Interrupt active level high
+    DEV_MODE_GPIO_INTRFALL       =( 0xA << 1 ),  // Mode 9 - Input Interrupt active falling edge
+    DEV_MODE_GPIO_INTRRISE       =( 0xB << 1 ),  // Mode 9 - Input Interrupt active rising edge
+    DEV_MODE_GPIO_MASK           =( 0xF << 1 ),
 
     /* UART modes */
-    DEV_MODE_UART_NO_FLOWCTRL  =( 0x1 << 5 ),  // no hardware flow control (uart= only rx, tx)
-    DEV_MODE_UART_HW_FLOWCTRL  =( 0x2 << 5 ),  // hardware flow control (uart += rts,cts)
-    DEV_MODE_UART_MOD_FLOWCTRL =( 0x3 << 5 ),  // modem hardware flow control (uart += dsr,dtr,ri,dcd)
-    DEV_MODE_UART_MASK         =( 0x3 << 5 ),
+    DEV_MODE_UART_NO_FLOWCTRL    =( 0x1 << 5 ),  // no hardware flow control (uart= only rx, tx)
+    DEV_MODE_UART_HW_FLOWCTRL    =( 0x2 << 5 ),  // hardware flow control (uart += rts,cts)
+    DEV_MODE_UART_MODEM_FLOWCTRL =( 0x3 << 5 ),  // modem hardware flow control (uart += dsr,dtr,ri,dcd)
+    DEV_MODE_UART_MASK           =( 0x3 << 5 ),
 
     /* I2C modes */
-    DEV_MODE_I2C_FREQ_DEFAULT  =( 0x1 << 7 ),  // I2C frequency 57600 bps
-    DEV_MODE_I2C_FREQ_57600    =( 0x1 << 7 ),  // I2C frequency 57600 bps
-    DEV_MODE_I2C_FREQ_115200   =( 0x2 << 7 ),  // I2C frequency 115200 bps
-    DEV_MODE_I2C_FREQ_230400   =( 0x3 << 7 ),  // I2C frequency 230400 bps
-    DEV_MODE_I2C_MASK          =( 0x3 << 7 ),
+    DEV_MODE_I2C_FREQ_DEFAULT    =( 0x1 << 7 ),  // I2C frequency 57600 bps
+    DEV_MODE_I2C_FREQ_57600      =( 0x1 << 7 ),  // I2C frequency 57600 bps
+    DEV_MODE_I2C_FREQ_115200     =( 0x2 << 7 ),  // I2C frequency 115200 bps
+    DEV_MODE_I2C_FREQ_230400     =( 0x3 << 7 ),  // I2C frequency 230400 bps
+    DEV_MODE_I2C_MASK            =( 0x3 << 7 ),
 
 } DEV_MODE;
 
@@ -216,8 +216,26 @@ typedef enum _gpio_pin_num
 
 } GPIO_PIN_NUM;
 
+#define NUM_PINS_GPIO ( GPIO_26 - GPIO_13 + 1 )
+
 
 /*----- Type Definitions ----------------------------------------------------*/
+typedef enum _dev_num_major
+{
+    DEV_NUM_GPIO = 0,
+    DEV_NUM_UART = 1,
+    DEV_NUM_SPI = 2,
+    DEV_NUM_I2C = 3,
+    
+    NUM_DEV_MAJOR = 4
+
+} DEV_NUM_MAJOR;
+
+typedef GPIO_PIN_NUM DEV_NUM_MINOR;
+
+
+typedef void ( *INTERRUPT_HANDLER )( DEV_NUM_MAJOR const, DEV_NUM_MINOR const );
+typedef void ( *FAST_INTERRUPT_HANDLER )( void );
 
 
 /*----- Function Declarations -----------------------------------------------*/
@@ -267,9 +285,9 @@ POSIX_ERRNO uart_poll(
 
     /* DEV_API: i2c_open
        Open I2C for i/o
-	   Frequency is one of 
-	     DEV_MODE_I2C_FREQ_57600, 
-		 DEV_MODE_I2C_FREQ_115200,
+       Frequency is one of 
+         DEV_MODE_I2C_FREQ_57600, 
+         DEV_MODE_I2C_FREQ_115200,
          DEV_MODE_I2C_FREQ_230400.
        Defined in devapi.c */
 POSIX_ERRNO i2c_open( 
@@ -339,11 +357,18 @@ POSIX_ERRNO spi_write(
 
     /* DEV_API: gpio_open
        Open GPIO for i/o
-       Defined in devapi.c */
+       Additional parameters:
+         For mode in { DEV_MODE_GPIO_OUT } supply int initial value
+         For mode in { DEV_MODE_GPIO_INTRDE, DEV_MODE_GPIO_INTRLOW, 
+                       DEV_MODE_GPIO_INTRHIGH, DEV_MODE_GPIO_INTRFALL, 
+                       DEV_MODE_GPIO_INTRRISE } supply INTERRUPT_HANDLER
+         For mode in { DEV_MODE_GPIO_IN, DEV_MODE_GPIO_DIO,
+                       DEV_MODE_GPIO_SIO DEV_MODE_GPIO_ALTFUNC } none
+        Defined in devapi.c */
 POSIX_ERRNO gpio_open( 
                 GPIO_PIN_NUM const pin, 
                 DEV_MODE const mode,
-                unsigned char const init
+                ...  // additional parameters depending on mode
             );
 
 
