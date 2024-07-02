@@ -57,8 +57,8 @@
 
 
 /* Devices
- *   configUSE_DRV_UART      0 = MOS API (bug in 1.04 ugetc function)
- *                           1 = DEV API safeguarded
+ *   configUSE_DRV_UART      0 = MOS API non-buffered, single character i/o
+ *                           1 = DEV API safeguarded, buffered multi-character i/o
  *   configUSE_DRV_I2C       0 = MOS API Single Master mode
  *                           1 = DEV API Multi-Master mode safeguarded
  *   configUSE_DRV_SPI       0 = disable support (MOS only supports SD-card)
@@ -66,10 +66,10 @@
  *   configUSE_DRV_GPIO      0 = disable support (MOS does not support GPIO)
  *                           1 = DEV API safeguarded interface
 */
-#define configUSE_DRV_UART        1
-#define configUSE_DRV_I2C         1
-#define configUSE_DRV_SPI         1
-#define configUSE_DRV_GPIO        1
+#define configUSE_DRV_UART             1
+#define configUSE_DRV_I2C              1
+#define configUSE_DRV_SPI              1
+#define configUSE_DRV_GPIO             1
 
 
 /* Safeguarding
@@ -79,17 +79,31 @@
                                0 = smaller and faster code, but unsafeguarded
                                    you might opt for this in a release build
 */
-#define configUSE_DEV_SAFEGUARDS  1
+#define configUSE_DEV_SAFEGUARDS       1
+
 
 /* Interrupts
-     configUSE_FAST_INTERRUPTS 1 = Application-sourced FAST_INTERRUPT_HANDLER ISR is stored in IVT
-                                   No DEV_MAJOR, DEV_MINOR params, need a dedicated ISR per device
-                                   ISR exit with a RETI.L epilogue (refer to devgpio::gpioisr)
-                               0 = Application-sourced INTERRUPT_HANDLER is called from DEV API ISR
-                                   DEV_MAJOR, DEV_MINOR params, devices may share a common handler
+     configUSE_FAST_INTERRUPTS 1 = Application-sourced FAST_INTERRUPT_HANDLER 
+                                     ISR is stored in IVT. 
+                                   No DEV_MAJOR or DEV_MINOR params.
+                                   Need a dedicated ISR per device
+                                   ISR exit with a RETI.L epilogue (refer to 
+                                     devgpio::gpioisr)
+                               0 = Application-sourced INTERRUPT_HANDLER is 
+                                     called from DEV API ISR.
+                                   DEV_MAJOR, DEV_MINOR params.
+                                   Devices may share a common handler
                                    All in C language
 */
-#define configUSE_FAST_INTERRUPTS 0
+#define configUSE_FAST_INTERRUPTS      0
+
+
+/* UART
+     configDRV_UART_BUFFER_SZ       16..1024
+                                    The UART DEV maintains an Rx and Tx buffer, 
+                                    each of configDRV_UART_BUFFER_SZ bytes size
+*/
+#define configDRV_UART_BUFFER_SZ       128
 
 
 #endif /* DEVCONFIG_H */

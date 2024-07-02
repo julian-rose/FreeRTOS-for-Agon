@@ -38,8 +38,7 @@
  *           ZDSII in ADL mode
  *
  * The definitions in this file support the DEV API (SPI low-level)
- * for Agon Light (and comptaibles) and the ZDSII compiler
- * Zilog eZ80 ANSI C Compiler Version 3.4 (19101101).
+ * for Agon Light (and comptaibles)
  * Created 20.Jun.2024 by Julian Rose for Agon Light port
  *
  * These functions should not normally be application-user altered.
@@ -101,7 +100,8 @@ void spi_dev_close(
 POSIX_ERRNO spi_dev_read(
                        void * const buffer,
                        size_t const num_bytes_to_read,
-                       size_t * num_bytes_read
+                       size_t * num_bytes_read,
+                       POSIX_ERRNO *result
                    )
 {
     return( POSIX_ERRNO_ENONE );
@@ -113,7 +113,8 @@ POSIX_ERRNO spi_dev_read(
 POSIX_ERRNO spi_dev_write(
                        void * const buffer,
                        size_t const num_bytes_to_write,
-                       size_t * num_bytes_written
+                       size_t * num_bytes_written,
+                       POSIX_ERRNO *result
                    )
 {
     return( POSIX_ERRNO_ENONE );

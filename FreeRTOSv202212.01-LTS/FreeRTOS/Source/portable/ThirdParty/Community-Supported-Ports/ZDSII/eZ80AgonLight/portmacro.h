@@ -54,17 +54,17 @@
 
 
 /***--------- Type definitions ---------***/
-#define portCHAR        		  char
-#define portFLOAT       		  float
-#define portDOUBLE      		  double
-#define portLONG        		  long
-#define portSHORT       		  short
-#define portSTACK_TYPE  		  unsigned int
-#define portBASE_TYPE   		  int
-#define portPOINTER_SIZE_TYPE	  unsigned int
+#define portCHAR                  char
+#define portFLOAT                 float
+#define portDOUBLE                double
+#define portLONG                  long
+#define portSHORT                 short
+#define portSTACK_TYPE            unsigned int
+#define portBASE_TYPE             int
+#define portPOINTER_SIZE_TYPE      unsigned int
 
-typedef portSTACK_TYPE   		  StackType_t;
-typedef portBASE_TYPE    		  BaseType_t;
+typedef portSTACK_TYPE             StackType_t;
+typedef portBASE_TYPE              BaseType_t;
 typedef unsigned portBASE_TYPE    UBaseType_t;
 
 
@@ -74,13 +74,13 @@ typedef unsigned portBASE_TYPE    UBaseType_t;
 
 /***--------- Ticks ---------***/
 #if ( configUSE_16_BIT_TICKS == 1 )
-    typedef unsigned portSHORT 	  portTickType;
+    typedef unsigned portSHORT       portTickType;
 #   define portMAX_DELAY          ( portTickType ) 0xffff
 #else
-   typedef unsigned portLONG 	  portTickType;
-   #define portMAX_DELAY 		  ( portTickType ) 0xffffffff
+   typedef unsigned portLONG       portTickType;
+   #define portMAX_DELAY           ( portTickType ) 0xffffffff
 #endif
-typedef portTickType 			  TickType_t;
+typedef portTickType               TickType_t;
 
 
 /***--------- Memory Protection Unit ---------***/
@@ -90,7 +90,7 @@ typedef portTickType 			  TickType_t;
 
 
 /***--------- Critical Sections ---------***/
-#define	portENTER_CRITICAL( )     asm( "\t di" )
+#define    portENTER_CRITICAL( )     asm( "\t di" )
 #define portEXIT_CRITICAL( )      asm( "\t ei" )
 #define portDISABLE_INTERRUPTS( ) asm( "\t di" )
 #define portENABLE_INTERRUPTS( )  asm( "\t ei" )
@@ -100,43 +100,46 @@ void portExitMOS( void );
 
 
 /***--------- Architecture ---------***/
-#define portSTACK_GROWTH          ( -1 )
-#define portTICK_PERIOD_MS        (( portTickType )1000 / configTICK_RATE_HZ )
-#define portBYTE_ALIGNMENT        3
+#define portSTACK_GROWTH          ( -1 )  /* stack grows down */
+#define portTICK_PERIOD_MS        ( configTICK_RATE_HZ < 1001 )\
+                                    ?(( portTickType )1000 / configTICK_RATE_HZ )\
+                                    :1
+#define portBYTE_ALIGNMENT        3       /* 24-bit int */
 
 
 /***------ Programmable Timer ------***/
 /* We assign any of PRT0..PRT4 for the FreeRTOS periodic interval timer (PIT) 
    function. PRT5..PRT6 cannot be used for PIT.
    Refer to eZ80F92 PS015317-0120 Table 32 for PRT Control Register */
-#define PRT_CTL_ENABLE	          ( 1 << 0 )
-#define PRT_CTL_RST_EN			  ( 1 << 1 )
-#define PRT_CTL_DIV04			  ( 0 << 2 )	/* configTICK_RATE_HZ = 72 is the smallest possible */
-#define PRT_CTL_DIV16			  ( 1 << 2 )	/* configTICK_RATE_HZ = 18 is the smallest possible */
-#define PRT_CTL_DIV64			  ( 2 << 2 )	/* configTICK_RATE_HZ = 5 is the smallest possible */
-#define PRT_CTL_DIV256			  ( 3 << 2 )	/* configTICK_RATE_HZ = 2 is the smallest possible */
-#define PRT_CTL_MODE_CONTINUOUS	  ( 1 << 4 )
-#define PRT_CTL_IRQ_EN			  ( 1 << 6 )
-#define PRT_ISS_SYSCLK			  ( unsigned char )(( 1 << 0 )|( 1 << 1 ))
+#define PRT_CTL_ENABLE              ( 1 << 0 )
+#define PRT_CTL_RST_EN              ( 1 << 1 )
+#define PRT_CTL_DIV04              ( 0 << 2 )    /* configTICK_RATE_HZ = 72 is the smallest possible */
+#define PRT_CTL_DIV16              ( 1 << 2 )    /* configTICK_RATE_HZ = 18 is the smallest possible */
+#define PRT_CTL_DIV64              ( 2 << 2 )    /* configTICK_RATE_HZ = 5 is the smallest possible */
+#define PRT_CTL_DIV256              ( 3 << 2 )    /* configTICK_RATE_HZ = 2 is the smallest possible */
+#define PRT_CTL_MODE_CONTINUOUS      ( 1 << 4 )
+#define PRT_CTL_IRQ_EN              ( 1 << 6 )
+#define PRT_ISS_SYSCLK              ( unsigned char )(( 1 << 0 )|( 1 << 1 ))
 
-#define PRT_CLK_PRESCALER		  64UL  		/* one of 16UL, 64UL or 256UL to match PRT_CTL_DIVnn */
+#define PRT_CLK_PRESCALER          64UL          /* one of 16UL, 64UL or 256UL to match PRT_CTL_DIVnn */
 
 
 /***--------- Kernel ---------***/
 extern void vPortYield( void );
+extern void vPortYieldFromISR( BaseType_t const higherPriorityTaskWoken );
 #define portYIELD()               vPortYield( )
 
 
 /***--------- Tasks ---------***/
-	/* since we split up tasks into multiple files,
-	   we need the tasks variable declarations to be global. */
-#define portREMOVE_STATIC_QUALIFIER	1
+    /* since we split up tasks into multiple files,
+       we need the tasks variable declarations to be global. */
+#define portREMOVE_STATIC_QUALIFIER    1
 
-	/* Task function macros as described on the FreeRTOS.org WEB site. */
+    /* Task function macros as described on the FreeRTOS.org WEB site. */
 #define portTASK_FUNCTION_PROTO( vFunction, pvParameters ) \
-								  void vFunction( void *pvParameters )
+                                  void vFunction( void *pvParameters )
 #define portTASK_FUNCTION( vFunction, pvParameters ) \
-								  void vFunction( void *pvParameters )
+                                  void vFunction( void *pvParameters )
 
 
 /***------------ Assert --------------***/

@@ -38,8 +38,7 @@
  *           ZDSII in ADL mode
  *
  * The definitions in this file support the DEV API
- * for Agon Light (and comptaibles) and the ZDSII compiler
- * Zilog eZ80 ANSI C Compiler Version 3.4 (19101101).
+ * for Agon Light (and comptaibles)
  * Created 11.Jun.2024 by Julian Rose for Agon Light port
  *
  * These functions should not normally be application-user altered.
@@ -206,7 +205,7 @@ static POSIX_ERRNO pins_alloc(
         case DEV_NUM_SPI:
         case DEV_NUM_I2C:  // same code as i2c pin numbers lie within limits of spi
         {
-            for( i = SPI_SS; SPI_MOSI > i; i++ )
+            for( i = SPI_SS; SPI_MOSI >= i; i++ )
             {
                 unsigned int const mnri =( i - PIN_NUM_START );
 
@@ -220,7 +219,7 @@ static POSIX_ERRNO pins_alloc(
             
             if( POSIX_ERRNO_EBUSY != ret )
             {
-                for( i = SPI_SS; SPI_MOSI > i; i++ )
+                for( i = SPI_SS; SPI_MOSI >= i; i++ )
                 {
                     unsigned int const mnri =( i - PIN_NUM_START );
 
@@ -243,12 +242,21 @@ static POSIX_ERRNO pins_alloc(
             else
             if( 1 == minor )
             {
-                PIN_NUM end = UART_1_RI;
+                PIN_NUM end = UART_1_RXD;
             
-                if( DEV_MODE_UART_HW_FLOWCTRL & mode ) end = UART_1_CTS;
-                if( DEV_MODE_UART_MODEM_FLOWCTRL & mode ) end = UART_1_RI;
+                if(( DEV_MODE_UART_HALF_NULL_MODEM & mode )||
+                   ( DEV_MODE_UART_HALF_MODEM & mode ))
+                {
+                    end = UART_1_CTS;
+                }
+                else
+                if(( DEV_MODE_UART_FULL_NULL_MODEM & mode )||
+                   ( DEV_MODE_UART_FULL_MODEM & mode ))
+                {
+                    end = UART_1_RI;
+                }
             
-                for( i = UART_1_TXD; end > i; i++ )
+                for( i = UART_1_TXD; end >= i; i++ )
                 {
                     unsigned int const mnri =( i - PIN_NUM_START );
 
@@ -261,7 +269,7 @@ static POSIX_ERRNO pins_alloc(
             
                 if( POSIX_ERRNO_EBUSY != ret )
                 {
-                    for( i = UART_1_TXD; end > i; i++ )
+                    for( i = UART_1_TXD; end >= i; i++ )
                     {
                         unsigned int const mnri =( i - PIN_NUM_START );
 
@@ -321,7 +329,7 @@ static POSIX_ERRNO pins_free(
         case DEV_NUM_SPI:
         case DEV_NUM_I2C:  // same code as i2c pin numbers lie within limits of spi
         {
-            for( i = SPI_SS; SPI_MOSI > i; i++ )
+            for( i = SPI_SS; SPI_MOSI >= i; i++ )
             {
                 unsigned int const mnri =( i - PIN_NUM_START );
 
@@ -335,7 +343,7 @@ static POSIX_ERRNO pins_free(
             
             if( POSIX_ERRNO_ENOTCONN != ret )
             {
-                for( i = SPI_SS; SPI_MOSI > i; i++ )
+                for( i = SPI_SS; SPI_MOSI >= i; i++ )
                 {
                     unsigned int const mnri =( i - PIN_NUM_START );
 
@@ -358,12 +366,25 @@ static POSIX_ERRNO pins_free(
             else
             if( 1 == minor )
             {
-                PIN_NUM end = UART_1_RI;
+                PIN_NUM end;
+
+                if(( DEV_MODE_UART_FULL_NULL_MODEM & pinmode[ UART_1_DTR - PIN_NUM_START ])||
+                   ( DEV_MODE_UART_FULL_MODEM & pinmode[ UART_1_DTR - PIN_NUM_START ]))
+                {
+                    end = UART_1_RI;
+                }
+                else
+                if(( DEV_MODE_UART_HALF_NULL_MODEM & pinmode[ UART_1_RTS - PIN_NUM_START ])||
+                   ( DEV_MODE_UART_HALF_MODEM & pinmode[ UART_1_RTS - PIN_NUM_START ]))
+                {
+                    end = UART_1_CTS;
+                }
+                else
+                {
+                    end = UART_1_RXD;
+                }
             
-                if( DEV_MODE_UART_HW_FLOWCTRL & pinmode[ major ]) end = UART_1_CTS;
-                if( DEV_MODE_UART_MODEM_FLOWCTRL & pinmode[ major ]) end = UART_1_RI;
-            
-                for( i = UART_1_TXD; end > i; i++ )
+                for( i = UART_1_TXD; end >= i; i++ )
                 {
                     unsigned int const mnri =( i - PIN_NUM_START );
 
@@ -376,7 +397,7 @@ static POSIX_ERRNO pins_free(
             
                 if( POSIX_ERRNO_ENOTCONN != ret )
                 {
-                    for( i = UART_1_TXD; end > i; i++ )
+                    for( i = UART_1_TXD; end >= i; i++ )
                     {
                         unsigned int const mnri =( i - PIN_NUM_START );
 
@@ -452,9 +473,11 @@ static POSIX_ERRNO dev_open(
 
             case DEV_NUM_UART:
             {
+                void * params;  // 24-bit int-sized argument (including pointers)
+                params = va_arg( args, void * );
                 va_end( args );
 
-                ret = uart_dev_open( mode );
+                ret = uart_dev_open( mode, params );
             }
             break;
 
@@ -601,7 +624,8 @@ static POSIX_ERRNO dev_read(
                        DEV_NUM_MINOR const minor,
                        void * const buffer,
                        size_t const num_bytes_to_read,
-                       size_t * num_bytes_read
+                       size_t * num_bytes_read,
+                       POSIX_ERRNO *result
                    )
 {
     POSIX_ERRNO ret = POSIX_ERRNO_ENONE;
@@ -642,7 +666,9 @@ static POSIX_ERRNO dev_read(
                 ret = uart_dev_read(
                           buffer, 
                           num_bytes_to_read,
-                          num_bytes_read );
+                          num_bytes_read,
+                          result
+                );
             }
         }
         break;
@@ -658,7 +684,9 @@ static POSIX_ERRNO dev_read(
                 ret = spi_dev_read(
                           buffer, 
                           num_bytes_to_read,
-                          num_bytes_read );
+                          num_bytes_read,
+                          result
+                );
             }
         }
         break;
@@ -674,7 +702,9 @@ static POSIX_ERRNO dev_read(
                 ret = i2c_dev_read(
                           buffer, 
                           num_bytes_to_read,
-                          num_bytes_read );
+                          num_bytes_read,
+                          result
+                );
             }
         }
         break;
@@ -698,7 +728,8 @@ static POSIX_ERRNO dev_write(
                        DEV_NUM_MINOR const minor,
                        void * const buffer,
                        size_t const num_bytes_to_write,
-                       size_t * const num_bytes_written
+                       size_t * const num_bytes_written,
+                       POSIX_ERRNO *result
                    )
 {
     POSIX_ERRNO ret = POSIX_ERRNO_ENONE;
@@ -739,7 +770,9 @@ static POSIX_ERRNO dev_write(
                 ret = uart_dev_write(
                           buffer, 
                           num_bytes_to_write,
-                          num_bytes_written );
+                          num_bytes_written,
+                          result
+                );
             }
         }
         break;
@@ -755,7 +788,9 @@ static POSIX_ERRNO dev_write(
                 ret = spi_dev_write(
                           buffer, 
                           num_bytes_to_write,
-                          num_bytes_written );
+                          num_bytes_written,
+                          result
+                );
             }
         }
         break;
@@ -771,7 +806,9 @@ static POSIX_ERRNO dev_write(
                 ret = i2c_dev_write(
                           buffer, 
                           num_bytes_to_write,
-                          num_bytes_written );
+                          num_bytes_written,
+                          result
+                );
             }
         }
         break;
@@ -805,152 +842,6 @@ static POSIX_ERRNO dev_poll(
 
 
 /*----- DEV API User Function definitions -----------------------------------*/
-#if( 1 == configUSE_DRV_UART )
-/* DEV_API: uart_open
-   Open UART1 for i/o */
-POSIX_ERRNO uart_open( 
-                DEV_MODE const mode 
-            )
-{
-//             To enable interrupts assign a handler
-
-    return( POSIX_ERRNO_ENONE );
-}
-
-
-/* DEV_API: uart_close
-   Close previously opened UART1 */
-POSIX_ERRNO uart_close( 
-                void 
-            )
-{
-    return( POSIX_ERRNO_ENONE );
-}
-
-
-/* DEV_API: uart_read
-   Read data from previously opened UART1 */
-POSIX_ERRNO uart_read(
-                void * const buffer,
-                size_t const num_bytes_to_read
-            )
-{
-    return( POSIX_ERRNO_ENONE );
-}
-
-
-/* DEV_API: uart_write
-   Write data to previously opened UART1 */
-POSIX_ERRNO uart_write(
-                void * const buffer,
-                size_t const num_bytes_to_write,
-                size_t * num_bytes_buffered
-            )
-{
-    return( POSIX_ERRNO_ENONE );
-}
-
-
-/* DEV_API: uart_poll
-   Poll previously opened UART1 */
-POSIX_ERRNO uart_poll(
-                size_t * num_bytes_to_read,    // content of uart input buffer
-                size_t * num_bytes_to_write    // free space in uart output buffer
-            )
-{
-    return( POSIX_ERRNO_ENONE );
-}
-#endif /* configUSE_DRV_UART */
-
-
-#if( 1 == configUSE_DRV_I2C )
-/* DEV_API: i2c_open
-   Open I2C for i/o */
-POSIX_ERRNO i2c_open( 
-                DEV_MODE const frequency 
-            )
-{
-    return( POSIX_ERRNO_ENONE );
-}
-
-
-/* DEV_API: i2c_close
-   Close previously opened I2C */
-POSIX_ERRNO i2c_close( 
-                void 
-            )
-{
-    return( POSIX_ERRNO_ENONE );
-}
-
-
-/* DEV_API: i2c_read
-   Read data from previously opened I2C */
-POSIX_ERRNO i2c_read(
-                void * const buffer,
-                size_t const num_bytes_to_read
-            )
-{
-    return( POSIX_ERRNO_ENONE );
-}
-
-
-/* DEV_API: i2c_write
-   Write data to a previously opened I2C */
-POSIX_ERRNO i2c_write(
-                void * const buffer,
-                size_t const num_bytes_to_write
-            )
-{
-    return( POSIX_ERRNO_ENONE );
-}
-#endif /* 1 == configUSE_DRV_I2C */
-
-
-#if( 1 == configUSE_DRV_SPI )
-/* DEV_API: spi_open
-   Open SPI for i/o */
-POSIX_ERRNO spi_open( 
-                DEV_MODE const mode 
-            )
-{
-    return( POSIX_ERRNO_ENONE );
-}
-
-
-/* DEV_API: spi_close
-   Close previously opened SPI */
-POSIX_ERRNO spi_close( 
-                void 
-            )
-{
-    return( POSIX_ERRNO_ENONE );
-}
-
-
-/* DEV_API: spi_read
-   Read data from previously opened SPI */
-POSIX_ERRNO spi_read(
-                void * const buffer,
-                size_t const num_bytes_to_read
-            )
-{
-    return( POSIX_ERRNO_ENONE );
-}
-
-
-/* DEV_API: spi_write
-   Write data to a previously opened SPI */
-POSIX_ERRNO spi_write(
-                void * const buffer,
-                size_t const num_bytes_to_write
-            )
-{
-    return( POSIX_ERRNO_ENONE );
-}
-#endif /* 1 == configUSE_DRV_SPI */
-
-
 #if( 1 == configUSE_DRV_GPIO )
     /* DEV_API: gpio_open
        Open GPIO for i/o
@@ -1084,7 +975,7 @@ POSIX_ERRNO gpio_read(
 {
 #   if( 1 == configUSE_DEV_SAFEGUARDS )
     {
-        dev_read( DEV_NUM_GPIO, pin, buffer, 1, NULL );
+        dev_read( DEV_NUM_GPIO, pin, buffer, 1, NULL, NULL );
     }
 #   else
     {
@@ -1106,7 +997,7 @@ POSIX_ERRNO gpio_write(
 {
 #   if( 1 == configUSE_DEV_SAFEGUARDS )
     {
-        dev_write( DEV_NUM_GPIO, pin, &val, 1, NULL );
+        dev_write( DEV_NUM_GPIO, pin, &val, 1, NULL, NULL );
     }
 #   else
     {
@@ -1119,3 +1010,285 @@ POSIX_ERRNO gpio_write(
 
 
 #endif  /* 1 == configUSE_DRV_GPIO */
+
+
+#if( 1 == configUSE_DRV_I2C )
+/* DEV_API: i2c_open
+   Open I2C for i/o */
+POSIX_ERRNO i2c_open( 
+                DEV_MODE const frequency 
+            )
+{
+    return( POSIX_ERRNO_ENONE );
+}
+
+
+/* DEV_API: i2c_close
+   Close previously opened I2C */
+POSIX_ERRNO i2c_close( 
+                void 
+            )
+{
+    return( POSIX_ERRNO_ENONE );
+}
+
+
+/* DEV_API: i2c_read
+   Read data from previously opened I2C */
+POSIX_ERRNO i2c_read(
+                void * const buffer,
+                size_t const num_bytes_to_read
+            )
+{
+    return( POSIX_ERRNO_ENONE );
+}
+
+
+/* DEV_API: i2c_write
+   Write data to a previously opened I2C */
+POSIX_ERRNO i2c_write(
+                void * const buffer,
+                size_t const num_bytes_to_write
+            )
+{
+    return( POSIX_ERRNO_ENONE );
+}
+#endif /* 1 == configUSE_DRV_I2C */
+
+
+#if( 1 == configUSE_DRV_SPI )
+/* DEV_API: spi_open
+   Open SPI for i/o */
+POSIX_ERRNO spi_open( 
+                DEV_MODE const mode 
+            )
+{
+    return( POSIX_ERRNO_ENONE );
+}
+
+
+/* DEV_API: spi_close
+   Close previously opened SPI */
+POSIX_ERRNO spi_close( 
+                void 
+            )
+{
+    return( POSIX_ERRNO_ENONE );
+}
+
+
+/* DEV_API: spi_read
+   Read data from previously opened SPI */
+POSIX_ERRNO spi_read(
+                void * const buffer,
+                size_t const num_bytes_to_read
+            )
+{
+    return( POSIX_ERRNO_ENONE );
+}
+
+
+/* DEV_API: spi_write
+   Write data to a previously opened SPI */
+POSIX_ERRNO spi_write(
+                void * const buffer,
+                size_t const num_bytes_to_write
+            )
+{
+    return( POSIX_ERRNO_ENONE );
+}
+#endif /* 1 == configUSE_DRV_SPI */
+
+
+#if( 1 == configUSE_DRV_UART )
+/* DEV_API: uart_open
+   Open UART1 for i/o */
+POSIX_ERRNO uart_open( 
+                DEV_MODE const mode,
+                UART_PARAMS const * params
+            )
+{
+    POSIX_ERRNO ret;
+
+        // mode may also contain DEV_MODE_BUFFERED_MASK
+    switch( DEV_MODE_UART_MASK & mode )
+    {
+        case DEV_MODE_UART_NO_MODEM :
+        case DEV_MODE_UART_HALF_MODEM :
+        case DEV_MODE_UART_HALF_NULL_MODEM :
+        case DEV_MODE_UART_FULL_MODEM :
+        case DEV_MODE_UART_FULL_NULL_MODEM :
+        {
+#           if( 1 == configUSE_DEV_SAFEGUARDS )
+            {
+                ret = dev_open( DEV_NUM_UART, 1, mode, params );
+            }
+#           else
+            {
+                ret = uart_dev_open( mode, params );
+            }
+#           endif
+        }
+        break;
+
+        default :
+        {
+            ret = POSIX_ERRNO_EINVAL;
+        }
+        break;
+    }
+
+    return( ret );
+}
+
+
+/* DEV_API: uart_close
+   Close previously opened UART1 */
+POSIX_ERRNO uart_close( 
+                void 
+            )
+{
+#   if( 1 == configUSE_DEV_SAFEGUARDS )
+    {
+        dev_close( DEV_NUM_UART, 1 );
+    }
+#   else
+    {
+        uart_dev_close( );
+    }
+#   endif
+
+    return( POSIX_ERRNO_ENONE );
+}
+
+
+/* DEV_API: uart_read
+     Read data from a previously opened UART1
+     Calling task may block until either the read is complete or an error
+       transpires. */
+POSIX_ERRNO uart_read(
+                void * const buffer,
+                size_t const num_bytes_to_read
+            )
+{
+    POSIX_ERRNO ret;
+
+#   if( 1 == configUSE_DEV_SAFEGUARDS )
+    {
+        ret = dev_read( 
+                  DEV_NUM_UART, 1, 
+                  buffer, num_bytes_to_read, NULL, NULL );
+    }
+#   else
+    {
+        ret = uart_dev_read( buffer, num_bytes_to_read, NULL, NULL );
+    }
+#   endif
+    
+    return( ret );
+}
+
+
+/* DEV_API: uart_read_buffered
+   Read data from previously opened UART1
+   If the uart is opened with DEV_MODE_BUFFERED in the mode parameters,
+     the calling task will not block, but return immediately with any data
+     that has been received at the time of calling. It is like a poll that
+     receives data immediately.
+   If the uart is opened without DEV_MODE_BUFFERED in the mode parameters,
+     then the behaviour is like uart_read and the calling task may block. */
+POSIX_ERRNO uart_read_buffered(
+                void * const buffer,
+                size_t const num_bytes_to_read,
+                size_t * num_bytes_buffered,
+                POSIX_ERRNO * result
+            )
+{
+    POSIX_ERRNO ret;
+
+#   if( 1 == configUSE_DEV_SAFEGUARDS )
+    {
+        ret = dev_read( 
+                  DEV_NUM_UART, 1, 
+                  buffer, num_bytes_to_read, num_bytes_buffered, result );
+    }
+#   else
+    {
+        ret = uart_dev_read( 
+                  buffer, num_bytes_to_read, num_bytes_buffered, result );
+    }
+#   endif
+    
+    return( ret );
+}
+
+
+/* DEV_API: uart_write
+     Write data to a previously opened UART1
+     Calling task will block until either the write is complete or an error
+       happens. */
+POSIX_ERRNO uart_write(
+                void * const buffer,
+                size_t const num_bytes_to_write
+            )
+{
+    POSIX_ERRNO ret;
+
+#   if( 1 == configUSE_DEV_SAFEGUARDS )
+    {
+        ret = dev_write( 
+                  DEV_NUM_UART, 1, 
+                  buffer, num_bytes_to_write, NULL, NULL );
+    }
+#   else
+    {
+        ret = uart_dev_write( buffer, num_bytes_to_write, NULL, NULL );
+    }
+#   endif
+    
+    return( ret );
+}
+
+
+/* DEV_API: uart_write_buffered
+     Write data to a previously opened UART1
+     If the uart is opened with DEV_MODE_BUFFERED in the mode parameters,
+       the calling task will not block, but return immediately.
+     If the uart is opened without DEV_MODE_BUFFERED in the mode parameters,
+       then the behaviour is like uart_write and the calling task may block.  */
+POSIX_ERRNO uart_write_buffered(
+                void * const buffer,
+                size_t const num_bytes_to_write,
+                size_t * num_bytes_buffered,
+                POSIX_ERRNO * result
+            )
+{
+    POSIX_ERRNO ret;
+
+#   if( 1 == configUSE_DEV_SAFEGUARDS )
+    {
+        ret = dev_write( 
+                  DEV_NUM_UART, 1, 
+                  buffer, num_bytes_to_write, num_bytes_buffered, result );
+    }
+#   else
+    {
+        ret = uart_dev_write( 
+                  buffer, num_bytes_to_write, num_bytes_buffered, result );
+    }
+#   endif
+    
+    return( ret );
+}
+
+
+/* DEV_API: uart_poll
+   Poll previously opened UART1 */
+POSIX_ERRNO uart_poll(
+                size_t * num_bytes_to_read,    // content of uart input buffer
+                size_t * num_bytes_to_write    // free space in uart output buffer
+            )
+{
+    return( POSIX_ERRNO_ENONE );
+}
+#endif /* configUSE_DRV_UART */

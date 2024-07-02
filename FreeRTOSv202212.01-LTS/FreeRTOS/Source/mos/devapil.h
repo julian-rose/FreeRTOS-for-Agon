@@ -42,6 +42,7 @@
  *
  * Definitions for DEV low-level functions for FreeRTOS for Agon Light 
  * (and compatibles).
+ * Created Jun.2024 by Julian Rose for Agon Light port
 */
 
 #ifndef DEVAPIL_H
@@ -204,6 +205,47 @@ typedef enum _port
 } PORT;
 
 
+/* Zilog UART error codes
+ * Error codes consist of both the errors reported by the UART device
+ * (through status registers), and the errors that occur in the UART driver
+ * software.
+ * The domain of UART error codes overlays that of MOS error codes
+ */
+typedef enum _uart_errno
+{
+    UART_ERRNO_NONE               = 0x00, // success.
+    UART_ERRNO_KBHIT              = 0x01,    // keyboard hit.            
+    UART_ERRNO_FRAMINGERR         = 0x02,    // Framing error occurs in the character received.        
+    UART_ERRNO_PARITYERR          = 0x03, // Parity error occurs in the character received.            
+    UART_ERRNO_OVERRUNERR         = 0x04, // Overrun error occurs in the receive buffer register.        
+    UART_ERRNO_BREAKINDICATIONERR = 0x05, // Break Indication Error occurs.        
+    UART_ERRNO_CHARTIMEOUT        = 0x06, // a character time-out occurs while receiving.            
+    UART_ERRNO_INVBAUDRATE        = 0x07, // baud rate specified is invalid.            
+    UART_ERRNO_INVPARITY          = 0x08,    // parity option specified is invalid.            
+    UART_ERRNO_INVSTOPBITS        = 0x09, // stop bits specified is invalid.            
+    UART_ERRNO_INVDATABITS        = 0x0A, // data bits per character specified is invalid.            
+    UART_ERRNO_INVTRIGGERLEVEL    = 0x0B, // receive FIFO trigger level specified is invalid.            
+    UART_ERRNO_FIFOBUFFERFULL     = 0x0C, // transmit FIFO buffer is full.        
+    UART_ERRNO_FIFOBUFFEREMPTY    = 0x0D, // receive FIFO buffer is empty.            
+    UART_ERRNO_RECEIVEFIFOFULL    = 0x0E, // software receive FIFO buffer is full.            
+    UART_ERRNO_RECEIVEFIFOEMPTY   = 0x0F, // software receive FIFO buffer is empty.            
+    UART_ERRNO_PEEKINPOLL         = 0x10, // invalid 'peek a character' while in polling mode
+    
+    UART_ERRNO_USRBASE            = 0x11, // The error code base value for user applications.
+
+    UART_ERRNO_RX_DATA_READY      = 0x11, // LSR.DR indicated
+    UART_ERRNO_CTS_LOST           = 0x12, // MSR.CTS indicated
+    UART_ERRNO_CTS_FOUND          = 0x13,
+    UART_ERRNO_DSR_LOST           = 0x14, // MSR.DSR indicated
+    UART_ERRNO_DSR_FOUND          = 0x15,
+    UART_ERRNO_DCD_LOST           = 0x16, // MSR.DCD indicated
+    UART_ERRNO_DCD_FOUND          = 0x17,
+    UART_ERRNO_RI_HANGUP          = 0x18, // MSR.RI indicated
+    UART_ERRNO_RI_CALL            = 0x19
+
+} UART_ERRNO;
+
+
 /*----- Type Definitions ----------------------------------------------------*/
 typedef struct _port_bitmap
 {
@@ -298,17 +340,19 @@ extern void i2c_dev_close(
 /* i2c_dev_read
    Device-specific i2c read function */
 extern POSIX_ERRNO i2c_dev_read(
-                       void * const buffer,
-                       size_t const num_bytes_to_read,
-                       size_t * num_bytes_read
+                       void * const buffer,              // IN
+                       size_t const num_bytes_to_read,   // IN
+                       size_t * num_bytes_read,          // OUT
+                       POSIX_ERRNO *result               // OUT
                    );
 
 /* i2c_dev_write
    Device-specific I2C write function */
 extern POSIX_ERRNO i2c_dev_write(
-                       void * const buffer,
-                       size_t const num_bytes_to_write,
-                       size_t * num_bytes_written
+                       void * const buffer,              // IN
+                       size_t const num_bytes_to_write,  // IN
+                       size_t * num_bytes_written,       // OUT
+                       POSIX_ERRNO *result               // OUT
                    );
 
 
@@ -328,17 +372,19 @@ extern void spi_dev_close(
 /* spi_dev_read
    Device-specific spi read function */
 extern POSIX_ERRNO spi_dev_read(
-                       void * const buffer,
-                       size_t const num_bytes_to_read,
-                       size_t * num_bytes_read
+                       void * const buffer,              // IN
+                       size_t const num_bytes_to_read,   // IN
+                       size_t * num_bytes_read,          // OUT
+                       POSIX_ERRNO *result               // OUT
                    );
 
 /* spi_dev_write
    Device-specific SPI write function */
 extern POSIX_ERRNO spi_dev_write(
-                       void * const buffer,
-                       size_t const num_bytes_to_write,
-                       size_t * num_bytes_written
+                       void * const buffer,              // IN
+                       size_t const num_bytes_to_write,  // IN
+                       size_t * num_bytes_written,       // OUT
+                       POSIX_ERRNO *result               // OUT
                    );
 
 
@@ -346,7 +392,8 @@ extern POSIX_ERRNO spi_dev_write(
 /* uart_dev_open
    Device-specific uart1 open function device configuration */
 extern POSIX_ERRNO uart_dev_open(
-                       DEV_MODE const mode
+                       DEV_MODE const mode,
+                       UART_PARAMS const * params
                    );
 
 /* uart_dev_close
@@ -358,17 +405,19 @@ extern void uart_dev_close(
 /* uart_dev_read
    Device-specific UART1 read function */
 extern POSIX_ERRNO uart_dev_read(
-                       void * const buffer,
-                       size_t const num_bytes_to_read,
-                       size_t * num_bytes_read
+                       void * const buffer,              // IN
+                       size_t const num_bytes_to_read,   // IN
+                       size_t * num_bytes_read,          // OUT
+                       POSIX_ERRNO *result               // OUT
                    );
 
 /* uart_dev_write
    Device-specific UART1 write function */
 extern POSIX_ERRNO uart_dev_write(
-                       void * const buffer,
-                       size_t const num_bytes_to_write,
-                       size_t * num_bytes_written
+                       void * const buffer,              // IN
+                       size_t const num_bytes_to_write,  // IN
+                       size_t * num_bytes_written,       // OUT
+                       POSIX_ERRNO *result               // OUT
                    );
 
 
@@ -403,7 +452,8 @@ extern POSIX_ERRNO dev_read(
                        DEV_NUM_MINOR const minor,
                        void * const buffer,
                        size_t const num_bytes_to_read,
-                       size_t * num_bytes_read
+                       size_t * num_bytes_read,
+                       POSIX_ERRNO *result
                    );
 
 /* dev_write
@@ -414,7 +464,8 @@ extern POSIX_ERRNO dev_write(
                        DEV_NUM_MINOR const minor,
                        void * const buffer,
                        size_t const num_bytes_to_write,
-                       size_t * const num_bytes_written
+                       size_t * const num_bytes_written,
+                       POSIX_ERRNO *result
                    );
 
 /* dev_poll

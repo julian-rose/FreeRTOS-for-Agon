@@ -154,35 +154,38 @@ typedef enum _posix_errno
 typedef enum _dev_mode
 {
     /* generic modes */
-    DEV_MODE_UNBUFFERED          =( 0x0 << 0 ),  // blocking mode, calling task may block
-    DEV_MODE_BUFFERED            =( 0x1 << 0 ),  // non-blocking mode, calling task will not block
-    DEV_MODE_BUFFERED_MASK       =( 0x1 << 0 ),
+    DEV_MODE_UNBUFFERED           =( 0x0 << 0 ),  // un-buffered semantics
+    DEV_MODE_BUFFERED             =( 0x1 << 0 ),  // buffered semantics
+    DEV_MODE_BUFFERED_MASK        =( 0x1 << 0 ),
 
     /* GPIO modes (refer to Zilog PS015317 table 6) */
-    DEV_MODE_GPIO_OUT            =( 0x1 << 1 ),  // Mode 1 - standard digital output
-    DEV_MODE_GPIO_IN             =( 0x2 << 1 ),  // Mode 2 - standard digital input
-    DEV_MODE_GPIO_DIO            =( 0x3 << 1 ),  // Mode 3 - Open Drain I/O (needs external pullup)
-    DEV_MODE_GPIO_SIO            =( 0x4 << 1 ),  // Mode 4 - Open Source I/O (needs external pulldown)
-    DEV_MODE_GPIO_INTRDE         =( 0x6 << 1 ),  // Mode 6 - Input Dual-Edge triggered INTR
-    DEV_MODE_GPIO_ALTFUNC        =( 0x7 << 1 ),  // Mode 7 - Alternate hardware function
-    DEV_MODE_GPIO_INTRLOW        =( 0x8 << 1 ),  // Mode 8 - Input Interrupt active level low
-    DEV_MODE_GPIO_INTRHIGH       =( 0x9 << 1 ),  // Mode 8 - Input Interrupt active level high
-    DEV_MODE_GPIO_INTRFALL       =( 0xA << 1 ),  // Mode 9 - Input Interrupt active falling edge
-    DEV_MODE_GPIO_INTRRISE       =( 0xB << 1 ),  // Mode 9 - Input Interrupt active rising edge
-    DEV_MODE_GPIO_MASK           =( 0xF << 1 ),
+    DEV_MODE_GPIO_OUT             =( 0x1 << 1 ),  // Mode 1 - standard digital output
+    DEV_MODE_GPIO_IN              =( 0x2 << 1 ),  // Mode 2 - standard digital input
+    DEV_MODE_GPIO_DIO             =( 0x3 << 1 ),  // Mode 3 - Open Drain I/O (needs external pullup)
+    DEV_MODE_GPIO_SIO             =( 0x4 << 1 ),  // Mode 4 - Open Source I/O (needs external pulldown)
+    DEV_MODE_GPIO_INTRDE          =( 0x6 << 1 ),  // Mode 6 - Input Dual-Edge triggered INTR
+    DEV_MODE_GPIO_ALTFUNC         =( 0x7 << 1 ),  // Mode 7 - Alternate hardware function
+    DEV_MODE_GPIO_INTRLOW         =( 0x8 << 1 ),  // Mode 8 - Input Interrupt active level low
+    DEV_MODE_GPIO_INTRHIGH        =( 0x9 << 1 ),  // Mode 8 - Input Interrupt active level high
+    DEV_MODE_GPIO_INTRFALL        =( 0xA << 1 ),  // Mode 9 - Input Interrupt active falling edge
+    DEV_MODE_GPIO_INTRRISE        =( 0xB << 1 ),  // Mode 9 - Input Interrupt active rising edge
+    DEV_MODE_GPIO_MASK            =( 0xF << 1 ),
 
-    /* UART modes */
-    DEV_MODE_UART_NO_FLOWCTRL    =( 0x1 << 5 ),  // no hardware flow control (uart= only rx, tx)
-    DEV_MODE_UART_HW_FLOWCTRL    =( 0x2 << 5 ),  // hardware flow control (uart += rts,cts)
-    DEV_MODE_UART_MODEM_FLOWCTRL =( 0x3 << 5 ),  // modem hardware flow control (uart += dsr,dtr,ri,dcd)
-    DEV_MODE_UART_MASK           =( 0x3 << 5 ),
+    /* UART modes */                              // DTE=computer, DCE=modem
+    DEV_MODE_UART_NO_MODEM        =( 0x0 << 5 ),  // DTE<->DTE software flow control, no hardware handshake
+    DEV_MODE_UART_HALF_MODEM      =( 0x1 << 5 ),  // DTE<->DCE RTS/CTS hw flow control, straight-through wiring
+    DEV_MODE_UART_FULL_MODEM      =( 0x2 << 5 ),  // DTE<->DCE RTS/CTS DTR/DSR hw flow control, straight-through
+    DEV_MODE_UART_HALF_NULL_MODEM =( 0x5 << 5 ),  // DTE<->DTE RTS/CTS hw flow control, cross-over wiring
+    DEV_MODE_UART_FULL_NULL_MODEM =( 0x6 << 5 ),  // DTE<->DTE RTS/CTS DTR/DSR hw flow control, cross-over
+    DEV_MODE_UART_MASK            =( 0x7 << 5 ),
 
     /* I2C modes */
-    DEV_MODE_I2C_FREQ_DEFAULT    =( 0x1 << 7 ),  // I2C frequency 57600 bps
-    DEV_MODE_I2C_FREQ_57600      =( 0x1 << 7 ),  // I2C frequency 57600 bps
-    DEV_MODE_I2C_FREQ_115200     =( 0x2 << 7 ),  // I2C frequency 115200 bps
-    DEV_MODE_I2C_FREQ_230400     =( 0x3 << 7 ),  // I2C frequency 230400 bps
-    DEV_MODE_I2C_MASK            =( 0x3 << 7 ),
+    DEV_MODE_I2C_DEFAULT          =( 0x1 << 8 ),
+    DEV_MODE_I2C_MASK             =( 0x1 << 8 ),
+
+    /* SPI modes */
+    DEV_MODE_SPI_DEFAULT          =( 0x1 << 9 ),
+    DEV_MODE_SPI_MASK             =( 0x1 << 9 ),
 
 } DEV_MODE;
 
@@ -219,7 +222,83 @@ typedef enum _gpio_pin_num
 #define NUM_PINS_GPIO ( GPIO_26 - GPIO_13 + 1 )
 
 
-/*----- Type Definitions ----------------------------------------------------*/
+typedef enum _uart_baud_rate   // BRG = 18,432,000 /( 16 * BAUD )
+{                              //                    -- refer to Zilog PS015317 pp:109
+    UART_BAUD_150     =  0,    // BRG=7,680   0x1E00
+    UART_BAUD_300     =  1,    // BRG=3,840   0x0F00
+    UART_BAUD_1200    =  2,    // BRG=960     0x03C0
+    UART_BAUD_2400    =  3,    // BRG=480     0x01E0
+    UART_BAUD_4800    =  4,    // BRG=240     0x00F0
+    UART_BAUD_9600    =  5,    // BRG=120     0x0078
+    UART_BAUD_11520   =  6,    // BRG=100     0x0064
+    UART_BAUD_14400   =  7,    // BRG=80      0x0050
+    UART_BAUD_19200   =  8,    // BRG=60      0x003C
+    UART_BAUD_28800   =  9,    // BRG=40      0x0028
+    UART_BAUD_38400   = 10,    // BRG=30      0x001E
+    UART_BAUD_57600   = 11,    // BRG=20      0x0014
+    UART_BAUD_115200  = 12,    // BRG=10      0x000A
+    UART_BAUD_144000  = 13,    // BRG=8       0x0008
+    UART_BAUD_192000  = 14,    // BRG=6       0x0006
+    UART_BAUD_288000  = 15,    // BRG=4       0x0004
+    UART_BAUD_384000  = 16,    // BRG=3       0x0003
+    UART_BAUD_576000  = 17,    // BRG=2       0x0002 -- system reset default
+    UART_BAUD_1152000 = 18,    // BRG=1       0x0001 -- minimum possible
+
+    NUM_UART_BAUD = 19
+
+} UART_BAUD_RATE;
+
+
+typedef enum _uart_databits
+{                      // values map directly to bits in the eZ80 UART Line Control Register
+    UART_DATABITS_5  =( 0x0 << 0 ),
+    UART_DATABITS_6  =( 0x1 << 0 ),
+    UART_DATABITS_7  =( 0x2 << 0 ),
+    UART_DATABITS_8  =( 0x3 << 0 )
+
+} UART_DATABITS;
+
+
+typedef enum _uart_stopbits
+{                      // values map directly to bits in the eZ80 UART Line Control Register
+    UART_STOPBITS_1  =( 0x0 << 2 ),
+    UART_STOPBITS_2  =( 0x1 << 2 )
+
+} UART_STOPBITS;
+
+
+typedef enum _uart_paritybit
+{                       // values map directly to bits in the eZ80 UART Line Control Register
+    UART_PARITY_NONE  =( 0x0 << 3 ),   // PEN=0
+    UART_PARITY_ODD   =( 0x1 << 3 ),   // PEN=1 + EPS=0
+    UART_PARITY_EVEN  =( 0x3 << 3 )    // PEN=1 + EPS=1
+
+} UART_PARITY_BIT;
+
+
+typedef enum _uart_event
+{
+    UART_EVENT_NONE = 0,
+    UART_EVENT_RX_READY,
+    UART_EVENT_RX_FULL,
+    UART_EVENT_RX_ERROR,
+    UART_EVENT_TX_DONE,
+    UART_EVENT_TX_ERROR,
+    UART_EVENT_TX_UNEXPECTED,
+    
+} UART_EVENT;
+
+
+typedef enum _i2c_frequency
+{
+    I2C_FREQ_DEFAULT     = 0x1,  // I2C frequency 57600 bps
+    I2C_FREQ_57600       = 0x1,  // I2C frequency 57600 bps
+    I2C_FREQ_115200      = 0x2,  // I2C frequency 115200 bps
+    I2C_FREQ_230400      = 0x3  // I2C frequency 230400 bps
+
+} I2C_FREQUENCY;
+
+
 typedef enum _dev_num_major
 {
     DEV_NUM_GPIO = 0,
@@ -234,52 +313,62 @@ typedef enum _dev_num_major
 typedef GPIO_PIN_NUM DEV_NUM_MINOR;
 
 
+/*----- Type Definitions ----------------------------------------------------*/
 typedef void ( *INTERRUPT_HANDLER )( DEV_NUM_MAJOR const, DEV_NUM_MINOR const );
 typedef void ( *FAST_INTERRUPT_HANDLER )( void );
 
 
+typedef struct _uart_params      // UART descriptor
+{
+    UART_BAUD_RATE   baudRate;
+    UART_DATABITS    dataBits;   // number of databits per character
+    UART_STOPBITS    stopBits;   // number of stopbits per character
+    UART_PARITY_BIT  parity;     // parity bit per character
+
+} UART_PARAMS;
+
+
 /*----- Function Declarations -----------------------------------------------*/
-    /* DEV_API: uart_open
-       Open UART1 for i/o
-       Defined in devapi.c */
-POSIX_ERRNO uart_open( 
-                DEV_MODE const mode 
+    /* DEV_API: gpio_open
+       Open GPIO for i/o
+       Additional parameters:
+         For mode in { DEV_MODE_GPIO_OUT } supply int initial value
+         For mode in { DEV_MODE_GPIO_INTRDE, DEV_MODE_GPIO_INTRLOW, 
+                       DEV_MODE_GPIO_INTRHIGH, DEV_MODE_GPIO_INTRFALL, 
+                       DEV_MODE_GPIO_INTRRISE } supply INTERRUPT_HANDLER
+         For mode in { DEV_MODE_GPIO_IN, DEV_MODE_GPIO_DIO,
+                       DEV_MODE_GPIO_SIO DEV_MODE_GPIO_ALTFUNC } none
+        Defined in devapi.c */
+POSIX_ERRNO gpio_open( 
+                GPIO_PIN_NUM const pin, 
+                DEV_MODE const mode,
+                ...  // additional parameters depending on mode
             );
 
 
-    /* DEV_API: uart_close
-       Close previously opened UART1
+    /* DEV_API: gpio_close
+       Close previously opened GPIO
        Defined in devapi.c */
-POSIX_ERRNO uart_close( 
-                void 
+POSIX_ERRNO gpio_close( 
+                GPIO_PIN_NUM const pin
             );
 
 
-    /* DEV_API: uart_read
-       Read data from previously opened UART1
+    /* DEV_API: gpio_read
+       Read data from previously opened GPIO
        Defined in devapi.c */
-POSIX_ERRNO uart_read(
-                void * const buffer,
-                size_t const num_bytes_to_read
+POSIX_ERRNO gpio_read(
+                GPIO_PIN_NUM const pin,
+                unsigned char * const val
             );
 
 
-    /* DEV_API: uart_write
-       Write data to a previously opened UART1
+    /* DEV_API: gpio_write
+       Write data to a previously opened GPIO
        Defined in devapi.c */
-POSIX_ERRNO uart_write(
-                void * const buffer,
-                size_t const num_bytes_to_write,
-                size_t * num_bytes_buffered
-            );
-
-
-    /* DEV_API: uart_poll
-       Poll previously opened UART1
-       Defined in devapi.c */
-POSIX_ERRNO uart_poll(
-                size_t * num_bytes_to_read,    // content of uart input buffer
-                size_t * num_bytes_to_write    // free space in uart output buffer
+POSIX_ERRNO gpio_write(
+                GPIO_PIN_NUM const pin,
+                unsigned char const val
             );
 
 
@@ -355,46 +444,84 @@ POSIX_ERRNO spi_write(
             );
 
 
-    /* DEV_API: gpio_open
-       Open GPIO for i/o
-       Additional parameters:
-         For mode in { DEV_MODE_GPIO_OUT } supply int initial value
-         For mode in { DEV_MODE_GPIO_INTRDE, DEV_MODE_GPIO_INTRLOW, 
-                       DEV_MODE_GPIO_INTRHIGH, DEV_MODE_GPIO_INTRFALL, 
-                       DEV_MODE_GPIO_INTRRISE } supply INTERRUPT_HANDLER
-         For mode in { DEV_MODE_GPIO_IN, DEV_MODE_GPIO_DIO,
-                       DEV_MODE_GPIO_SIO DEV_MODE_GPIO_ALTFUNC } none
-        Defined in devapi.c */
-POSIX_ERRNO gpio_open( 
-                GPIO_PIN_NUM const pin, 
+    /* DEV_API: uart_open
+       Open UART1 for i/o
+       Defined in devapi.c */
+POSIX_ERRNO uart_open( 
                 DEV_MODE const mode,
-                ...  // additional parameters depending on mode
+                UART_PARAMS const * params
+                //TIMEOUT
             );
 
 
-    /* DEV_API: gpio_close
-       Close previously opened GPIO
+    /* DEV_API: uart_close
+       Close previously opened UART1
        Defined in devapi.c */
-POSIX_ERRNO gpio_close( 
-                GPIO_PIN_NUM const pin
+POSIX_ERRNO uart_close( 
+                void 
             );
 
 
-    /* DEV_API: gpio_read
-       Read data from previously opened GPIO
+    /* DEV_API: uart_read
+       Read data from a previously opened UART1
+       Calling task may block until either the read is complete or an error
+         transpires.
        Defined in devapi.c */
-POSIX_ERRNO gpio_read(
-                GPIO_PIN_NUM const pin,
-                unsigned char * const val
+POSIX_ERRNO uart_read(
+                void * const buffer,
+                size_t const num_bytes_to_read
             );
 
 
-    /* DEV_API: gpio_write
-       Write data to a previously opened GPIO
+    /* DEV_API: uart_read_buffered
+       Read data from previously opened UART1
+       If the uart is opened with DEV_MODE_BUFFERED in the mode parameters,
+         the calling task will not block, but return immediately with any data
+         that has been received at the time of calling. It is like a poll that
+         receives data immediately.
+       If the uart is opened without DEV_MODE_BUFFERED in the mode parameters,
+         then the behaviour is like uart_read and the calling task may block. 
        Defined in devapi.c */
-POSIX_ERRNO gpio_write(
-                GPIO_PIN_NUM const pin,
-                unsigned char const val
+POSIX_ERRNO uart_read_buffered(
+                void * const buffer,
+                size_t const num_bytes_to_read,
+                size_t * num_bytes_read,
+                POSIX_ERRNO * result
+            );
+
+
+    /* DEV_API: uart_write
+       Write data to a previously opened UART1
+       Calling task will block until either the write is complete or an error
+         happens.
+       Defined in devapi.c */
+POSIX_ERRNO uart_write(
+                void * const buffer,
+                size_t const num_bytes_to_write
+            );
+
+
+    /* DEV_API: uart_write_buffered
+       Write data to a previously opened UART1
+       If the uart is opened with DEV_MODE_BUFFERED in the mode parameters,
+         the calling task will not block, but return immediately.
+       If the uart is opened without DEV_MODE_BUFFERED in the mode parameters,
+         then the behaviour is like uart_write and the calling task may block. 
+       Defined in devapi.c */
+POSIX_ERRNO uart_write_buffered(
+                void * const buffer,
+                size_t const num_bytes_to_write,
+                size_t * num_bytes_written,
+                POSIX_ERRNO * result
+            );
+
+
+    /* DEV_API: uart_poll
+       Poll previously opened UART1
+       Defined in devapi.c */
+POSIX_ERRNO uart_poll(
+                size_t * num_bytes_to_read,    // content of uart input buffer
+                size_t * num_bytes_to_write    // free space in uart output buffer
             );
 
 

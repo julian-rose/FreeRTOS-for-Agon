@@ -186,9 +186,9 @@ typedef char KEYMAP[ 16 ];       // Virtual Keyboard map (16*8 bits, each bit a 
 typedef struct _mos_uart         // UART descriptor
 {
     unsigned int  baudRate;      // baudrate (bits per sec) 
-    unsigned char dataBits;      // number of databits per character to be used (in range 5..8)
-    unsigned char stopBits;      // number of stopbits to be used (in range 1..2)
-    unsigned char parity;        // parity bit option to be used (00b=none, 01b=odd, 11b=even)
+    unsigned char dataBits;      // number of databits per character (in range 5..8)
+    unsigned char stopBits;      // number of stopbits (in range 1..2)
+    unsigned char parity;        // parity bit per character (00b=none, 01b=odd, 11b=even)
     unsigned char flowControl;   // flow control option (0: None, 1: Hardware)
     unsigned char interrupts;    // enabled interrupts (1h=receive, 2h=transmit, 4h=line, 
                                  //                     8h=modem, 10h=sent)

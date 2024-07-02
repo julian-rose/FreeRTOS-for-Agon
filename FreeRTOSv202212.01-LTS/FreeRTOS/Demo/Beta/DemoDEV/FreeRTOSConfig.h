@@ -47,7 +47,7 @@
     /* configENABLE_BACKWARD_COMPATIBILITY enables pre-8.0 API 
        (the eZ80 port was originally 5.0) */
 #define configENABLE_BACKWARD_COMPATIBILITY     1
-#define configUSE_PREEMPTION                    0
+#define configUSE_PREEMPTION                    1
     // configCPU_CLOCK_HZ as per Project->Settings->Setup->System Clock Frequency
 #define configCPU_CLOCK_HZ                      (( unsigned portLONG )18432000 )
 #define configTICK_RATE_HZ                      (( portTickType )10 )

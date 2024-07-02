@@ -63,7 +63,7 @@ include "mos_api.inc"
     XDEF    _getch
             
     XDEF    __putch
-    XDEF    __putchf        ; no test for MOS rentry, for use in low-leve; debugging
+    XDEF    __putchf        ; no test for MOS rentry, for use in low-level debugging
     XDEF    __getch
         
 

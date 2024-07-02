@@ -76,6 +76,8 @@ typedef struct _mosftest
 /*----- Private Variables ---------------------------------------------------*/
 static unsigned int idlecnt = 0;
 static volatile unsigned int gpiocnt = 0;
+static volatile unsigned int yieldcnt = 0;
+static TaskHandle_t isrTestTaskHandle = NULL;
 
 
 /*----- Local Declarations --------------------------------------------------*/
@@ -89,7 +91,9 @@ static void * menu( void );
     /* Device tests */
 static void doGPIOWriteTest( void );
 static void doGPIOReadWriteTest( void );
-static void doGpioCallback( void );
+static void doGPIOCallbackTest( void );
+static void doYieldFromISRTest( void );
+static void doUARTEchoTest( void );
 
 
 /*----- Function Definitions ------------------------------------------------*/
@@ -142,7 +146,9 @@ static void * menu( void )
     {
         { '0', "Test DEV GPIO write", doGPIOWriteTest },
         { '1', "Test DEV GPIO read write", doGPIOReadWriteTest },
-        { '2', "Test DEV GPIO ISR", doGpioCallback },
+        { '2', "Test DEV GPIO ISR", doGPIOCallbackTest },
+        { '3', "Test ISR Yield", doYieldFromISRTest },
+        { '4', "Test DEV UART echo test", doUARTEchoTest },
         { 'q', "End tests", NULL }
     };
     void ( *ret )( void )=( void* )-1;  /* any non-NULL value */
@@ -157,11 +163,7 @@ static void * menu( void )
     }
 
     ( void )printf( "\r\n>" );
-    do
-    {
-        ch = getchar( );
-    }
-    while( ESC == ch );
+    ch = getchar( );  // getchar blocks within MOS (no Idle task time)
 
     ( void )printf( "%c\r\n\r\n", ch );
     for( i = 0;( sizeof( tests )/sizeof( tests[ 0 ]))> i; i++ )
@@ -308,9 +310,10 @@ void myGpioHndlr( DEV_NUM_MAJOR const major, DEV_NUM_MINOR const minor )
 #   if( 1 == configUSE_FAST_INTERRUPTS )
     {
         /* This conditional block is provided as a template for writing your 
-           own FAST ISR. It is not required for the simpler Interrupt Handler,
-           configured with 0 == configUSE_FAST_INTERRUPTS, when similar is done
-           in devgpio::gpioisr for you. */
+           own FAST ISR, configured with 1 == configUSE_FAST_INTERRUPTS. 
+           It is not required for the simpler Interrupt Handler, configured 
+           with 0 == configUSE_FAST_INTERRUPTS, which wraps up low-level ISR
+           in devgpio::gpioisr to enable the simpler user Interrupt Handler. */
 
         ( void )major;  // not accessible
         ( void )minor;  // not accessible
@@ -328,15 +331,17 @@ void myGpioHndlr( DEV_NUM_MAJOR const major, DEV_NUM_MINOR const minor )
 #   endif /*( 1 == configUSE_FAST_INTERRUPTS )*/
 }
 
-/* doGpioCallback
+/* doGPIOCallbackTest
  *   Try out DEV API GPIO functions with interrupt
  *   Set an output that can be seen with a LED or a multimeter probe
  *   To test this I used a breadboard as per doGPIOWriteTest; and 
- *    in addition Pin 16 is wired to Pin 13 on the breadboard.
- *    GPIO 16 is opened using DEV_MODE_GPIO_INTRDE mode supplying the handler
+ *    in addition Pin 18 is wired to Pin 13 on the breadboard.
+ *    Refer to Source/docs/DEV API Extension Interface and MOS issues why we
+ *    cannot use GPIOs in ports D and B for rising edge interrupts.
+ *    GPIO 18 is opened using DEV_MODE_GPIO_INTRDE mode supplying the handler
  *    All LED state changes should result in the handler being run
 */
-static void doGpioCallback( void )
+static void doGPIOCallbackTest( void )
 {
     POSIX_ERRNO res;
     KEYMAP *kbmap;
@@ -350,6 +355,9 @@ static void doGpioCallback( void )
         ( void )printf( "myGpioHndlr = %p\r\n", &myGpioHndlr );    
     }
 #   endif
+    ( void )printf( "Toggling GPIO pin 13 periodically\r\n" );
+    ( void )printf( "Press 'ESC' key to exit test\r\n" );
+    kbmap = mos_getkbmap( );  // only need do this once at startup
 
     // open GPIO:13 as an output, initial value 0
     res = gpio_open( GPIO_13, DEV_MODE_GPIO_OUT, 0 );
@@ -358,10 +366,6 @@ static void doGpioCallback( void )
     // open GPIO:18 as an interrupt input
     res = gpio_open( GPIO_18, DEV_MODE_GPIO_INTRDE, myGpioHndlr );
     ( void )printf( "gpio_open(18) interrupt returns : %d\r\n", res );
-
-    ( void )printf( "Toggling GPIO pin 13\r\n" );
-    ( void )printf( "Press 'ESC' key to exit test\r\n" );
-    kbmap = mos_getkbmap( );  // only need do this once at startup
 
     // toggle the output until user-halted
     for( i = 1; ; i = 1 - i )
@@ -387,11 +391,202 @@ static void doGpioCallback( void )
 }
 
 
+/* IsrTestTask
+     High-priority task.
+     Will run immediately on exit of myYieldHndlr;
+       iff the current task is not blocking inside MOS */
+static void IsrTestTask( void * params )
+{
+    unsigned long notification;
+
+    for( ;; )
+    {
+        notification = ulTaskNotifyTake( pdTRUE, portMAX_DELAY );
+        if( notification )
+        {
+            putchar( '+' );
+        }
+    }
+}
+/*
+ * myYieldHndlr is an INTERRUPT_HANDLER
+ * It will be invoked in context of a DEV API GPIO ISR
+ * It must not call any blocking functions, and avoid calls to MOS;
+ * It must not disable interrupts, but may itself be interrupted
+ *
+ * It will send a notification to a waiting highest priority task. 
+ * On exit from the ISR, that highest priority task should run immediately.
+ */
+void myYieldHndlr( DEV_NUM_MAJOR const major, DEV_NUM_MINOR const minor )
+{
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+
+    yieldcnt++;
+    putchar( '*' );
+
+    /* run in context of high-priority interrupt handler uartIsrTask */
+    vTaskNotifyGiveFromISR( isrTestTaskHandle, &xHigherPriorityTaskWoken );
+        
+    /* If xHigherPriorityTaskWoken is now set to pdTRUE then a context 
+       switch should be performed to ensure the interrupt returns directly 
+       to the highest priority task. */
+    vPortYieldFromISR( xHigherPriorityTaskWoken ); // <--- This is what is under test
+}
+
+/* doYieldFromISRTest
+ *   Try out vPortYieldFromISR
+ *   Set an output that can be seen with a LED or a multimeter probe
+ *   To test this I used a breadboard as per doGPIOWriteTest; and 
+ *    in addition Pin 18 is wired to Pin 13 on the breadboard.
+ *    Refer to Source/docs/DEV API Extension Interface and MOS issues why we
+ *    cannot use GPIOs in ports D and B for rising edge interrupts.
+ *    GPIO 18 is opened using DEV_MODE_GPIO_INTRDE mode supplying the handler
+ *    All LED state changes should result in the handler being run
+*/
+static void doYieldFromISRTest( void )
+{
+    POSIX_ERRNO res;
+    BaseType_t r;
+    KEYMAP *kbmap;
+    int const escbyte =((( 113 - 1 )& 0xF8 )>> 3 );
+    int const escbit =  (( 113 - 1 )& 0x07 );
+    int i;
+
+    ( void )printf( "\r\n\r\nRunning Yield from ISR test\r\n" );
+#   if defined( _DEBUG )&& 0
+    {
+        ( void )printf( "myYieldHndlr = %p\r\n", &myYieldHndlr );    
+    }
+#   endif
+    
+    r = xTaskCreate( 
+            IsrTestTask, 
+            "ISR Test Task", 
+            configMINIMAL_STACK_SIZE, 
+            NULL,                      // no params
+            configMAX_PRIORITIES,      // highest possible priority
+            &isrTestTaskHandle );
+    if( pdPASS != r )
+    {
+#       if defined( _DEBUG )
+        {
+            ( void )printf( "Failed to create IsrTestTask: %d\r\n", r );
+        }
+#       endif
+    }
+    else
+    {
+#       if defined( _DEBUG )
+        {
+            ( void )printf( "Created IsrTestTask\r\n" );
+        }
+#       endif
+    }
+
+    ( void )printf( "Toggling GPIO pin 13 periodically\r\n" );
+    ( void )printf( "Press 'ESC' key to exit test\r\n" );
+    kbmap = mos_getkbmap( );  // only need do this once at startup
+
+    // open GPIO:13 as an output, initial value 0
+    res = gpio_open( GPIO_13, DEV_MODE_GPIO_OUT, 0 );
+    ( void )printf( "gpio_open(13) output returns : %d\r\n", res );
+
+    // open GPIO:18 as an interrupt input
+    res = gpio_open( GPIO_18, DEV_MODE_GPIO_INTRDE, myYieldHndlr );
+    ( void )printf( "gpio_open(18) interrupt returns : %d\r\n", res );
+
+    // toggle the output until user-halted
+    for( i = 1; ; i = 1 - i )
+    {
+        ( void )printf( "gpio_write(13) %d\r\n", i );
+        res = gpio_write( GPIO_13, i );
+
+        vTaskDelay( 5 );  // delay 0.5s
+
+        /* scan keyboard for ESC */
+        if((( char* )kbmap )[ escbyte ]&( 1 << escbit ))
+        {
+            break;
+        }
+    }
+
+    ( void )printf( "gpio_close\r\n" );
+    gpio_close( GPIO_13 );
+    gpio_close( GPIO_18 );
+
+    // finish up
+    ( void )printf( "gpiocnt = %d\r\n", gpiocnt );
+    
+    ( void )printf( "Deleting IsrTestTask\r\n\r\n" );
+    vTaskDelete( isrTestTaskHandle );
+}
+
+
+/* doUARTEchoTest
+ *   Try out DEV API UART functions
+ *   Connect UART1 to an external source (laptop putty for example)
+ *   Read a string (terminator character ctrl-Z) and Echo it back
+*/
+static void doUARTEchoTest( void )
+{
+    POSIX_ERRNO res;
+    KEYMAP *kbmap;
+    int const escbyte =((( 113 - 1 )& 0xF8 )>> 3 );
+    int const escbit =  (( 113 - 1 )& 0x07 );
+    int i;
+    UART_PARAMS const uparm =
+        { UART_BAUD_9600, UART_DATABITS_8, UART_STOPBITS_1, UART_PARITY_ODD };
+
+    ( void )printf( "\r\n\r\nRunning UART echo test\r\n" );
+    ( void )printf( "Press 'ESC' key to exit test\r\n" );
+    kbmap = mos_getkbmap( );  // only need do this once at startup
+
+    // open GPIO:13 as an output, initial value 0
+    res = gpio_open( GPIO_13, DEV_MODE_GPIO_OUT, 0 );
+    ( void )printf( "gpio_open(13) output returns : %d\r\n", res );
+
+    // no flow control (simple rx.tx connection)
+    res = uart_open( DEV_MODE_UART_NO_MODEM, &uparm );
+    ( void )printf( "uart_open returns : %d\r\n", res );
+
+    // read input until a terminator character is read (^-Z)
+    for( i = 1; ; i = 1 - i )
+    {
+        ( void )printf( "gpio_write(13) %d\r\n", i );
+        ( void )gpio_write( GPIO_13, i );
+
+        ( void )printf( "uart_write( \"Hello\")\r\n" );
+        res = uart_write( "Hello", 5 );
+        vTaskDelay( 5 );  // delay 0.5s
+
+        /* scan keyboard for ESC */
+        if((( char* )kbmap )[ escbyte ]&( 1 << escbit ))
+        {
+            break;
+        }
+    }
+
+    ( void )printf( "uart_close\r\n" );
+    uart_close( );
+    ( void )printf( "gpio_close\r\n" );
+    gpio_close( GPIO_13 );
+}
+
+
 /*----- Task Definitions ----------------------------------------------------*/
 #pragma asm "\tSEGMENT TASKS"
 void Task1( void *pvParameters )
 {
+    POSIX_ERRNO res;
+
     ( void )printf( "\r\nStarting %s\r\n", pcTaskGetName( NULL ));
+
+    // open GPIO:26 as an output, initial value 0
+    res = gpio_open( GPIO_26, DEV_MODE_GPIO_OUT, 0 );
+    if( POSIX_ERRNO_ENONE == res )
+    {
+        ( void )printf( "Assigned gpio(26) to the idle task\r\n" );
+    }
 
     for( ;; )
     {
@@ -404,7 +599,7 @@ void Task1( void *pvParameters )
     ( void )printf( "Waiting 3 seconds before resetting Agon\r\n");
     vTaskDelay( 30 );  // wait 3 seconds at 10 ticks/sec
 
-    asm( "\tRST.LIS 00h      ; invoke MOS reset");
+    asm( "\tRST.LIS 00h      ; invoke MOS reset" );
     
     ( void )pvParameters;
 }
@@ -419,7 +614,21 @@ void Task1( void *pvParameters )
 #pragma asm "\tSEGMENT TASKS"
 void vApplicationIdleHook( void )
 {
-    //Machen mit ein blinken light would be excellent
+    static unsigned char led = 0;
+    int toggle;
 
     idlecnt++;
+
+    //Machen mit ein blinken light
+        // safeguard use of math library (% operation) against interleaving
+    portENTER_CRITICAL( );
+    {
+        toggle =( idlecnt % 3000 );
+    }
+    portEXIT_CRITICAL( );
+    if( 0== toggle )
+    {
+        led = 1 - led;
+        ( void )gpio_write( GPIO_26, led );
+    }
 }

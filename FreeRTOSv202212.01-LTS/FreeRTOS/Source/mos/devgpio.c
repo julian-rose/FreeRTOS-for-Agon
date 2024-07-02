@@ -38,8 +38,7 @@
  *           ZDSII in ADL mode
  *
  * The definitions in this file support the DEV API (GPIO low-level)
- * for Agon Light (and comptaibles) and the ZDSII compiler
- * Zilog eZ80 ANSI C Compiler Version 3.4 (19101101).
+ * for Agon Light (and comptaibles)
  * Created 17.Jun.2024 by Julian Rose for Agon Light port
  *
  * These functions should not normally be application-user altered.
@@ -922,9 +921,9 @@ POSIX_ERRNO gpio_dev_open(
     unsigned int const mnr =( minor - PIN_NUM_START );
     va_list args;
 
-#   if defined( _DEBUG )&& 0
+#   if defined( _DEBUG )&&0
     {
-        ( void )printf( "%s : %d : mnr = %d : ", __FILE__, __LINE__, mnr );
+        ( void )printf( "%s : %d : mnr = %d : ", "devgpio.c", __LINE__, mnr );
         ( void )printf( "mode = 0x%x : mask = 0x%x\r\n", mode, DEV_MODE_GPIO_MASK & mode );
     }
 #   endif
@@ -936,6 +935,10 @@ POSIX_ERRNO gpio_dev_open(
 #   endif
 
     va_start( args, mode );
+
+#if defined( _DEBUG )&&0
+    ( void )printf( "%s : %d\r\n", "devgpio.c", __LINE__ );
+#endif
 
     // 1. Configure Pin Mode    
     switch( DEV_MODE_GPIO_MASK & mode )
@@ -997,13 +1000,16 @@ POSIX_ERRNO gpio_dev_open(
 
         case DEV_MODE_GPIO_INTRDE:    // Mode 6 - Input Dual-Edge triggered INTR
         {
+#if defined( _DEBUG )&&0
+    ( void )printf( "%s : %d\r\n", "devgpio.c", __LINE__ );
+#endif
             intrhndl[ mnr ][ 1 ]= va_arg( args, void* );
             va_end( args );
 
 #           if defined( _DEBUG )&& 0
             {
                 ( void )printf( "%s : %d : intrhndl[ mnr ][ 1 ]= %p\r\n", 
-                                __FILE__, __LINE__, intrhndl[ mnr ][ 1 ]);
+                                "devgpio.c", __LINE__, intrhndl[ mnr ][ 1 ]);
             }
 #           endif
 
@@ -1095,7 +1101,7 @@ POSIX_ERRNO gpio_dev_open(
 #       if defined( _DEBUG )&& 0
         {
             ( void )printf( "%s : %d : isr_vector[ mnr ]= %p\r\n", 
-                            __FILE__, __LINE__, isr_vector[ mnr ]);
+                            "devgpio.c", __LINE__, isr_vector[ mnr ]);
         }
 #       endif
         intrhndl[ mnr ][ 0 ]=  // remember old vector to restore on gpio_close
@@ -1118,7 +1124,19 @@ void gpio_dev_close(
     unsigned int const mnr =( minor - PIN_NUM_START );
     
     // 1. Detach any interrupt handler
-
+    intrhndl[ mnr ][ 1 ]= NULL;
+#   if( 1 == configUSE_FAST_INTERRUPTS )
+    {
+        if( intrhndl[ mnr ][ 0 ])
+        {
+            mos_setintvector( pin_vector[ mnr ], intrhndl[ mnr ][ 0 ]);
+            intrhndl[ mnr ][ 0 ]= NULL;
+        }
+    }
+#   else
+        // We'll leave the devgpio isr attached to clear down extrenuous events
+#   endif /*( 1 == configUSE_FAST_INTERRUPTS )*/
+    
     // 2. set DEV_MODE_GPIO_IN: Mode 2 - standard digital input
     gpio_set_mode_input( portmap[ mnr ].port, portmap[ mnr ].bit );
 }

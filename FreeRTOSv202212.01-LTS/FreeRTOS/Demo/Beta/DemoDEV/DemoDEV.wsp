@@ -6,12 +6,16 @@ ptn_Child1=ChildFrames
 
 [WorkState_v1_2.Frames.ChildFrames]
 ptn_Child1=Document-0
+ptn_Child10=Document-9
+ptn_Child11=Document-10
 ptn_Child2=Document-1
 ptn_Child3=Document-2
 ptn_Child4=Document-3
 ptn_Child5=Document-4
 ptn_Child6=Document-5
 ptn_Child7=Document-6
+ptn_Child8=Document-7
+ptn_Child9=Document-8
 
 [WorkState_v1_2.Frames.ChildFrames.Document-0]
 ptn_Child1=ViewFrame-0
@@ -28,65 +32,109 @@ WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAAAAAAAAAHDCAAAAAPPPPPPPPPPPPPPPPIBAAAAAA
 ptn_Child1=ViewFrame-0
 
 [WorkState_v1_2.Frames.ChildFrames.Document-1.ViewFrame-0]
-DocPathName=..\..\..\Source\mos\devapil.h
+DocPathName=..\..\..\Source\mos\devuart.c
+DocTemplateIndex=0
+DocumentString=IDE.Document
+IsActiveChildFrame=True
+IsFrameVisible=True
+WindowPlacement=MCAAAAAAAAAAAAAABAAAAAAAOIBAAAAAFBCAAAAAPPPPPPPPPPPPPPPPJOAAAAAAHEAAAAAAEDEAAAAABBCAAAAA
+
+[WorkState_v1_2.Frames.ChildFrames.Document-10]
+ptn_Child1=ViewFrame-0
+
+[WorkState_v1_2.Frames.ChildFrames.Document-10.ViewFrame-0]
+DocPathName=.\FreeRTOSConfig.h
 DocTemplateIndex=0
 DocumentString=IDE.Document
 IsActiveChildFrame=False
 IsFrameVisible=True
-WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAHMAAAAAAHDCAAAAAPPPPPPPPPPPPPPPPIFAAAAAACCAAAAAAMODAAAAAFMBAAAAA
+WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAHMAAAAAAHDCAAAAAPPPPPPPPPPPPPPPPHIAAAAAADEAAAAAALBEAAAAAGOBAAAAA
 
 [WorkState_v1_2.Frames.ChildFrames.Document-2]
 ptn_Child1=ViewFrame-0
 
 [WorkState_v1_2.Frames.ChildFrames.Document-2.ViewFrame-0]
-DocPathName=..\..\..\Source\mos\devapi.c
+DocPathName=..\..\..\..\..\..\..\..\ZDSII_~1.5\include\zilog\uartdefs.h
 DocTemplateIndex=0
 DocumentString=IDE.Document
 IsActiveChildFrame=False
 IsFrameVisible=True
-WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAOIBAAAAAHDCAAAAAPPPPPPPPPPPPPPPPCBAAAAAAAFAAAAAAGKDAAAAADPBAAAAA
+WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAOIBAAAAAHDCAAAAAPPPPPPPPPPPPPPPPECAAAAAABFAAAAAAILDAAAAAEPBAAAAA
 
 [WorkState_v1_2.Frames.ChildFrames.Document-3]
 ptn_Child1=ViewFrame-0
 
 [WorkState_v1_2.Frames.ChildFrames.Document-3.ViewFrame-0]
-DocPathName=..\..\..\Source\mos\devgpio.c
+DocPathName=..\..\..\..\..\..\..\..\ZDSII_~1.5\include\zilog\uart.h
 DocTemplateIndex=0
 DocumentString=IDE.Document
 IsActiveChildFrame=False
 IsFrameVisible=True
-WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAFFCAAAAAHDCAAAAAPPPPPPPPPPPPPPPPGHAAAAAAHFAAAAAAKAEAAAAAKPBAAAAA
+WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAFFCAAAAAHDCAAAAAPPPPPPPPPPPPPPPPBJAAAAAAIDAAAAAAFCEAAAAALNBAAAAA
 
 [WorkState_v1_2.Frames.ChildFrames.Document-4]
 ptn_Child1=ViewFrame-0
 
 [WorkState_v1_2.Frames.ChildFrames.Document-4.ViewFrame-0]
-DocPathName=..\..\..\Source\mos\devapi.h
+DocPathName=..\..\..\..\..\..\..\..\ZDSII_~1.5\src\uart\common\isruart1.c
 DocTemplateIndex=0
 DocumentString=IDE.Document
 IsActiveChildFrame=False
 IsFrameVisible=True
-WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAMBDAAAAAHDCAAAAAPPPPPPPPPPPPPPPPEEAAAAAALFAAAAAAINDAAAAAOPBAAAAA
+WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAMBDAAAAAHDCAAAAAPPPPPPPPPPPPPPPPMKAAAAAAAGAAAAAAAEEAAAAADACAAAAA
 
 [WorkState_v1_2.Frames.ChildFrames.Document-5]
 ptn_Child1=ViewFrame-0
 
 [WorkState_v1_2.Frames.ChildFrames.Document-5.ViewFrame-0]
-DocPathName=.\devConfig.h
+DocPathName=..\..\..\Source\mos\devapil.h
 DocTemplateIndex=0
 DocumentString=IDE.Document
 IsActiveChildFrame=False
 IsFrameVisible=True
-WindowPlacement=MCAAAAAAAAAAAAAABAAAAAAAAAAAAAAAFBCAAAAAPPPPPPPPPPPPPPPPOIAAAAAAPHAAAAAACCEAAAAACCCAAAAA
+WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAAAAAAAAAFBCAAAAAPPPPPPPPPPPPPPPPGAAAAAAABAAAAAAAKJDAAAAAEKBAAAAA
 
 [WorkState_v1_2.Frames.ChildFrames.Document-6]
 ptn_Child1=ViewFrame-0
 
 [WorkState_v1_2.Frames.ChildFrames.Document-6.ViewFrame-0]
+DocPathName=..\..\..\Source\mos\devapi.c
+DocTemplateIndex=0
+DocumentString=IDE.Document
+IsActiveChildFrame=False
+IsFrameVisible=True
+WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAOIBAAAAAFBCAAAAAPPPPPPPPPPPPPPPPDGAAAAAAHEAAAAAAHPDAAAAAKOBAAAAA
+
+[WorkState_v1_2.Frames.ChildFrames.Document-7]
+ptn_Child1=ViewFrame-0
+
+[WorkState_v1_2.Frames.ChildFrames.Document-7.ViewFrame-0]
+DocPathName=..\..\..\Source\mos\devapi.h
+DocTemplateIndex=0
+DocumentString=IDE.Document
+IsActiveChildFrame=False
+IsFrameVisible=True
+WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAHMAAAAAAFBCAAAAAPPPPPPPPPPPPPPPPFDAAAAAAIBAAAAAAPNDAAAAALLBAAAAA
+
+[WorkState_v1_2.Frames.ChildFrames.Document-8]
+ptn_Child1=ViewFrame-0
+
+[WorkState_v1_2.Frames.ChildFrames.Document-8.ViewFrame-0]
+DocPathName=.\devConfig.h
+DocTemplateIndex=0
+DocumentString=IDE.Document
+IsActiveChildFrame=False
+IsFrameVisible=True
+WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAFFCAAAAAFBCAAAAAPPPPPPPPPPPPPPPPOIAAAAAAPHAAAAAACCEAAAAACCCAAAAA
+
+[WorkState_v1_2.Frames.ChildFrames.Document-9]
+ptn_Child1=ViewFrame-0
+
+[WorkState_v1_2.Frames.ChildFrames.Document-9.ViewFrame-0]
 DocPathName=.\main.c
 DocTemplateIndex=0
 DocumentString=IDE.Document
-IsActiveChildFrame=True
+IsActiveChildFrame=False
 IsFrameVisible=True
-WindowPlacement=MCAAAAAAAAAAAAAABAAAAAAAMBDAAAAAHDCAAAAAPPPPPPPPPPPPPPPPGDAAAAAACCAAAAAAKMDAAAAAFMBAAAAA
+WindowPlacement=MCAAAAAAAAAAAAAABAAAAAAAHMAAAAAAFBCAAAAAPPPPPPPPPPPPPPPPMAAAAAAAHAAAAAAAAKDAAAAAKKBAAAAA
 

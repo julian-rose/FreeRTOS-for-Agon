@@ -195,7 +195,9 @@ static BaseType_t portCreateMOSMutex( )
     
 #   if( 1 == configUSE_PREEMPTION )    
     {
-        portMOSMutex = xSemaphoreCreateMutex( );
+        /* Mutexes (as in xSemaphoreCreateMutex) cannot be used in ISRs;
+           so we must use a Binary instead */
+        portMOSMutex = xSemaphoreCreateBinary( );
         if( NULL == portMOSMutex )
         {
 #           if defined( _DEBUG )
@@ -233,7 +235,8 @@ void portEnterMOS( void )
 
 #   if( 1 == configUSE_PREEMPTION )
     {
-        if(( NULL != portMOSMutex )&&( taskSCHEDULER_RUNNING == xTaskGetSchedulerState( )))
+        if(( NULL != portMOSMutex )&&
+           ( taskSCHEDULER_RUNNING == xTaskGetSchedulerState( )))
         {
             /* suspend until semaphore can be taken */
             while( pdTRUE != xSemaphoreTake( portMOSMutex, 0 ))
@@ -241,7 +244,6 @@ void portEnterMOS( void )
                 /* Some other task has the mutex.
                     If we use vTaskSuspend then the tick ISR will have
                     to call vTaskResume. Easier to use the delayed list.
-                    Could be better using notifications?
                     */
                 vTaskDelay( 1 );
             }
@@ -265,7 +267,8 @@ void portExitMOS( void )
     
 #   if( 1 == configUSE_PREEMPTION )
     {
-        if(( NULL != portMOSMutex )&&( taskSCHEDULER_RUNNING == xTaskGetSchedulerState( )))
+        if(( NULL != portMOSMutex )&&
+           ( taskSCHEDULER_RUNNING == xTaskGetSchedulerState( )))
         {
             xSemaphoreGive( portMOSMutex );
         }
@@ -276,6 +279,30 @@ void portExitMOS( void )
         ( void )printf( "%s : %d\r\n", "port.c", __LINE__ );
 #   endif
 }
+
+
+#if 0
+/* Test critical region for MOS
+ *    If the semaphore is a binary semaphore then uxSemaphoreGetCount returns 1 
+ *    if the semaphore is available, and 0 if the semaphore is not available.
+*/
+BaseType_t portTestMOS( void )
+{
+    BaseType_t r = 0;
+
+#   if( 1 == configUSE_PREEMPTION )
+    {
+        if(( NULL != portMOSMutex )&&
+           ( taskSCHEDULER_RUNNING == xTaskGetSchedulerState( )))
+        {
+            r = uxSemaphoreGetCount( portMOSMutex );
+        }
+    }
+#   endif /* configUSE_PREEMPTION */
+
+    return( r );    
+}
+#endif
 
 
 /*---------------------------------------------------------------------------*/
@@ -387,6 +414,79 @@ void vPortYield( void )
     asm( "\t ei           ; re-enable interrupts " );
     asm( "\t ret          ; ret from here   " );
     asm( "                ; compiler-inserted postlog below not followed " );
+
+    /* following compiler-inserted epilogue is not executed */
+}
+
+
+/* vPortYieldFromISR
+ *   Context switch function used by an ISR
+ *   This must be identical to vPortYield() from the call to vTaskSwitchContext() 
+ *     onwards.  
+ *   We have to save the context, even in non-preemptive configuration,
+ *     in order to preserve the AF flags register
+*/
+void vPortYieldFromISR( BaseType_t const higherPriorityTaskWoken )
+{
+    /*   Spill WORKAROUND: Zilog eZ80 ANSI C Compiler Version 3.4 (19101101)
+     *   "Allocate space for locals to override prologue spill" is a workaround
+     *     to stop the compiler inserting two 'push BC' instructions for the
+     *     test 'if( pdTRUE == higherPriorityTaskWoken )' along with some weird
+     *     'spill' translation code. (This looks like a compiler fix-up.) 
+     *     If we insert two 'pop BC' after the test brace, then the compiler
+     *     does not insert the 'push BC' instructions. Either way unbalances
+     *     the stack.
+     *     By manually inserting a "push BC" and then a "pop BC" after the 
+     *     brace, the compiler produces expected code for the test, and the
+     *     stack is left balanced.
+     *     To observe this, comment out the two 'Spill WORKAROUND' asm lines,
+     *     and look at the generated port.src output from doing a build.
+     */
+    asm( "\tpush BC    ; Spill WORKAROUND" );   // doesn't need to matched at the bottom
+
+    if( pdTRUE == higherPriorityTaskWoken )
+    {
+        asm( "\tpop BC     ; Spill WORKAROUND" );
+        
+        /* The current task context SHALL be saved first; 
+           even if 0==configUSE_PREEMPTION. */
+        portSAVE_CONTEXT( );
+
+#       if( 1 == configUSE_PREEMPTION )
+        {
+            /* Check if the current task is in the non-reentrant MOS.
+             * If so, then indicate that a context switch is needed.
+             */
+            if( 1 == uxSemaphoreGetCount( portMOSMutex ))
+            {
+                //_putchf( 'A' );
+                /* not blocked on MOS, so do the task yield from ISR */
+                asm( "\t push hl        ; in lieu of prologue stack frame" );        
+                vTaskSwitchContext( );
+                asm( "\t pop hl         ; " );
+            } 
+            else
+            {
+                //_putchf( 'B' );
+                /* blocked on MOS; indicate a context switch is required. */
+                asm( "\t push hl        ; in lieu of prologue stack frame" );        
+                vTaskMissedYield( );
+                asm( "\t pop hl         ; " );
+            }
+        }
+#       endif /* configUSE_PREEMPTION == 1 */
+
+        portRESTORE_CONTEXT( );
+
+        /* RESTORE CONTEXT is shared with vPortYield and vPortYieldFromTick, 
+           so that we must "ret" to a calling task. 
+           In this yield, the calling ISR shall reti */
+        asm( "\t pop    ix    ; return from here," );
+        asm( "\t ret          ; so that we don't modify the stack pointer" );
+        asm( "                ; in the compiler epilog that follows" );
+
+            /* following compiler-inserted epilogue is not executed */
+    }
 }
 
 
@@ -414,13 +514,14 @@ static void vPortYieldFromTick( void )
     
 #   if( 1 == configUSE_PREEMPTION )
     {
-        /* Check if the current task is accessing the non-reentrant MOS.
-         * If MOS is in use, then indicate that a context switch is needed.
+        /* Check if the current task is in the non-reentrant MOS.
+         * If so, then indicate that a context switch is needed.
+         *   If the semaphore is a binary semaphore then uxSemaphoreGetCount
+         *   returns 1 if the semaphore is available, and 0 if not.
          */
-        if( pdTRUE == xSemaphoreTakeFromISR( portMOSMutex, NULL ))
+        if( 1 == uxSemaphoreGetCount( portMOSMutex ))
         {
-            ( void )xSemaphoreGiveFromISR( portMOSMutex, NULL );
-
+            //_putchf( 'X' );
             /* not blocked on MOS, so do the task yield from tick 
                xTaskIncrementTick is done in this function */
             asm( "\t push hl        ; in lieu of prologue stack frame" );        
@@ -429,6 +530,7 @@ static void vPortYieldFromTick( void )
         } 
         else
         {
+            //_putchf( 'Y' );
             /* blocked on MOS; indicate a context switch is required. */
             asm( "\t push hl        ; in lieu of prologue stack frame" );        
             vTaskMissedYield( );
@@ -439,13 +541,16 @@ static void vPortYieldFromTick( void )
 
     portRESTORE_CONTEXT( );
 
-    /* RESTORE CONTEXT is shared with port yield, so that we must "ret" to a 
-       calling task. In this case, the calling tick ISR shall reti */
+    /* RESTORE CONTEXT is shared with vPortYield and vPortYieldFromISR, 
+       so that we must "ret" to a calling task. 
+       In this yield, timer_isr shall reti */
     asm( "\t pop    ix    ; return from here," );
     asm( "\t ret          ; so that we don't modify the stack pointer" );
     asm( "                ; in the compiler epilog that follows" );
+
         /* following compiler-inserted epilogue is not executed */
 }
+
 
 /* timer_isr is an ISR bound to a PRT countdown expiry event, 
      via the MOS interrupt vector table.
