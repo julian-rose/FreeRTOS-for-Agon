@@ -124,10 +124,14 @@ void portExitMOS( void );
 #define PRT_CLK_PRESCALER          64UL          /* one of 16UL, 64UL or 256UL to match PRT_CTL_DIVnn */
 
 
-/***--------- Kernel ---------***/
-extern void vPortYield( void );
-extern void vPortYieldFromISR( BaseType_t const higherPriorityTaskWoken );
-#define portYIELD()               vPortYield( )
+/***--------- Task Yielding ---------***/
+extern void vPortYield( void );    /* SHALL be entered via a Long Call */
+
+#define portYIELD( )\
+   asm( "\t xref _vPortYield" );\
+   asm( "\t call.LIL _vPortYield   ; Long call demanding a ret[i].L compatible with MOS ISRs" );
+
+extern void vPortYieldFromISR( void );
 
 
 /***--------- Tasks ---------***/

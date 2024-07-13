@@ -2,67 +2,65 @@
 
 
 <h2>Description</h2>
-Targetting Agon as a Micro-controller, FreeRTOS port for the Zilog eZ80-based 
-Agon Light (and compatibles) running MOS. The concept is very much FreeRTOS 
-over MOS, reflected in the project name. FreeRTOS provides concurrency and 
-time, and MOS provides the system services.
+FreeRTOS port for the Zilog eZ80-based Agon Light (and compatibles) running 
+MOS. The concept is very much FreeRTOS over MOS, reflected in the project name. 
+MOS provides system services; and FreeRTOS enables concurrency, real-time, and 
+other extended services. 
 <p>
 
 This Agon Light port integrates FreeRTOS version 20221201-LTS (10.5.1) with 
 the Zilog ZDSII eZ80Acclaim! version 5.3.5 (Build 23020901) C language toolset. 
-The choice of version 20221201-LTS prioritises stability over latest and 
-greatest. For a detailed description of the Agon port, refer to the README in 
+The LTS choice prioritises stability over latest and greatest. For a detailed 
+description of the Agon port, refer to the README in 
 ./FreeRTOSv202212.01-LTS/FreeRTOS/Source/portable/Community-Supported-Ports/ZDSII/eZ80AgonLight/
 
 <h3>What is FreeRTOS?</h3>
-FreeRTOS is a real-time, multi-tasking, software development kernel and library.
-It provides an application development framework that allows a C language 
-application to be arranged into a number of concurrent tasks. The core of 
-FreeRTOS (and indeed any RTOS) is its kernel; refer to 
-https://www.freertos.org/RTOS.html for the kernel overview. 
-And to https://www.freertos.org/features.html for a developer overview;
+FreeRTOS is a real-time, multi-tasking software development kernel and library.
+It is a fully open-source application development framework that allows a C 
+language application to be arranged into a number of concurrent tasks. The core 
+of FreeRTOS (and indeed any RTOS) is its kernel; refer to the overview at
+https://www.freertos.org/RTOS.html. 
+And to https://www.freertos.org/features.html for the developer overview;
 and to https://www.freertos.org/a00106.html for the programmers API reference.
 <p>
 
-FreeRTOS is not an operating system in the sense of MOS or CP/M, which provide
-a command console interpreter and long-term storage. Instead, FreeRTOS for Agon 
-applications run on MOS to access its services. No re-Flashing is required -
-you just build and link a C language application together with the FreeRTOS 
-software into a MOS executable. 
+We use FreeRTOS in targetting Agon as a Micro-controller. FreeRTOS is not a 
+standalone operating system in the sense of MOS or CP/M. Those O/S provide 
+command console interpreter (CCP), long-term storage (BDOS) and a basic I/O 
+system (BIOS) services. Rather, FreeRTOS applications run on MOS to access its 
+services. No re-Flashing is required - you just build and link your C language 
+application together with the FreeRTOS software into a MOS executable. 
 
 <h4>Why do we care about concurrency and time?</h4>
-In a nutshell, because they are in the real world. And a micro-controller 
+In a nutshell, because they are in the real world; and a micro-controller 
 interacts with the real world, through sensors and actuators. So we need to 
-embrace time and the order of events (concurrency) into our software for it 
-to function well. 
+embrace time and event ordering (concurrency) into our software for it to 
+function well. 
 
 <h3>What is Agon?</h3>
 Agon Light™ is a fully open-source 8-bit microcomputer and microcontroller in 
 one small, low-cost board. Refer to https://github.com/TheByteAttic/AgonLight.
 It embeds two processor sub-systems: the eZ80-based main processor, which runs 
 MOS (and where FreeRTOS programs will run); and the ESP32-based VDP terminal 
-processor, which primarily performs I/O functions.
+processor, which primarily performs I/O and graphics functions.
 <p>
 
-Agon is well-suited to the role of micro-controller through the Extensions
-Interface, providing UART, SPI, I2C and GPIO connectivity. Moreover, with its 
-integrated VDP, applications can include a sophisticated GUI to visualise the 
+Agon is well-suited to the role of micro-controller through the hardware 
+Extensions Interface, providing UART, SPI, I2C and GPIO connectivity. Moreover, 
+with its integrated VDP, applications can include a GUI to visualise the 
 system under control, or to graph I/O in real-time. 
 
 <h3>What is MOS?</h3>
 MOS is the Machine Operating System for Agon Light and compatibles. It runs on 
-the eZ80 and provides an API to access the eZ80 on-chip peripherals, on-board 
+the eZ80 and provides an API to access eZ80 on-chip peripherals, on-board 
 interfaces including the VDP terminal co-processor, and long-term file storage 
 through SD-cards. Refer to https://agonconsole8.github.io/agon-docs/MOS/.
 <p>
 
 <h4>MOS versions</h4>
 FreeRTOS for Agon is built to MOS version 1.04. Version 1.03 may work, but has 
-not been tested. Likewise newer Console8 2.x versions of MOS will work, but 
-have not been tested. Console8-specific MOS and VDP functions are not yet 
-supported. There are a small number of tightly coupled dependencies in parts of
-the code (such as the keyboard read functions) which may fail if differences 
-start to emerge between forks of the MOS code.
+not been tested. FreeRTOS will work with Console8 2.x versions of MOS, but has 
+not been tested. Console8-specific MOS and VDP functions are not yet supported. 
 
 <h2>Project</h2>
 FreeRTOS / MOS for Agon Light is a highly configurable, multi-capability 
@@ -75,12 +73,12 @@ project.
   <li>beta:      MOS API (MOS 1.04 subset of the FFS API), plus a DEV API; 
                  the hardware interfaces API</li>
   <li>gamma:     VDP API (MOS 1.04 subset); the graphics API</li>
-  <li>delta:     Console8 MOS & VDP extended API (only if i buy a second Agon);
-                 the extended graphics API</li>
+  <li>delta:     Console8 2.x MOS and VDP extended API; the extended graphics 
+                 API (may not happen)</li>
   <li>epsilon:   a real-time library inspired by the posix-4 API; the real-time
                  API</li>
   <li>omega:     a safer version with (protected memory) Z80-mode tasks and the
-                 ADL-mode kernel</li>
+                 ADL-mode kernel (may not happen)</li>
 </ul>
 
 Each capability is configurable through user-settable definitions in 
@@ -100,7 +98,7 @@ minimal number of MOS services, namely putch (printf) and getch (scanf).
 The "Alpha" capability is already provided, with the FreeRTOS source located in 
 ./FreeRTOSv202212.01-LTS/FreeRTOS/Source/ and the eZ80 portable code in
 ./FreeRTOSv202212.01-LTS/FreeRTOS/Source/portable/Community-Supported-Ports/ZDSII/eZ80AgonLight/.
-You can already use "Alpha" to develop full Standard C, FreeRTOS applications 
+You can already use "Alpha" to develop full standard C, FreeRTOS applications 
 that will run on Agon. 
 <p>
 
@@ -210,19 +208,27 @@ https://sourceforge.net/projects/hex2bin/files/latest/download
 
 
 <h2>Debugging</h2>
-In general, you will not need a debugger to build applications. But it may speed
-up your development time if you do use one. To catch those elusive resets (refer 
-to UM007715 Illegal Instruction Traps) and other bugs, I now possess a $100 
-ZUSBASC0200ZADG Acclaim! Smart Cable (ASC) debug device bought from
+In general, you will not need a debugger to build FreeRTOS applications. But it 
+may speed up your development time and help you to find bugs if you do use one. 
+I now possess a $100 ZUSBASC0200ZADG Acclaim! Smart Cable (ASC) debug device 
+bought from
 https://www.mouser.com/datasheet/2/240/Littelfuse_ZUSBASC0200ZACG_Data_Sheet-3078266.pdf
 To use this hardware debugger, you will need version 5.3.5 of the ZDSII tools.
 <p>
 
 It turns out the Zilog Acclaim Smart Cable device driver (found in
 ZDSII_eZ80Acclaim!_5.3.5\device drivers\USB\AcclaimSmartCable) is not digitally 
-signed (Windows Device Manager Code 52). So that installing it requires Secure 
-Boot to be disabled in the host PC BIOS settings. This is the official Zilog 
-solution, as per a customer support ticket. 
+signed (Windows Device Manager Code 52). So that installing it requires UEFI 
+Secure Boot to be disabled in the host PC BIOS settings. This is the official 
+Zilog solution, as per a customer support ticket. 
+<p>
+
+To give an example of its benefit: I knew there was a flaw in the "Alpha" 
+context switch code, such that FreeRTOS wasn't exiting interrupts properly; but 
+I hadn't been able to pinpoint the cause. I needed the debugger to breakpoint 
+the executable to identify the cause. And this enabled me to provide a 
+satisfactory fix, so the context switch now works exactly as it should. 
+Moreover, I now understand a bit more about ADL mode call stacks on the eZ80. 
 
 <h3>Re-entrancy</h3>
 I will point out, because you will run into it, that the Zilog libraries are
