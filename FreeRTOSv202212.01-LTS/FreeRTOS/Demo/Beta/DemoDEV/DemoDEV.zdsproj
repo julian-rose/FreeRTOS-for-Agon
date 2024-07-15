@@ -276,10 +276,60 @@
 
 <!-- watch information -->
 <watch-elements>
+<watch-element expression="rxTransact" />
 </watch-elements>
 
 <!-- breakpoint information -->
 <breakpoints>
+<breakpoint temporary="false" enabled="false" >
+<line-number>1961</line-number>
+<pathname>C:\Users\jrose\tech_stuff\retro\Zilog\eZ80\AgonLight\programming\FreeRTOS-for-Agon\FreeRTOSv202212.01-LTS\FreeRTOS\Source\mos\devuart.c</pathname>
+<address>279002</address>
+<command></command>
+<preserve-type>0</preserve-type>
+</breakpoint>
+<breakpoint temporary="false" enabled="false" >
+<line-number>1950</line-number>
+<pathname>C:\Users\jrose\tech_stuff\retro\Zilog\eZ80\AgonLight\programming\FreeRTOS-for-Agon\FreeRTOSv202212.01-LTS\FreeRTOS\Source\mos\devuart.c</pathname>
+<address>278166</address>
+<command></command>
+<preserve-type>0</preserve-type>
+</breakpoint>
+<breakpoint temporary="false" enabled="false" >
+<line-number>1358</line-number>
+<pathname>C:\Users\jrose\tech_stuff\retro\Zilog\eZ80\AgonLight\programming\FreeRTOS-for-Agon\FreeRTOSv202212.01-LTS\FreeRTOS\Source\mos\devuart.c</pathname>
+<address>275480</address>
+<command></command>
+<preserve-type>0</preserve-type>
+</breakpoint>
+<breakpoint temporary="false" enabled="false" >
+<line-number>1505</line-number>
+<pathname>C:\Users\jrose\tech_stuff\retro\Zilog\eZ80\AgonLight\programming\FreeRTOS-for-Agon\FreeRTOSv202212.01-LTS\FreeRTOS\Source\mos\devuart.c</pathname>
+<address>277069</address>
+<command></command>
+<preserve-type>0</preserve-type>
+</breakpoint>
+<breakpoint temporary="false" enabled="false" >
+<line-number>1492</line-number>
+<pathname>C:\Users\jrose\tech_stuff\retro\Zilog\eZ80\AgonLight\programming\FreeRTOS-for-Agon\FreeRTOSv202212.01-LTS\FreeRTOS\Source\mos\devuart.c</pathname>
+<address>277034</address>
+<command></command>
+<preserve-type>0</preserve-type>
+</breakpoint>
+<breakpoint temporary="false" enabled="false" >
+<line-number>1492</line-number>
+<pathname>C:\Users\jrose\tech_stuff\retro\Zilog\eZ80\AgonLight\programming\FreeRTOS-for-Agon\FreeRTOSv202212.01-LTS\FreeRTOS\Source\mos\devuart.c</pathname>
+<address>277034</address>
+<command></command>
+<preserve-type>0</preserve-type>
+</breakpoint>
+<breakpoint temporary="false" enabled="false" >
+<line-number>892</line-number>
+<pathname>C:\Users\jrose\tech_stuff\retro\Zilog\eZ80\AgonLight\programming\FreeRTOS-for-Agon\FreeRTOSv202212.01-LTS\FreeRTOS\Source\mos\devuart.c</pathname>
+<address>273842</address>
+<command></command>
+<preserve-type>0</preserve-type>
+</breakpoint>
 </breakpoints>
 
 </project>

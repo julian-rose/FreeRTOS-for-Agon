@@ -63,6 +63,8 @@
 extern unsigned int _heaptop;  // defined in the linker directive file
 extern unsigned int _heapbot;  //   "
 
+extern BaseType_t mosHigherPriorityTaskWoken;  // set in ISR to context-switch
+
 
 /*----- Local Types ---------------------------------------------------------*/
 typedef struct _mosftest
@@ -355,6 +357,8 @@ static void doGPIOCallbackTest( void )
         ( void )printf( "myGpioHndlr = %p\r\n", &myGpioHndlr );    
     }
 #   endif
+    ( void )printf( "If you don't see '*' in the output, "
+                    "check pins 13 and 18 are wired together\r\n" );
     ( void )printf( "Toggling GPIO pin 13 periodically\r\n" );
     ( void )printf( "Press 'ESC' key to exit test\r\n" );
     kbmap = mos_getkbmap( );  // only need do this once at startup
@@ -414,23 +418,18 @@ static void IsrTestTask( void * params )
  * It must not call any blocking functions, and avoid calls to MOS;
  * It must not disable interrupts, but may itself be interrupted
  *
- * It will send a notification to a waiting highest priority task. 
+ * This test handler will send a notification to a waiting highest priority task. 
  * On exit from the ISR, that highest priority task should run immediately.
  */
 void myYieldHndlr( DEV_NUM_MAJOR const major, DEV_NUM_MINOR const minor )
 {
-    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-
     yieldcnt++;
     putchar( '*' );
 
-    /* run in context of high-priority interrupt handler uartIsrTask */
-    vTaskNotifyGiveFromISR( isrTestTaskHandle, &xHigherPriorityTaskWoken );
-        
-    /* If xHigherPriorityTaskWoken is now set to pdTRUE then a context 
-       switch should be performed to ensure the interrupt returns directly 
-       to the highest priority task. */
-    vPortYieldFromISR( xHigherPriorityTaskWoken ); // <--- This is what is under test
+    /* run in context of high-priority interrupt handler gpioisr */
+    vTaskNotifyGiveFromISR( isrTestTaskHandle, &mosHigherPriorityTaskWoken );
+    
+    /* mosHigherPriorityTaskWoken will be tested in ISR */
 }
 
 /* doYieldFromISRTest
@@ -483,6 +482,8 @@ static void doYieldFromISRTest( void )
 #       endif
     }
 
+    ( void )printf( "If you don't see '*+' in the output, "
+                    "check pins 13 and 18 are wired together\r\n" );
     ( void )printf( "Toggling GPIO pin 13 periodically\r\n" );
     ( void )printf( "Press 'ESC' key to exit test\r\n" );
     kbmap = mos_getkbmap( );  // only need do this once at startup
@@ -515,7 +516,7 @@ static void doYieldFromISRTest( void )
     gpio_close( GPIO_18 );
 
     // finish up
-    ( void )printf( "gpiocnt = %d\r\n", gpiocnt );
+    ( void )printf( "yieldcnt = %d\r\n", yieldcnt );
     
     ( void )printf( "Deleting IsrTestTask\r\n\r\n" );
     vTaskDelete( isrTestTaskHandle );
@@ -524,20 +525,28 @@ static void doYieldFromISRTest( void )
 
 /* doUARTEchoTest
  *   Try out DEV API UART functions
- *   Connect UART1 to an external source (laptop putty for example)
+ *   Connect UART1 tx pin 17 to UART1 rx pin 18
  *   Read a string (terminator character ctrl-Z) and Echo it back
 */
 static void doUARTEchoTest( void )
 {
-    POSIX_ERRNO res;
-    KEYMAP *kbmap;
-    int const escbyte =((( 113 - 1 )& 0xF8 )>> 3 );
-    int const escbit =  (( 113 - 1 )& 0x07 );
-    int i;
     UART_PARAMS const uparm =
         { UART_BAUD_9600, UART_DATABITS_8, UART_STOPBITS_1, UART_PARITY_ODD };
+    int const escbyte =((( 113 - 1 )& 0xF8 )>> 3 );
+    int const escbit =  (( 113 - 1 )& 0x07 );
+    KEYMAP *kbmap;
+    POSIX_ERRNO res;
+    char b[ 32 ];
+    int i, j;
 
     ( void )printf( "\r\n\r\nRunning UART echo test\r\n" );
+
+    ( void )printf( "Wire UART1 tx pin 17 to UART1 rx pin 18\r\n" );
+    ( void )printf( "Wire GPIO pin 13 (task activity) "
+                    "-> LED+220ohm resistor -> GND\r\n" );
+    ( void )printf( "Wire GPIO pin 26 (idle activity) "
+                    "-> LED+220ohm resistor -> GND\r\n" );
+
     ( void )printf( "Press 'ESC' key to exit test\r\n" );
     kbmap = mos_getkbmap( );  // only need do this once at startup
 
@@ -552,12 +561,28 @@ static void doUARTEchoTest( void )
     // read input until a terminator character is read (^-Z)
     for( i = 1; ; i = 1 - i )
     {
-        ( void )printf( "gpio_write(13) %d\r\n", i );
-        ( void )gpio_write( GPIO_13, i );
+        ( void )gpio_write( GPIO_13, i );  // toggle pin 13 (LED)
 
-        ( void )printf( "uart_write( \"Hello\")\r\n" );
+        ( void )printf( "uart_write( \"Hello\") [[" );
         res = uart_write( "Hello", 5 );
+        ( void )printf( "]] res = 0x%x\r\n", res );
+
         vTaskDelay( 5 );  // delay 0.5s
+
+#if 1
+        portENTER_CRITICAL( );
+        {
+            // always safeguard use of Zilog library calls
+            memset( b, 0, sizeof( b ));
+        }
+        portEXIT_CRITICAL( );
+        ( void )printf( "uart_read( ) [[" );
+        res = uart_read( &b, 16 );
+        ( void )printf( "]] res = 0x%x\r\n", res );
+        ( void )printf( "buf = (" );
+        for( j=0; 16 > j; j++ ) printf( "0x%x ",( unsigned char )( b[ j ]));
+        ( void )printf( ")\r\n" );
+#endif
 
         /* scan keyboard for ESC */
         if((( char* )kbmap )[ escbyte ]&( 1 << escbit ))
@@ -595,9 +620,12 @@ void Task1( void *pvParameters )
             break;
         }
     }
+    
+    gpio_close( GPIO_26 );
+
     ( void )printf( "\r\nTests complete\r\n" );
     ( void )printf( "Waiting 3 seconds before resetting Agon\r\n");
-    vTaskDelay( 30 );  // wait 3 seconds at 10 ticks/sec
+    vTaskDelay( configTICK_RATE_HZ * 3 );  // wait 3 seconds at 10 ticks/sec
 
     asm( "\tRST.LIS 00h      ; invoke MOS reset" );
     
@@ -609,25 +637,22 @@ void Task1( void *pvParameters )
  *   Runs in context of the idle task.
  *   DO NOT call a BLOCKING function from within the IDLE task;
  *   IDLE must always be in either the READY or the RUN state, and no other. 
- *   Typically used to do a heartbeat LED, or perform heap garbage collection.
+ *   Typically used to do a heartbeat LED.
 */
 #pragma asm "\tSEGMENT TASKS"
 void vApplicationIdleHook( void )
 {
     static unsigned char led = 0;
-    int toggle;
+    static unsigned int toggle = 0;
 
     idlecnt++;
-
+    
     //Machen mit ein blinken light
-        // safeguard use of math library (% operation) against interleaving
-    portENTER_CRITICAL( );
+    toggle++;
+    if( 30000 < toggle ) 
     {
-        toggle =( idlecnt % 3000 );
-    }
-    portEXIT_CRITICAL( );
-    if( 0== toggle )
-    {
+        toggle = 0;
+_putchf( 'I' );
         led = 1 - led;
         ( void )gpio_write( GPIO_26, led );
     }

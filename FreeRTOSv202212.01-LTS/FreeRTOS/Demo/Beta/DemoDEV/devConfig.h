@@ -66,10 +66,10 @@
  *   configUSE_DRV_GPIO      0 = disable support (MOS does not support GPIO)
  *                           1 = DEV API safeguarded interface
 */
-#define configUSE_DRV_UART             1
-#define configUSE_DRV_I2C              1
-#define configUSE_DRV_SPI              1
-#define configUSE_DRV_GPIO             1
+#define configUSE_DRV_UART               1
+#define configUSE_DRV_I2C                1
+#define configUSE_DRV_SPI                1
+#define configUSE_DRV_GPIO               1
 
 
 /* Safeguarding
@@ -79,7 +79,7 @@
                                0 = smaller and faster code, but unsafeguarded
                                    you might opt for this in a release build
 */
-#define configUSE_DEV_SAFEGUARDS       1
+#define configUSE_DEV_SAFEGUARDS         0
 
 
 /* Interrupts
@@ -95,15 +95,22 @@
                                    Devices may share a common handler
                                    All in C language
 */
-#define configUSE_FAST_INTERRUPTS      0
+#define configUSE_FAST_INTERRUPTS        0
 
 
 /* UART
-     configDRV_UART_BUFFER_SZ       16..1024
-                                    The UART DEV maintains an Rx and Tx buffer, 
-                                    each of configDRV_UART_BUFFER_SZ bytes size
+     configDRV_UART_BUFFER_SZ         UART DEV maintains separate Rx and Tx 
+                                      buffers, each of configDRV_UART_BUFFER_SZ 
+                                      bytes in size.
+                                      Values in range 16..1024
+     configDRV_UART_UNBUFFERED_DELAY  uart_read and uart_write timeout in ticks
+                                      before returning incomplete.
+                                      uart_read_buffered and uart_write_buffered
+                                      always return without waiting.
+                                      Values in range 0..portMAX_DELAY
 */
-#define configDRV_UART_BUFFER_SZ       128
+#define configDRV_UART_BUFFER_SZ         128
+#define configDRV_UART_UNBUFFERED_DELAY  ( configTICK_RATE_HZ * 1 )
 
 
 #endif /* DEVCONFIG_H */

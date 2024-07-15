@@ -138,6 +138,8 @@ PIN_STATE pinstate[ NUM_DEV_MINOR ]=
     PIN_STATE_FREE, PIN_STATE_FREE, PIN_STATE_FREE, PIN_STATE_FREE
 };
 
+#endif  /* ( 1 == configUSE_DEV_SAFEGUARDS ) */
+
 DEV_MODE pinmode[ NUM_DEV_MINOR ]=
 {
     DEV_MODE_UNBUFFERED, DEV_MODE_UNBUFFERED, DEV_MODE_UNBUFFERED,
@@ -149,9 +151,12 @@ DEV_MODE pinmode[ NUM_DEV_MINOR ]=
     DEV_MODE_UNBUFFERED, DEV_MODE_UNBUFFERED
 };
 
-#endif  /* ( 1 == configUSE_DEV_SAFEGUARDS ) */
-
 #endif  /* ( 1 == configUSE_DEV_DEVICE_DRIVERS ) */
+
+
+/* Global variable tested to decide if a context switch is necessary on exit 
+   from an ISR */
+BaseType_t mosHigherPriorityTaskWoken = pdFALSE;
 
 
 /*----- Private functions ---------------------------------------------------*/
@@ -242,7 +247,7 @@ static POSIX_ERRNO pins_alloc(
             else
             if( 1 == minor )
             {
-                PIN_NUM end = UART_1_RXD;
+                PIN_NUM end;
             
                 if(( DEV_MODE_UART_HALF_NULL_MODEM & mode )||
                    ( DEV_MODE_UART_HALF_MODEM & mode ))
@@ -255,7 +260,12 @@ static POSIX_ERRNO pins_alloc(
                 {
                     end = UART_1_RI;
                 }
-            
+                else
+                {
+                    end = UART_1_RXD;
+                }
+printf( "devapi.c : %d : end = %d\r\n", __LINE__, end );
+
                 for( i = UART_1_TXD; end >= i; i++ )
                 {
                     unsigned int const mnri =( i - PIN_NUM_START );
@@ -275,6 +285,7 @@ static POSIX_ERRNO pins_alloc(
 
                         pinstate[ mnri ]= PIN_STATE_INUSE;
                         pinmode[ mnri ]= mode;
+printf( "devapi.c : %d : pinmode[ %d ]= %d\r\n", __LINE__, mnri, mode );
                     }
                 }
             }
@@ -1223,6 +1234,36 @@ POSIX_ERRNO uart_read_buffered(
 }
 
 
+/* DEV_API: uart_getch
+       Read a single byte from the previously opened UART1
+       Calling task may block; on error 0xff is returned 
+       (0xff may be a valid read too, but this api cannot return ret) */
+char uart_getch(
+         void
+     )
+{
+    POSIX_ERRNO ret;
+    char ch;
+
+#   if( 1 == configUSE_DEV_SAFEGUARDS )
+    {
+        ret = dev_read( DEV_NUM_UART, 1, &ch, 1, NULL, NULL );
+    }
+#   else
+    {
+        ret = uart_dev_read( &ch, 1, NULL, NULL );
+    }
+#   endif
+    
+    if( POSIX_ERRNO_ENONE != ret )
+    {
+        ch = 0xff;
+    }
+    
+    return( ch );
+}
+
+
 /* DEV_API: uart_write
      Write data to a previously opened UART1
      Calling task will block until either the write is complete or an error
@@ -1280,6 +1321,33 @@ POSIX_ERRNO uart_write_buffered(
     
     return( ret );
 }
+
+
+    /* DEV_API: uart_putch
+       Write a single byte to the previously opened UART1
+       Calling task will return immediately; user must check return value
+       Defined in devapi.c */
+POSIX_ERRNO uart_putch(
+                char const ch
+            )
+{
+    POSIX_ERRNO ret;
+
+#   if( 1 == configUSE_DEV_SAFEGUARDS )
+    {
+        ret = dev_write( 
+                  DEV_NUM_UART, 1, 
+                  &ch, 1, NULL, NULL );
+    }
+#   else
+    {
+        ret = uart_dev_write( &ch, 1, NULL, NULL );
+    }
+#   endif
+    
+    return( ret );
+}
+
 
 
 /* DEV_API: uart_poll

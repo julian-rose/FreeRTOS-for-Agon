@@ -113,6 +113,10 @@ unsigned char const pin_vector[ NUM_PINS_GPIO ]=
 */
 static INTERRUPT_HANDLER intrhndl[ NUM_PINS_GPIO ][ 2 ]={ NULL };
 
+/* mosHigherPriorityTaskWoken can be set by a user interrupt handler.
+   It needs to be tested by the gpioisr. */
+extern BaseType_t mosHigherPriorityTaskWoken;
+
 
 /*----- Private functions ---------------------------------------------------*/
 /*------ GPIO I/O value functions -------------------------------------------*/
@@ -651,7 +655,7 @@ static void gpioisr( DEV_NUM_MINOR const minor )
 
 #   if defined( _DEBUG )&& 0
     {
-        putchar( '-' );
+        putchar( 'G' );
     }
 #   endif
 
@@ -722,7 +726,8 @@ static void gpioisr( DEV_NUM_MINOR const minor )
     // 2. call user-program Interrupt Handler
     if( ih )
     {
-        ( *ih )( DEV_NUM_GPIO, minor );   // invoke user Interrupt Handler
+        // invoke user Interrupt Handler; may set mosHigherPriorityTaskWoken
+        ( *ih )( DEV_NUM_GPIO, minor );
     }
 }
 
@@ -731,176 +736,431 @@ static void gpioisr( DEV_NUM_MINOR const minor )
      Standard ISR reti epilogue */
 static void gpio13isr( void )
 {
+    /* The current task context SHALL be saved first on entry to an ISR */
+    portSAVE_CONTEXT( );
+
+    mosHigherPriorityTaskWoken = pdFALSE;
+
     gpioisr( GPIO_13 );
 
-    asm( "\t pop ix      ; epilogue, restore IX pushed in prolog");
-    asm( "               ; like github.com/breakintoprogram/agon-mos/blob/main/src_startup/vectors16.asm" );
-    asm( "               ;   __default_mi_handler" );
-    asm( "\t ei          ; re-enable interrupts (on completion of following ret)" );
-    asm( "\t reti.l      ; need reti.L as per UM007715 table 25 for IM 2 ADL=1 MADL=1");
+    /* If mosHigherPriorityTaskWoken is now set to pdTRUE then a 
+       context switch should be performed to ensure the 
+       interrupt returns directly to the highest priority task */
+    if( pdTRUE == mosHigherPriorityTaskWoken )
+    {
+        asm( "\txref _vPortYieldFromISR_2   ; reti from vPortYieldFromISR" );
+        asm( "\tJP _vPortYieldFromISR_2     ;   with saved context" );
+    }
+    else
+    {
+        /* RESTORE CONTEXT SHALL be the last action prior to pop ix; reti.L */
+        portRESTORE_CONTEXT( );
 
-    /* following compiler-inserted epilogue is not executed */
+        asm( "\t                            ; reti from here" );
+        asm( "\t pop ix      ; epilogue, restore IX pushed in prolog");
+        asm( "               ; like github.com/breakintoprogram/agon-mos/blob/main/src_startup/vectors16.asm" );
+        asm( "               ;   __default_mi_handler" );
+        asm( "\t ei          ; re-enable interrupts (on completion of following ret)" );  // *2
+        asm( "\t reti.L      ; Long ret (ADL_CALL_MODE_LIL + 3 byte PC)" ); // *3
+        asm( "               ; as per UM007715 table 25 for IM 2 ADL=1 MADL=1" );
+        asm( "               ; compiler-inserted epilogue below will not be executed" );
+    }
 }
 
 static void gpio14isr( void )
 {
-#   if defined( _DEBUG )&& 0
-    {
-        putchar( '/' );
-    }
-#   endif
+    /* The current task context SHALL be saved first on entry to an ISR */
+    portSAVE_CONTEXT( );
+
+    mosHigherPriorityTaskWoken = pdFALSE;
+
     gpioisr( GPIO_14 );
 
-    asm( "\t pop ix      ; epilogue, restore IX pushed in prolog");
-    asm( "               ; like github.com/breakintoprogram/agon-mos/blob/main/src_startup/vectors16.asm" );
-    asm( "               ;   __default_mi_handler" );
-    asm( "\t ei          ; re-enable interrupts (on completion of following ret)" );
-    asm( "\t reti.l      ; need reti.L as per UM007715 table 25 for IM 2 ADL=1 MADL=1");
+    /* If mosHigherPriorityTaskWoken is now set to pdTRUE then a 
+       context switch should be performed to ensure the 
+       interrupt returns directly to the highest priority task */
+    if( pdTRUE == mosHigherPriorityTaskWoken )
+    {
+        asm( "\txref _vPortYieldFromISR_2   ; reti from vPortYieldFromISR" );
+        asm( "\tJP _vPortYieldFromISR_2     ;   with saved context" );
+    }
+    else
+    {
+        /* RESTORE CONTEXT SHALL be the last action prior to pop ix; reti.L */
+        portRESTORE_CONTEXT( );
 
-    /* following compiler-inserted epilogue is not executed */
+        asm( "\t                            ; reti from here" );
+        asm( "\t pop ix      ; epilogue, restore IX pushed in prolog");
+        asm( "               ; like github.com/breakintoprogram/agon-mos/blob/main/src_startup/vectors16.asm" );
+        asm( "               ;   __default_mi_handler" );
+        asm( "\t ei          ; re-enable interrupts (on completion of following ret)" );  // *2
+        asm( "\t reti.L      ; Long ret (ADL_CALL_MODE_LIL + 3 byte PC)" ); // *3
+        asm( "               ; as per UM007715 table 25 for IM 2 ADL=1 MADL=1" );
+        asm( "               ; compiler-inserted epilogue below will not be executed" );
+    }
 }
 
 static void gpio15isr( void )
 {
+    /* The current task context SHALL be saved first on entry to an ISR */
+    portSAVE_CONTEXT( );
+
+    mosHigherPriorityTaskWoken = pdFALSE;
+
     gpioisr( GPIO_15 );
 
-    asm( "\t pop ix      ; epilogue, restore IX pushed in prolog");
-    asm( "               ; like github.com/breakintoprogram/agon-mos/blob/main/src_startup/vectors16.asm" );
-    asm( "               ;   __default_mi_handler" );
-    asm( "\t ei          ; re-enable interrupts (on completion of following ret)" );
-    asm( "\t reti.l      ; need reti.L as per UM007715 table 25 for IM 2 ADL=1 MADL=1");
+    /* If mosHigherPriorityTaskWoken is now set to pdTRUE then a 
+       context switch should be performed to ensure the 
+       interrupt returns directly to the highest priority task */
+    if( pdTRUE == mosHigherPriorityTaskWoken )
+    {
+        asm( "\txref _vPortYieldFromISR_2   ; reti from vPortYieldFromISR" );
+        asm( "\tJP _vPortYieldFromISR_2     ;   with saved context" );
+    }
+    else
+    {
+        /* RESTORE CONTEXT SHALL be the last action prior to pop ix; reti.L */
+        portRESTORE_CONTEXT( );
 
-    /* following compiler-inserted epilogue is not executed */
+        asm( "\t                            ; reti from here" );
+        asm( "\t pop ix      ; epilogue, restore IX pushed in prolog");
+        asm( "               ; like github.com/breakintoprogram/agon-mos/blob/main/src_startup/vectors16.asm" );
+        asm( "               ;   __default_mi_handler" );
+        asm( "\t ei          ; re-enable interrupts (on completion of following ret)" );  // *2
+        asm( "\t reti.L      ; Long ret (ADL_CALL_MODE_LIL + 3 byte PC)" ); // *3
+        asm( "               ; as per UM007715 table 25 for IM 2 ADL=1 MADL=1" );
+        asm( "               ; compiler-inserted epilogue below will not be executed" );
+    }
 }
 
 static void gpio16isr( void )
 {
+    /* The current task context SHALL be saved first on entry to an ISR */
+    portSAVE_CONTEXT( );
+
+    mosHigherPriorityTaskWoken = pdFALSE;
+
     gpioisr( GPIO_16 );
 
-    asm( "\t pop ix      ; epilogue, restore IX pushed in prolog");
-    asm( "               ; like github.com/breakintoprogram/agon-mos/blob/main/src_startup/vectors16.asm" );
-    asm( "               ;   __default_mi_handler" );
-    asm( "\t ei          ; re-enable interrupts (on completion of following ret)" );
-    asm( "\t reti.l      ; need reti.L as per UM007715 table 25 for IM 2 ADL=1 MADL=1");
+    /* If mosHigherPriorityTaskWoken is now set to pdTRUE then a 
+       context switch should be performed to ensure the 
+       interrupt returns directly to the highest priority task */
+    if( pdTRUE == mosHigherPriorityTaskWoken )
+    {
+        asm( "\txref _vPortYieldFromISR_2   ; reti from vPortYieldFromISR" );
+        asm( "\tJP _vPortYieldFromISR_2     ;   with saved context" );
+    }
+    else
+    {
+        /* RESTORE CONTEXT SHALL be the last action prior to pop ix; reti.L */
+        portRESTORE_CONTEXT( );
 
-    /* following compiler-inserted epilogue is not executed */
+        asm( "\t                            ; reti from here" );
+        asm( "\t pop ix      ; epilogue, restore IX pushed in prolog");
+        asm( "               ; like github.com/breakintoprogram/agon-mos/blob/main/src_startup/vectors16.asm" );
+        asm( "               ;   __default_mi_handler" );
+        asm( "\t ei          ; re-enable interrupts (on completion of following ret)" );  // *2
+        asm( "\t reti.L      ; Long ret (ADL_CALL_MODE_LIL + 3 byte PC)" ); // *3
+        asm( "               ; as per UM007715 table 25 for IM 2 ADL=1 MADL=1" );
+        asm( "               ; compiler-inserted epilogue below will not be executed" );
+    }
 }
 
 static void gpio17isr( void )
 {
+    /* The current task context SHALL be saved first on entry to an ISR */
+    portSAVE_CONTEXT( );
+
+    mosHigherPriorityTaskWoken = pdFALSE;
+
     gpioisr( GPIO_17 );
 
-    asm( "\t pop ix      ; epilogue, restore IX pushed in prolog");
-    asm( "               ; like github.com/breakintoprogram/agon-mos/blob/main/src_startup/vectors16.asm" );
-    asm( "               ;   __default_mi_handler" );
-    asm( "\t ei          ; re-enable interrupts (on completion of following ret)" );
-    asm( "\t reti.l      ; need reti.L as per UM007715 table 25 for IM 2 ADL=1 MADL=1");
+    /* If mosHigherPriorityTaskWoken is now set to pdTRUE then a 
+       context switch should be performed to ensure the 
+       interrupt returns directly to the highest priority task */
+    if( pdTRUE == mosHigherPriorityTaskWoken )
+    {
+        asm( "\txref _vPortYieldFromISR_2   ; reti from vPortYieldFromISR" );
+        asm( "\tJP _vPortYieldFromISR_2     ;   with saved context" );
+    }
+    else
+    {
+        /* RESTORE CONTEXT SHALL be the last action prior to pop ix; reti.L */
+        portRESTORE_CONTEXT( );
 
-    /* following compiler-inserted epilogue is not executed */
+        asm( "\t                            ; reti from here" );
+        asm( "\t pop ix      ; epilogue, restore IX pushed in prolog");
+        asm( "               ; like github.com/breakintoprogram/agon-mos/blob/main/src_startup/vectors16.asm" );
+        asm( "               ;   __default_mi_handler" );
+        asm( "\t ei          ; re-enable interrupts (on completion of following ret)" );  // *2
+        asm( "\t reti.L      ; Long ret (ADL_CALL_MODE_LIL + 3 byte PC)" ); // *3
+        asm( "               ; as per UM007715 table 25 for IM 2 ADL=1 MADL=1" );
+        asm( "               ; compiler-inserted epilogue below will not be executed" );
+    }
 }
 
 static void gpio18isr( void )
 {
+    /* The current task context SHALL be saved first on entry to an ISR */
+    portSAVE_CONTEXT( );
+
+    mosHigherPriorityTaskWoken = pdFALSE;
+
     gpioisr( GPIO_18 );
 
-    asm( "\t pop ix      ; epilogue, restore IX pushed in prolog");
-    asm( "               ; like github.com/breakintoprogram/agon-mos/blob/main/src_startup/vectors16.asm" );
-    asm( "               ;   __default_mi_handler" );
-    asm( "\t ei          ; re-enable interrupts (on completion of following ret)" );
-    asm( "\t reti.l      ; need reti.L as per UM007715 table 25 for IM 2 ADL=1 MADL=1");
+    /* If mosHigherPriorityTaskWoken is now set to pdTRUE then a 
+       context switch should be performed to ensure the 
+       interrupt returns directly to the highest priority task */
+    if( pdTRUE == mosHigherPriorityTaskWoken )
+    {
+        asm( "\txref _vPortYieldFromISR_2   ; reti from vPortYieldFromISR" );
+        asm( "\tJP _vPortYieldFromISR_2     ;   with saved context" );
+    }
+    else
+    {
+        /* RESTORE CONTEXT SHALL be the last action prior to pop ix; reti.L */
+        portRESTORE_CONTEXT( );
 
-    /* following compiler-inserted epilogue is not executed */
+        asm( "\t                            ; reti from here" );
+        asm( "\t pop ix      ; epilogue, restore IX pushed in prolog");
+        asm( "               ; like github.com/breakintoprogram/agon-mos/blob/main/src_startup/vectors16.asm" );
+        asm( "               ;   __default_mi_handler" );
+        asm( "\t ei          ; re-enable interrupts (on completion of following ret)" );  // *2
+        asm( "\t reti.L      ; Long ret (ADL_CALL_MODE_LIL + 3 byte PC)" ); // *3
+        asm( "               ; as per UM007715 table 25 for IM 2 ADL=1 MADL=1" );
+        asm( "               ; compiler-inserted epilogue below will not be executed" );
+    }
 }
 
 static void gpio19isr( void )
 {
+    /* The current task context SHALL be saved first on entry to an ISR */
+    portSAVE_CONTEXT( );
+
+    mosHigherPriorityTaskWoken = pdFALSE;
+
     gpioisr( GPIO_19 );
 
-    asm( "\t pop ix      ; epilogue, restore IX pushed in prolog");
-    asm( "               ; like github.com/breakintoprogram/agon-mos/blob/main/src_startup/vectors16.asm" );
-    asm( "               ;   __default_mi_handler" );
-    asm( "\t ei          ; re-enable interrupts (on completion of following ret)" );
-    asm( "\t reti.l      ; need reti.L as per UM007715 table 25 for IM 2 ADL=1 MADL=1");
+    /* If mosHigherPriorityTaskWoken is now set to pdTRUE then a 
+       context switch should be performed to ensure the 
+       interrupt returns directly to the highest priority task */
+    if( pdTRUE == mosHigherPriorityTaskWoken )
+    {
+        asm( "\txref _vPortYieldFromISR_2   ; reti from vPortYieldFromISR" );
+        asm( "\tJP _vPortYieldFromISR_2     ;   with saved context" );
+    }
+    else
+    {
+        /* RESTORE CONTEXT SHALL be the last action prior to pop ix; reti.L */
+        portRESTORE_CONTEXT( );
 
-    /* following compiler-inserted epilogue is not executed */
+        asm( "\t                            ; reti from here" );
+        asm( "\t pop ix      ; epilogue, restore IX pushed in prolog");
+        asm( "               ; like github.com/breakintoprogram/agon-mos/blob/main/src_startup/vectors16.asm" );
+        asm( "               ;   __default_mi_handler" );
+        asm( "\t ei          ; re-enable interrupts (on completion of following ret)" );  // *2
+        asm( "\t reti.L      ; Long ret (ADL_CALL_MODE_LIL + 3 byte PC)" ); // *3
+        asm( "               ; as per UM007715 table 25 for IM 2 ADL=1 MADL=1" );
+        asm( "               ; compiler-inserted epilogue below will not be executed" );
+    }
 }
 
 static void gpio20isr( void )
 {
+    /* The current task context SHALL be saved first on entry to an ISR */
+    portSAVE_CONTEXT( );
+
+    mosHigherPriorityTaskWoken = pdFALSE;
+
     gpioisr( GPIO_20 );
 
-    asm( "\t pop ix      ; epilogue, restore IX pushed in prolog");
-    asm( "               ; like github.com/breakintoprogram/agon-mos/blob/main/src_startup/vectors16.asm" );
-    asm( "               ;   __default_mi_handler" );
-    asm( "\t ei          ; re-enable interrupts (on completion of following ret)" );
-    asm( "\t reti.l      ; need reti.L as per UM007715 table 25 for IM 2 ADL=1 MADL=1");
+    /* If mosHigherPriorityTaskWoken is now set to pdTRUE then a 
+       context switch should be performed to ensure the 
+       interrupt returns directly to the highest priority task */
+    if( pdTRUE == mosHigherPriorityTaskWoken )
+    {
+        asm( "\txref _vPortYieldFromISR_2   ; reti from vPortYieldFromISR" );
+        asm( "\tJP _vPortYieldFromISR_2     ;   with saved context" );
+    }
+    else
+    {
+        /* RESTORE CONTEXT SHALL be the last action prior to pop ix; reti.L */
+        portRESTORE_CONTEXT( );
 
-    /* following compiler-inserted epilogue is not executed */
+        asm( "\t                            ; reti from here" );
+        asm( "\t pop ix      ; epilogue, restore IX pushed in prolog");
+        asm( "               ; like github.com/breakintoprogram/agon-mos/blob/main/src_startup/vectors16.asm" );
+        asm( "               ;   __default_mi_handler" );
+        asm( "\t ei          ; re-enable interrupts (on completion of following ret)" );  // *2
+        asm( "\t reti.L      ; Long ret (ADL_CALL_MODE_LIL + 3 byte PC)" ); // *3
+        asm( "               ; as per UM007715 table 25 for IM 2 ADL=1 MADL=1" );
+        asm( "               ; compiler-inserted epilogue below will not be executed" );
+    }
 }
 
 static void gpio21isr( void )
 {
+    /* The current task context SHALL be saved first on entry to an ISR */
+    portSAVE_CONTEXT( );
+
+    mosHigherPriorityTaskWoken = pdFALSE;
+
     gpioisr( GPIO_21 );
 
-    asm( "\t pop ix      ; epilogue, restore IX pushed in prolog");
-    asm( "               ; like github.com/breakintoprogram/agon-mos/blob/main/src_startup/vectors16.asm" );
-    asm( "               ;   __default_mi_handler" );
-    asm( "\t ei          ; re-enable interrupts (on completion of following ret)" );
-    asm( "\t reti.l      ; need reti.L as per UM007715 table 25 for IM 2 ADL=1 MADL=1");
+    /* If mosHigherPriorityTaskWoken is now set to pdTRUE then a 
+       context switch should be performed to ensure the 
+       interrupt returns directly to the highest priority task */
+    if( pdTRUE == mosHigherPriorityTaskWoken )
+    {
+        asm( "\txref _vPortYieldFromISR_2   ; reti from vPortYieldFromISR" );
+        asm( "\tJP _vPortYieldFromISR_2     ;   with saved context" );
+    }
+    else
+    {
+        /* RESTORE CONTEXT SHALL be the last action prior to pop ix; reti.L */
+        portRESTORE_CONTEXT( );
 
-    /* following compiler-inserted epilogue is not executed */
+        asm( "\t                            ; reti from here" );
+        asm( "\t pop ix      ; epilogue, restore IX pushed in prolog");
+        asm( "               ; like github.com/breakintoprogram/agon-mos/blob/main/src_startup/vectors16.asm" );
+        asm( "               ;   __default_mi_handler" );
+        asm( "\t ei          ; re-enable interrupts (on completion of following ret)" );  // *2
+        asm( "\t reti.L      ; Long ret (ADL_CALL_MODE_LIL + 3 byte PC)" ); // *3
+        asm( "               ; as per UM007715 table 25 for IM 2 ADL=1 MADL=1" );
+        asm( "               ; compiler-inserted epilogue below will not be executed" );
+    }
 }
 
 static void gpio22isr( void )
 {
+    /* The current task context SHALL be saved first on entry to an ISR */
+    portSAVE_CONTEXT( );
+
+    mosHigherPriorityTaskWoken = pdFALSE;
+
     gpioisr( GPIO_22 );
 
-    asm( "\t pop ix      ; epilogue, restore IX pushed in prolog");
-    asm( "               ; like github.com/breakintoprogram/agon-mos/blob/main/src_startup/vectors16.asm" );
-    asm( "               ;   __default_mi_handler" );
-    asm( "\t ei          ; re-enable interrupts (on completion of following ret)" );
-    asm( "\t reti.l      ; need reti.L as per UM007715 table 25 for IM 2 ADL=1 MADL=1");
+    /* If mosHigherPriorityTaskWoken is now set to pdTRUE then a 
+       context switch should be performed to ensure the 
+       interrupt returns directly to the highest priority task */
+    if( pdTRUE == mosHigherPriorityTaskWoken )
+    {
+        asm( "\txref _vPortYieldFromISR_2   ; reti from vPortYieldFromISR" );
+        asm( "\tJP _vPortYieldFromISR_2     ;   with saved context" );
+    }
+    else
+    {
+        /* RESTORE CONTEXT SHALL be the last action prior to pop ix; reti.L */
+        portRESTORE_CONTEXT( );
 
-    /* following compiler-inserted epilogue is not executed */
+        asm( "\t                            ; reti from here" );
+        asm( "\t pop ix      ; epilogue, restore IX pushed in prolog");
+        asm( "               ; like github.com/breakintoprogram/agon-mos/blob/main/src_startup/vectors16.asm" );
+        asm( "               ;   __default_mi_handler" );
+        asm( "\t ei          ; re-enable interrupts (on completion of following ret)" );  // *2
+        asm( "\t reti.L      ; Long ret (ADL_CALL_MODE_LIL + 3 byte PC)" ); // *3
+        asm( "               ; as per UM007715 table 25 for IM 2 ADL=1 MADL=1" );
+        asm( "               ; compiler-inserted epilogue below will not be executed" );
+    }
 }
 
 static void gpio23isr( void )
 {
+    /* The current task context SHALL be saved first on entry to an ISR */
+    portSAVE_CONTEXT( );
+
+    mosHigherPriorityTaskWoken = pdFALSE;
+
     gpioisr( GPIO_23 );
 
-    asm( "\t pop ix      ; epilogue, restore IX pushed in prolog");
-    asm( "               ; like github.com/breakintoprogram/agon-mos/blob/main/src_startup/vectors16.asm" );
-    asm( "               ;   __default_mi_handler" );
-    asm( "\t ei          ; re-enable interrupts (on completion of following ret)" );
-    asm( "\t reti.l      ; need reti.L as per UM007715 table 25 for IM 2 ADL=1 MADL=1");
+    /* If mosHigherPriorityTaskWoken is now set to pdTRUE then a 
+       context switch should be performed to ensure the 
+       interrupt returns directly to the highest priority task */
+    if( pdTRUE == mosHigherPriorityTaskWoken )
+    {
+        asm( "\txref _vPortYieldFromISR_2   ; reti from vPortYieldFromISR" );
+        asm( "\tJP _vPortYieldFromISR_2     ;   with saved context" );
+    }
+    else
+    {
+        /* RESTORE CONTEXT SHALL be the last action prior to pop ix; reti.L */
+        portRESTORE_CONTEXT( );
 
-    /* following compiler-inserted epilogue is not executed */
+        asm( "\t                            ; reti from here" );
+        asm( "\t pop ix      ; epilogue, restore IX pushed in prolog");
+        asm( "               ; like github.com/breakintoprogram/agon-mos/blob/main/src_startup/vectors16.asm" );
+        asm( "               ;   __default_mi_handler" );
+        asm( "\t ei          ; re-enable interrupts (on completion of following ret)" );  // *2
+        asm( "\t reti.L      ; Long ret (ADL_CALL_MODE_LIL + 3 byte PC)" ); // *3
+        asm( "               ; as per UM007715 table 25 for IM 2 ADL=1 MADL=1" );
+        asm( "               ; compiler-inserted epilogue below will not be executed" );
+    }
 }
 
 static void gpio24isr( void )
 {
+    /* The current task context SHALL be saved first on entry to an ISR */
+    portSAVE_CONTEXT( );
+
+    mosHigherPriorityTaskWoken = pdFALSE;
+
     gpioisr( GPIO_24 );
 
-    asm( "\t pop ix      ; epilogue, restore IX pushed in prolog");
-    asm( "               ; like github.com/breakintoprogram/agon-mos/blob/main/src_startup/vectors16.asm" );
-    asm( "               ;   __default_mi_handler" );
-    asm( "\t ei          ; re-enable interrupts (on completion of following ret)" );
-    asm( "\t reti.l      ; need reti.L as per UM007715 table 25 for IM 2 ADL=1 MADL=1");
+    /* If mosHigherPriorityTaskWoken is now set to pdTRUE then a 
+       context switch should be performed to ensure the 
+       interrupt returns directly to the highest priority task */
+    if( pdTRUE == mosHigherPriorityTaskWoken )
+    {
+        asm( "\txref _vPortYieldFromISR_2   ; reti from vPortYieldFromISR" );
+        asm( "\tJP _vPortYieldFromISR_2     ;   with saved context" );
+    }
+    else
+    {
+        /* RESTORE CONTEXT SHALL be the last action prior to pop ix; reti.L */
+        portRESTORE_CONTEXT( );
 
-    /* following compiler-inserted epilogue is not executed */
+        asm( "\t                            ; reti from here" );
+        asm( "\t pop ix      ; epilogue, restore IX pushed in prolog");
+        asm( "               ; like github.com/breakintoprogram/agon-mos/blob/main/src_startup/vectors16.asm" );
+        asm( "               ;   __default_mi_handler" );
+        asm( "\t ei          ; re-enable interrupts (on completion of following ret)" );  // *2
+        asm( "\t reti.L      ; Long ret (ADL_CALL_MODE_LIL + 3 byte PC)" ); // *3
+        asm( "               ; as per UM007715 table 25 for IM 2 ADL=1 MADL=1" );
+        asm( "               ; compiler-inserted epilogue below will not be executed" );
+    }
 }
 
 static void gpio26isr( void )
 {
+    /* The current task context SHALL be saved first on entry to an ISR */
+    portSAVE_CONTEXT( );
+
+    mosHigherPriorityTaskWoken = pdFALSE;
+
     gpioisr( GPIO_26 );
 
-    asm( "\t pop ix      ; epilogue, restore IX pushed in prolog");
-    asm( "               ; like github.com/breakintoprogram/agon-mos/blob/main/src_startup/vectors16.asm" );
-    asm( "               ;   __default_mi_handler" );
-    asm( "\t ei          ; re-enable interrupts (on completion of following ret)" );
-    asm( "\t reti.l      ; need reti.L as per UM007715 table 25 for IM 2 ADL=1 MADL=1");
+    /* If mosHigherPriorityTaskWoken is now set to pdTRUE then a 
+       context switch should be performed to ensure the 
+       interrupt returns directly to the highest priority task */
+    if( pdTRUE == mosHigherPriorityTaskWoken )
+    {
+        asm( "\txref _vPortYieldFromISR_2   ; reti from vPortYieldFromISR" );
+        asm( "\tJP _vPortYieldFromISR_2     ;   with saved context" );
+    }
+    else
+    {
+        /* RESTORE CONTEXT SHALL be the last action prior to pop ix; reti.L */
+        portRESTORE_CONTEXT( );
 
-    /* following compiler-inserted epilogue is not executed */
+        asm( "\t                            ; reti from here" );
+        asm( "\t pop ix      ; epilogue, restore IX pushed in prolog");
+        asm( "               ; like github.com/breakintoprogram/agon-mos/blob/main/src_startup/vectors16.asm" );
+        asm( "               ;   __default_mi_handler" );
+        asm( "\t ei          ; re-enable interrupts (on completion of following ret)" );  // *2
+        asm( "\t reti.L      ; Long ret (ADL_CALL_MODE_LIL + 3 byte PC)" ); // *3
+        asm( "               ; as per UM007715 table 25 for IM 2 ADL=1 MADL=1" );
+        asm( "               ; compiler-inserted epilogue below will not be executed" );
+    }
 }
 
 

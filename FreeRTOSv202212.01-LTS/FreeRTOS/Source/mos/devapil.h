@@ -259,6 +259,8 @@ extern PIN_NUM const assigned_pins[ NUM_DEV_MAJOR ]
                                   [ NUM_DEV_MINOR ];
 extern PORT_BITMAP const portmap[ NUM_DEV_MINOR ];
 
+extern BaseType_t mosHigherPriorityTaskWoken;
+
 
 /*---- Global Variables -----------------------------------------------------*/
 /* Changing any global variable needs to be done within

@@ -75,8 +75,8 @@
 /* Calling Modes - refer to Zilog UG07715 Table 49 */
 typedef enum _adl_call_mode
 {
-    ADL_CALL_MODE_LIL = 0x0,   /* call from Z80 (ADL=0) to Z80 (ADL<-0) */
-    ADL_CALL_MODE_LIL = 0x1,   /* call from ADL (ADL=1) to Z80 (ADL<-0) */
+    ADL_CALL_MODE_SIS = 0x0,   /* call from Z80 (ADL=0) to Z80 (ADL<-0) */
+    ADL_CALL_MODE_LIS = 0x1,   /* call from ADL (ADL=1) to Z80 (ADL<-0) */
     ADL_CALL_MODE_SIL = 0x2,   /* call from Z80 (ADL=0) to ADL (ADL<-1) */
     ADL_CALL_MODE_LIL = 0x3    /* call from ADL (ADL=1) to ADL (ADL<-1) */
 
@@ -84,9 +84,8 @@ typedef enum _adl_call_mode
 
 
 /*----- Global Names --------------------------------------------------------*/
-
-    /* We require the address of the (tasks.c) pxCurrentTCB variable, 
-       but don't need to know its type. */
+/* Address of the (tasks.c) pxCurrentTCB variable, 
+   but don't need to know its type. */
 typedef void tskTCB;
 extern tskTCB * volatile pxCurrentTCB;
 extern void * mos_setpitvector( 
@@ -96,7 +95,7 @@ extern void * mos_setpitvector(
 
 
 /*----- Private Variables ---------------------------------------------------*/
-    /* we use a mutex to implement critical regions */
+/* mutex to implement MOS critical regions */
 static SemaphoreHandle_t portMOSMutex = NULL;
 
 /* we keep track of our installed ISR, to remove it in case of exit */
@@ -106,66 +105,17 @@ static int portTmr = -1;
 
 /*----- Private Functions ---------------------------------------------------*/
 static BaseType_t prvSetupTimerInterrupt( void );
-static void portTaskExit( void );
 static void portTeardownTimerInterrupt( void );
+static void timer_isr( void );
+
+static void portTaskExit( void );
+
+static BaseType_t portCreateMOSMutex( void );
+
+static void vPortYieldFromTick( void );
 
 
 /*----- Context Construction ------------------------------------------------*/
-/*
- * Macro to save all the general purpose registers, 
- *  then save the stack pointer into the TCB.
- *    [jhr Think about "in 0 a,(80h)" for EZ80L92 from https://www.freertos.org/FreeRTOS_Support_Forum_Archive/March_2007/freertos_Bug_in_the_ez80_1687732.html
- *    Along the lines of EZ80F91 port which did "in0 a,(62h)" to read the timer interrupt bit
- *    Agon reads the timer separately in the ISR]
- */
-#define portSAVE_CONTEXT( )                 \
-    asm( "\t xref _pxCurrentTCB         " );\
-    asm( "\t di                         " );\
-    asm( "\t;push pc    [long call]     " );\
-    asm( "\t;0x03       [ADL mode byte = _ADL_CALL_MODE_LIL] " );\
-    asm( "\t;push ix    [prologue]      " );\
-    asm( "\t push af                    " );\
-    asm( "\t push bc                    " );\
-    asm( "\t push de                    " );\
-    asm( "\t push hl                    " );\
-    asm( "\t push iy                    " );\
-    asm( "\t ex   af,   af'             " );\
-    asm( "\t exx                        " );\
-    asm( "\t push af                    " );\
-    asm( "\t push bc                    " );\
-    asm( "\t push de                    " );\
-    asm( "\t push hl                    " );\
-    asm( "\t ld   ix,   0               " );\
-    asm( "\t add  ix,   sp              " );\
-    asm( "\t ld   hl,   (_pxCurrentTCB) " );\
-    asm( "\t ld   (hl), ix              " );
-
-/*
- * Macro to restore the stack pointer from the new TCB,
- *  then restore all the general purpose registers, 
- *  Exact opposite of SAVE CONTEXT.
- */
-#define portRESTORE_CONTEXT( )           \
-    asm( "\t xref _pxCurrentTCB   " );\
-    asm( "\t ld   hl, (_pxCurrentTCB) " );\
-    asm( "\t ld   hl, (hl)            " );\
-    asm( "\t ld   sp, hl              " );\
-    asm( "\t pop  hl                  " );\
-    asm( "\t pop  de                  " );\
-    asm( "\t pop  bc                  " );\
-    asm( "\t pop  af                  " );\
-    asm( "\t exx                      " );\
-    asm( "\t ex   af, af'             " );\
-    asm( "\t pop  iy                  " );\
-    asm( "\t pop  hl                  " );\
-    asm( "\t pop  de                  " );\
-    asm( "\t pop  bc                  " );\
-    asm( "\t pop  af                  " );\
-    asm( "\t;pop  ix  [epilogue]      " );\
-    asm( "\t;0x03     [ADL mode byte = _ADL_CALL_MODE_LIL] " );\
-    asm( "\t;pop  pc  [ret.L/reti.L]  " );
-
-
 /* pxPortInitialiseStack
      Initialse the stack for an ADL task. This includes the ADL-mode byte
      after the PC register initial value.
@@ -433,9 +383,9 @@ void vPortEndScheduler( void )
  *      byte on the call stack, so that a reti.L is necessary. *3
  *
  *    Actions:
- *      Save the current task context
+ *      Save the current task context SHALL be done first on entry
  *      Decide which is the new task to run
- *      Restore the new task context
+ *      Restore the new task context SHALL be done last before exit
  *
  *   Entry: With all of the "vPortYield" functions the FIRST thing we MUST do 
  *     (*1) is call portSAVE_CONTEXT. Even in non-preemptive configuration, we 
@@ -467,8 +417,15 @@ void vPortYield( void )
        stack. */
     asm( "\t pop    bc   ; undo compiler 'push BC' from the stack" );  // *1
 
+    /* The current task context SHALL be saved first. */
     portSAVE_CONTEXT( );   // pushes the 1-byte ADL mode after the 3-byte PC 
+
     vTaskSwitchContext( );
+
+    /* RESTORE CONTEXT is shared with vPortYieldFromISR and vPortYieldFromTick,
+       so that we must do a long return "reti.L" to the new task context.
+       It SHALL be the last action prior to pop ix; ret.L
+    */
     portRESTORE_CONTEXT( );
 
     asm( "\t pop    ix    ; epilogue" );
@@ -491,20 +448,25 @@ void vPortYield( void )
  *      "Yield" versions. These place the additional ADL mode byte on the call 
  *      stack, so that a reti.L is necessary. *3
  *
- *   Entry: With all of the "vPortYield" functions the FIRST thing we MUST do 
- *     (*1) is call portSAVE_CONTEXT. Even in non-preemptive configuration, we 
- *     MUST save the context in order to preserve the AF flags register.
+ *   Entry: 
+ *     A/ ISRs that have not saved a context SHALL jump to _vPortYieldFromISR_1.
+ *        As with all of the "vPortYield" functions the FIRST action SHALL be
+ *        (*1) to call portSAVE_CONTEXT. Even in non-preemptive configuration,
+ *        we MUST save the context in order to preserve the AF flags register.
+ *     B/ ISRs that have already executed portSAVE_CONTEXT SHALL jump to
+ *        _vPortYieldFromISR_2
  *   Exit: With all of the "vPortYield" functions we MUST exit in the identical 
- *     sequence FOLLOWING the call to vTaskSwitchContext onwards:
+ *     sequence FOLLOWING the call to vTaskSwitchContext onwards. RESTORE CONTEXT
+ *     SHALL be the last action prior to pop ix; reti. 
  *            vTaskSwitchContext( );
  *            portRESTORE_CONTEXT( );
  *            asm( "\t pop    ix    ; postlog         " );
  *         *2 asm( "\t ei           ; re-enable interrupts " ); *2
- *            asm( "\t ret          ; ret from here   " );
+ *            asm( "\t reti.L       ; ret from here   " );
  *            asm( "                ; compiler-inserted postlog below not followed " );
  *   The reason Entry and Exit must be identical is that a task may be Yielded
  *     out by one function, and Yielded back in by another. Between Entry and 
- *     Exit each function can do what it needs. 
+ *     Exit each Yield function can do what it needs. 
  *
  *     *1 We must design the function to use no local stack variables. If the 
  *        compiler allocates space on the stack e.g. push BC then we must undo 
@@ -516,25 +478,26 @@ void vPortYield( void )
 void vPortYieldFromISR( void )
 {
     asm( "\t xdef _vPortYieldFromISR_1      ; entry point for jump" );
-    asm( "\t _vPortYieldFromISR_1: " );
+    asm( "\t _vPortYieldFromISR_1:          ;   with no saved context" );
     
     /* The current task context SHALL be saved first; 
        even if 0==configUSE_PREEMPTION. */
     portSAVE_CONTEXT( );
+    /* UNLESS the current task context is already saved by the 'calling' ISR */
+    asm( "\t xdef _vPortYieldFromISR_2      ; entry point for jump" );
+    asm( "\t _vPortYieldFromISR_2:          ;   with already saved context" );
 
     /* A context switch is required, if not in pre-emptive mode. */
-    asm( "\t push hl        ; in lieu of prologue stack frame" );        
     vTaskMissedYield( );
-    asm( "\t pop hl         ; " );
         
 #   if( 1 == configUSE_PREEMPTION )
     {
         /* Check if the current task is in the non-reentrant MOS.
          * If so, then indicate that a context switch is needed.
          */
-        if( 1 == uxSemaphoreGetCount( portMOSMutex ))
+        if( 1 == uxSemaphoreGetCountFromISR( portMOSMutex ))
         {
-#           if defined( _DEBUG )
+#           if defined( _DEBUG )&& 0
                 _putchf( 'A' );
 #           endif
             /* not blocked on MOS, so do the task yield from ISR */
@@ -544,25 +507,25 @@ void vPortYieldFromISR( void )
         } 
         else
         {
-#           if defined( _DEBUG )
+#           if defined( _DEBUG )&& 0
                 _putchf( 'B' );
 #           endif
             /* blocked on MOS; indicate a context switch is required. */
-            asm( "\t push hl        ; in lieu of prologue stack frame" );        
             vTaskMissedYield( );
-            asm( "\t pop hl         ; " );
         }
     }
 #   endif /* configUSE_PREEMPTION == 1 */
 
-    /* RESTORE CONTEXT is shared with vPortYield and vPortYieldFromTick,
-       so that we must do a long return "reti.L" to the ISR and a context
-       switched task.  */
-    portRESTORE_CONTEXT( );
-
-#   if defined( _DEBUG )
+#   if defined( _DEBUG )&& 0
         _putchf( 'C' );
 #   endif
+
+    /* RESTORE CONTEXT is shared with vPortYield and vPortYieldFromTick,
+       so that we must do a long return "reti.L" to the ISR and a context
+       switched task.
+       It SHALL be the last action prior to pop ix; reti.L
+    */
+    portRESTORE_CONTEXT( );
 
     asm( "\t pop ix      ; epilogue, restore IX pushed in prolog");
     asm( "               ; like github.com/breakintoprogram/agon-mos/blob/main/src_startup/vectors16.asm" );
@@ -577,8 +540,8 @@ void vPortYieldFromISR( void )
 /* vPortYieldFromTick
  *   Context switch function used by the tick.  
  *
- *   Entry: With all of the "vPortYield" functions the FIRST thing we MUST do 
- *     (*1) is call portSAVE_CONTEXT. Even in non-preemptive configuration, we 
+ *   Entry: With all of the "vPortYield" functions the FIRST action SHALL be to
+ *     (*1) call portSAVE_CONTEXT. Even in non-preemptive configuration, we 
  *     MUST save the context in order to preserve the AF flags register.
  *   Exit: With all of the "vPortYield" functions we MUST exit in the identical 
  *     sequence FOLLOWING the call to vTaskSwitchContext onwards:
@@ -586,11 +549,11 @@ void vPortYieldFromISR( void )
  *            portRESTORE_CONTEXT( );
  *            asm( "\t pop    ix    ; postlog         " );
  *         *2 asm( "\t ei           ; re-enable interrupts " ); *2
- *            asm( "\t ret          ; ret from here   " );
+ *            asm( "\t reti.L       ; ret from here   " );
  *            asm( "                ; compiler-inserted postlog below not followed " );
  *   The reason Entry and Exit must be identical is that a task may be Yielded
  *     out by one function, and Yielded back in by another. Between Entry and 
- *     Exit each function can do what it needs. 
+ *     Exit each Yield function can do what it needs. 
  *
  *     *1 We must design the function to use no local stack variables. If the 
  *        compiler allocates space on the stack e.g. push BC then we must undo 
@@ -601,6 +564,10 @@ void vPortYieldFromISR( void )
 */
 static void vPortYieldFromTick( void )
 {
+    /* push BC     is inserted by "Zilog eZ80 ANSI C Compiler Version 3.4 (19101101)"
+       following the standard prolog. We don't want it left on the task stack. */
+    asm( "\t pop    bc   ; undo compiler 'push BC' from the stack" );  // *1
+
     asm( "_vPortYieldFromTick_1:      ; entry point for jump" );
 
     /* The current task context SHALL be saved first; 
@@ -612,19 +579,15 @@ static void vPortYieldFromTick( void )
     if( pdFALSE != xTaskIncrementTick( ))
     {
         /* A context switch is required. */
-        asm( "\t push hl        ; in lieu of prologue stack frame" );        
         vTaskMissedYield( );
-        asm( "\t pop hl         ; " );
     }
     
 #   if( 1 == configUSE_PREEMPTION )
     {
         /* Check if the current task is in the non-reentrant MOS.
          * If so, then indicate that a context switch is needed.
-         *   If the semaphore is a binary semaphore then uxSemaphoreGetCount
-         *   returns 1 if the semaphore is available, and 0 if not.
          */
-        if( 1 == uxSemaphoreGetCount( portMOSMutex ))
+        if( 1 == uxSemaphoreGetCountFromISR( portMOSMutex ))
         {
 #           if defined( _DEBUG )&& 0
                 _putchf( 'E' );
@@ -641,16 +604,15 @@ static void vPortYieldFromTick( void )
                 _putchf( 'F' );
 #           endif
             /* blocked on MOS; indicate a context switch is required. */
-            asm( "\t push hl        ; in lieu of prologue stack frame" );        
             vTaskMissedYield( );
-            asm( "\t pop hl         ; " );
         }
     }
 #   endif /* configUSE_PREEMPTION == 1 */
 
     /* RESTORE CONTEXT is shared with vPortYield and vPortYieldFromTick,
        so that we must do a long return "reti.L" to the ISR and a context
-       switched task.  */
+       switched task. 
+       It SHALL be the last action prior to pop ix; reti.L */
     portRESTORE_CONTEXT( );
 
     asm( "\t pop ix      ; epilogue, restore IX pushed in prolog");

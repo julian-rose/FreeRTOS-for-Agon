@@ -53,7 +53,7 @@
 #   define PORTMACRO_H
 
 
-/***--------- Type definitions ---------***/
+/***--------- Type definitions ----------------------------------***/
 #define portCHAR                  char
 #define portFLOAT                 float
 #define portDOUBLE                double
@@ -61,10 +61,10 @@
 #define portSHORT                 short
 #define portSTACK_TYPE            unsigned int
 #define portBASE_TYPE             int
-#define portPOINTER_SIZE_TYPE      unsigned int
+#define portPOINTER_SIZE_TYPE     unsigned int
 
-typedef portSTACK_TYPE             StackType_t;
-typedef portBASE_TYPE              BaseType_t;
+typedef portSTACK_TYPE            StackType_t;
+typedef portBASE_TYPE             BaseType_t;
 typedef unsigned portBASE_TYPE    UBaseType_t;
 
 
@@ -72,7 +72,7 @@ typedef unsigned portBASE_TYPE    UBaseType_t;
 #define inline
 
 
-/***--------- Ticks ---------***/
+/***-------- Ticks ----------------------------------------------***/
 #if ( configUSE_16_BIT_TICKS == 1 )
     typedef unsigned portSHORT       portTickType;
 #   define portMAX_DELAY          ( portTickType ) 0xffff
@@ -83,14 +83,39 @@ typedef unsigned portBASE_TYPE    UBaseType_t;
 typedef portTickType               TickType_t;
 
 
-/***--------- Memory Protection Unit ---------***/
+/***--------- Memory Protection Unit ----------------------------***/
 /* The eZ80 does not have an MMU */
 #define portUSING_MPU_WRAPPERS    0
 #define PRIVILEGED_FUNCTION
 
 
-/***--------- Critical Sections ---------***/
-#define    portENTER_CRITICAL( )     asm( "\t di" )
+/***--------- Architecture --------------------------------------***/
+#define portSTACK_GROWTH          ( -1 )  /* stack grows down */
+#define portTICK_PERIOD_MS        ( configTICK_RATE_HZ < 1001 )\
+                                    ?(( portTickType )1000 / configTICK_RATE_HZ )\
+                                    :1
+#define portBYTE_ALIGNMENT        3       /* 24-bit int */
+
+
+/***------ Programmable Timer -----------------------------------***/
+/* We assign any of PRT0..PRT4 for the FreeRTOS periodic interval timer (PIT) 
+   function. PRT5..PRT6 cannot be used for PIT.
+   Refer to eZ80F92 PS015317-0120 Table 32 for PRT Control Register */
+#define PRT_CTL_ENABLE            ( 1 << 0 )
+#define PRT_CTL_RST_EN            ( 1 << 1 )
+#define PRT_CTL_DIV04             ( 0 << 2 )    /* configTICK_RATE_HZ = 72 is the smallest possible */
+#define PRT_CTL_DIV16             ( 1 << 2 )    /* configTICK_RATE_HZ = 18 is the smallest possible */
+#define PRT_CTL_DIV64             ( 2 << 2 )    /* configTICK_RATE_HZ = 5 is the smallest possible */
+#define PRT_CTL_DIV256            ( 3 << 2 )    /* configTICK_RATE_HZ = 2 is the smallest possible */
+#define PRT_CTL_MODE_CONTINUOUS   ( 1 << 4 )
+#define PRT_CTL_IRQ_EN            ( 1 << 6 )
+#define PRT_ISS_SYSCLK            ( unsigned char )(( 1 << 0 )|( 1 << 1 ))
+
+#define PRT_CLK_PRESCALER         64UL          /* one of 16UL, 64UL or 256UL to match PRT_CTL_DIVnn */
+
+
+/***--------- Critical Sections ---------------------------------***/
+#define    portENTER_CRITICAL( )  asm( "\t di" )
 #define portEXIT_CRITICAL( )      asm( "\t ei" )
 #define portDISABLE_INTERRUPTS( ) asm( "\t di" )
 #define portENABLE_INTERRUPTS( )  asm( "\t ei" )
@@ -99,42 +124,72 @@ void portEnterMOS( void );
 void portExitMOS( void );
 
 
-/***--------- Architecture ---------***/
-#define portSTACK_GROWTH          ( -1 )  /* stack grows down */
-#define portTICK_PERIOD_MS        ( configTICK_RATE_HZ < 1001 )\
-                                    ?(( portTickType )1000 / configTICK_RATE_HZ )\
-                                    :1
-#define portBYTE_ALIGNMENT        3       /* 24-bit int */
-
-
-/***------ Programmable Timer ------***/
-/* We assign any of PRT0..PRT4 for the FreeRTOS periodic interval timer (PIT) 
-   function. PRT5..PRT6 cannot be used for PIT.
-   Refer to eZ80F92 PS015317-0120 Table 32 for PRT Control Register */
-#define PRT_CTL_ENABLE              ( 1 << 0 )
-#define PRT_CTL_RST_EN              ( 1 << 1 )
-#define PRT_CTL_DIV04              ( 0 << 2 )    /* configTICK_RATE_HZ = 72 is the smallest possible */
-#define PRT_CTL_DIV16              ( 1 << 2 )    /* configTICK_RATE_HZ = 18 is the smallest possible */
-#define PRT_CTL_DIV64              ( 2 << 2 )    /* configTICK_RATE_HZ = 5 is the smallest possible */
-#define PRT_CTL_DIV256              ( 3 << 2 )    /* configTICK_RATE_HZ = 2 is the smallest possible */
-#define PRT_CTL_MODE_CONTINUOUS      ( 1 << 4 )
-#define PRT_CTL_IRQ_EN              ( 1 << 6 )
-#define PRT_ISS_SYSCLK              ( unsigned char )(( 1 << 0 )|( 1 << 1 ))
-
-#define PRT_CLK_PRESCALER          64UL          /* one of 16UL, 64UL or 256UL to match PRT_CTL_DIVnn */
-
-
-/***--------- Task Yielding ---------***/
-extern void vPortYield( void );    /* SHALL be entered via a Long Call */
+/***--------- Task Yielding -------------------------------------***/
+extern void vPortYield( void );   /* SHALL be entered via a Long Call */
 
 #define portYIELD( )\
    asm( "\t xref _vPortYield" );\
-   asm( "\t call.LIL _vPortYield   ; Long call demanding a ret[i].L compatible with MOS ISRs" );
+   asm( "\t call.LIL _vPortYield  ; Long call demanding a ret[i].L compatible with MOS ISRs" );
 
 extern void vPortYieldFromISR( void );
 
 
-/***--------- Tasks ---------***/
+/***--------- Context Construction ------------------------------***/
+/* Macro to save all the general purpose registers, 
+ *  then save the stack pointer into the TCB.
+ *    [jhr Think about "in 0 a,(80h)" for EZ80L92 from https://www.freertos.org/FreeRTOS_Support_Forum_Archive/March_2007/freertos_Bug_in_the_ez80_1687732.html
+ *    Along the lines of EZ80F91 port which did "in0 a,(62h)" to read the timer interrupt bit
+ *    Agon reads the timer separately in the ISR]
+ */
+#define portSAVE_CONTEXT( )                 \
+    asm( "\t xref _pxCurrentTCB         " );\
+    asm( "\t di                         " );\
+    asm( "\t;push pc    [long call]     " );\
+    asm( "\t;0x03       [ADL mode byte = _ADL_CALL_MODE_LIL] " );\
+    asm( "\t;push ix    [prologue]      " );\
+    asm( "\t push af                    " );\
+    asm( "\t push bc                    " );\
+    asm( "\t push de                    " );\
+    asm( "\t push hl                    " );\
+    asm( "\t push iy                    " );\
+    asm( "\t ex   af,   af'             " );\
+    asm( "\t exx                        " );\
+    asm( "\t push af                    " );\
+    asm( "\t push bc                    " );\
+    asm( "\t push de                    " );\
+    asm( "\t push hl                    " );\
+    asm( "\t ld   ix,   0               " );\
+    asm( "\t add  ix,   sp              " );\
+    asm( "\t ld   hl,   (_pxCurrentTCB) " );\
+    asm( "\t ld   (hl), ix              " );
+
+/*
+ * Macro to restore the stack pointer from the new TCB,
+ *  then restore all the general purpose registers, 
+ *  Exact opposite of SAVE CONTEXT.
+ */
+#define portRESTORE_CONTEXT( )            \
+    asm( "\t xref _pxCurrentTCB   " );    \
+    asm( "\t ld   hl, (_pxCurrentTCB) " );\
+    asm( "\t ld   hl, (hl)            " );\
+    asm( "\t ld   sp, hl              " );\
+    asm( "\t pop  hl                  " );\
+    asm( "\t pop  de                  " );\
+    asm( "\t pop  bc                  " );\
+    asm( "\t pop  af                  " );\
+    asm( "\t exx                      " );\
+    asm( "\t ex   af, af'             " );\
+    asm( "\t pop  iy                  " );\
+    asm( "\t pop  hl                  " );\
+    asm( "\t pop  de                  " );\
+    asm( "\t pop  bc                  " );\
+    asm( "\t pop  af                  " );\
+    asm( "\t;pop  ix  [epilogue]      " );\
+    asm( "\t;0x03     [ADL mode byte = _ADL_CALL_MODE_LIL] " );\
+    asm( "\t;pop  pc  [ret.L/reti.L]  " );
+
+
+/***--------- Tasks ---------------------------------------------***/
     /* since we split up tasks into multiple files,
        we need the tasks variable declarations to be global. */
 #define portREMOVE_STATIC_QUALIFIER    1
@@ -146,7 +201,7 @@ extern void vPortYieldFromISR( void );
                                   void vFunction( void *pvParameters )
 
 
-/***------------ Assert --------------***/
+/***------------ Assert -----------------------------------------***/
 #if defined( configASSERT )
     void portAssert( char *file, unsigned int line );
 #endif

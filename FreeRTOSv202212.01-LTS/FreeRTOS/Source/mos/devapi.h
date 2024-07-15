@@ -172,20 +172,20 @@ typedef enum _dev_mode
     DEV_MODE_GPIO_MASK            =( 0xF << 1 ),
 
     /* UART modes */                              // DTE=computer, DCE=modem
-    DEV_MODE_UART_NO_MODEM        =( 0x0 << 5 ),  // DTE<->DTE software flow control, no hardware handshake
-    DEV_MODE_UART_HALF_MODEM      =( 0x1 << 5 ),  // DTE<->DCE RTS/CTS hw flow control, straight-through wiring
-    DEV_MODE_UART_FULL_MODEM      =( 0x2 << 5 ),  // DTE<->DCE RTS/CTS DTR/DSR hw flow control, straight-through
-    DEV_MODE_UART_HALF_NULL_MODEM =( 0x5 << 5 ),  // DTE<->DTE RTS/CTS hw flow control, cross-over wiring
-    DEV_MODE_UART_FULL_NULL_MODEM =( 0x6 << 5 ),  // DTE<->DTE RTS/CTS DTR/DSR hw flow control, cross-over
-    DEV_MODE_UART_MASK            =( 0x7 << 5 ),
+    DEV_MODE_UART_NO_MODEM        =( 0x1 << 5 ),  // DTE<->DTE software flow control, no hardware handshake
+    DEV_MODE_UART_HALF_MODEM      =( 0x2 << 5 ),  // DTE<->DCE RTS/CTS hw flow control, straight-through wiring
+    DEV_MODE_UART_FULL_MODEM      =( 0x4 << 5 ),  // DTE<->DCE RTS/CTS DTR/DSR hw flow control, straight-through
+    DEV_MODE_UART_HALF_NULL_MODEM =( 0xA << 5 ),  // DTE<->DTE RTS/CTS hw flow control, cross-over wiring
+    DEV_MODE_UART_FULL_NULL_MODEM =( 0xC << 5 ),  // DTE<->DTE RTS/CTS DTR/DSR hw flow control, cross-over
+    DEV_MODE_UART_MASK            =( 0xf << 5 ),
 
     /* I2C modes */
-    DEV_MODE_I2C_DEFAULT          =( 0x1 << 8 ),
-    DEV_MODE_I2C_MASK             =( 0x1 << 8 ),
+    DEV_MODE_I2C_DEFAULT          =( 0x1 << 9 ),
+    DEV_MODE_I2C_MASK             =( 0x1 << 9 ),
 
     /* SPI modes */
-    DEV_MODE_SPI_DEFAULT          =( 0x1 << 9 ),
-    DEV_MODE_SPI_MASK             =( 0x1 << 9 ),
+    DEV_MODE_SPI_DEFAULT          =( 0x1 << 10 ),
+    DEV_MODE_SPI_MASK             =( 0x1 << 10 ),
 
 } DEV_MODE;
 
@@ -490,6 +490,16 @@ POSIX_ERRNO uart_read_buffered(
             );
 
 
+    /* DEV_API: uart_getch
+       Read a single byte from the previously opened UART1
+       Calling task may block. 
+       On error 0xff is returned, but this may also be a valid value.
+       Defined in devapi.c */
+char uart_getch( 
+         void
+     );
+
+
     /* DEV_API: uart_write
        Write data to a previously opened UART1
        Calling task will block until either the write is complete or an error
@@ -513,6 +523,15 @@ POSIX_ERRNO uart_write_buffered(
                 size_t const num_bytes_to_write,
                 size_t * num_bytes_written,
                 POSIX_ERRNO * result
+            );
+
+
+    /* DEV_API: uart_putch
+       Write a single byte to the previously opened UART1
+       Calling task will return immediately; user must check return value
+       Defined in devapi.c */
+POSIX_ERRNO uart_putch(
+                char const ch
             );
 
 
