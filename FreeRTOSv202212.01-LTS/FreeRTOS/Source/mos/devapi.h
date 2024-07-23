@@ -172,20 +172,21 @@ typedef enum _dev_mode
     DEV_MODE_GPIO_MASK            =( 0xF << 1 ),
 
     /* UART modes */                              // DTE=computer, DCE=modem
-    DEV_MODE_UART_NO_MODEM        =( 0x1 << 5 ),  // DTE<->DTE software flow control, no hardware handshake
-    DEV_MODE_UART_HALF_MODEM      =( 0x2 << 5 ),  // DTE<->DCE RTS/CTS hw flow control, straight-through wiring
-    DEV_MODE_UART_FULL_MODEM      =( 0x4 << 5 ),  // DTE<->DCE RTS/CTS DTR/DSR hw flow control, straight-through
-    DEV_MODE_UART_HALF_NULL_MODEM =( 0xA << 5 ),  // DTE<->DTE RTS/CTS hw flow control, cross-over wiring
-    DEV_MODE_UART_FULL_NULL_MODEM =( 0xC << 5 ),  // DTE<->DTE RTS/CTS DTR/DSR hw flow control, cross-over
-    DEV_MODE_UART_MASK            =( 0xf << 5 ),
+    DEV_MODE_UART_NO_FLOWCONTROL  =( 0x01 << 5 ), // DTE<->DTE no flow control
+    DEV_MODE_UART_SW_FLOWCONTROL  =( 0x02 << 5 ), // DTE<->DTE Xon / Xoff sw flow control
+    DEV_MODE_UART_HALF_MODEM      =( 0x04 << 5 ), // DTE<->DCE RTS/CTS hw flow control, straight-through wiring
+    DEV_MODE_UART_FULL_MODEM      =( 0x08 << 5 ), // DTE<->DCE RTS/CTS DTR/DSR hw flow control, straight-through
+    DEV_MODE_UART_HALF_NULL_MODEM =( 0x14 << 5 ), // DTE<->DTE RTS/CTS hw flow control, cross-over wiring
+    DEV_MODE_UART_FULL_NULL_MODEM =( 0x18 << 5 ), // DTE<->DTE RTS/CTS DTR/DSR hw flow control, cross-over
+    DEV_MODE_UART_MASK            =( 0x1f << 5 ),
 
     /* I2C modes */
-    DEV_MODE_I2C_DEFAULT          =( 0x1 << 9 ),
-    DEV_MODE_I2C_MASK             =( 0x1 << 9 ),
+    DEV_MODE_I2C_DEFAULT          =( 0x1 << 10 ),
+    DEV_MODE_I2C_MASK             =( 0x1 << 10 ),
 
     /* SPI modes */
-    DEV_MODE_SPI_DEFAULT          =( 0x1 << 10 ),
-    DEV_MODE_SPI_MASK             =( 0x1 << 10 ),
+    DEV_MODE_SPI_DEFAULT          =( 0x1 << 11 ),
+    DEV_MODE_SPI_MASK             =( 0x1 << 11 ),
 
 } DEV_MODE;
 
@@ -542,6 +543,14 @@ POSIX_ERRNO uart_poll(
                 size_t * num_bytes_to_read,    // content of uart input buffer
                 size_t * num_bytes_to_write    // free space in uart output buffer
             );
+
+
+/* uartRxXonXoff
+     Manage Receiver-side Xon / Xoff for software flow control.
+     Not a formal interrupt routine, but to be called by either (best) the tick 
+     ISR, or (second best) the Idle Task.
+     Defined in devuart.c */
+void uart_rxXonXoff( void );
 
 
 #endif /* DEVAPI_H */

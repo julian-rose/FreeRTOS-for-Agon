@@ -134,6 +134,16 @@
 
 
 /*----- Enumeration Types ---------------------------------------------------*/
+/* Emulate C99 standard _Boolean type */
+#if !defined( true )
+typedef enum _bool
+{
+    false = 0,
+    true = 1
+} _Bool;
+#endif
+
+
 /*  Connector pinout
       Extended enumeration of GPIO_PIN_NUM.
       Pin numbers follow Agon Light2; and Agon Origins. 
@@ -207,31 +217,31 @@ typedef enum _port
 
 /* Zilog UART error codes
  * Error codes consist of both the errors reported by the UART device
- * (through status registers), and the errors that occur in the UART driver
- * software.
+ * (through status registers), and from values after UART_ERRNO_USRBASE the 
+ * errors that occur in the UART driver software.
  * The domain of UART error codes overlays that of MOS error codes
  */
 typedef enum _uart_errno
 {
-    UART_ERRNO_NONE               = 0x00, // success.
-    UART_ERRNO_KBHIT              = 0x01,    // keyboard hit.            
-    UART_ERRNO_FRAMINGERR         = 0x02,    // Framing error occurs in the character received.        
-    UART_ERRNO_PARITYERR          = 0x03, // Parity error occurs in the character received.            
-    UART_ERRNO_OVERRUNERR         = 0x04, // Overrun error occurs in the receive buffer register.        
-    UART_ERRNO_BREAKINDICATIONERR = 0x05, // Break Indication Error occurs.        
-    UART_ERRNO_CHARTIMEOUT        = 0x06, // a character time-out occurs while receiving.            
-    UART_ERRNO_INVBAUDRATE        = 0x07, // baud rate specified is invalid.            
-    UART_ERRNO_INVPARITY          = 0x08,    // parity option specified is invalid.            
-    UART_ERRNO_INVSTOPBITS        = 0x09, // stop bits specified is invalid.            
-    UART_ERRNO_INVDATABITS        = 0x0A, // data bits per character specified is invalid.            
-    UART_ERRNO_INVTRIGGERLEVEL    = 0x0B, // receive FIFO trigger level specified is invalid.            
-    UART_ERRNO_FIFOBUFFERFULL     = 0x0C, // transmit FIFO buffer is full.        
-    UART_ERRNO_FIFOBUFFEREMPTY    = 0x0D, // receive FIFO buffer is empty.            
-    UART_ERRNO_RECEIVEFIFOFULL    = 0x0E, // software receive FIFO buffer is full.            
-    UART_ERRNO_RECEIVEFIFOEMPTY   = 0x0F, // software receive FIFO buffer is empty.            
+    UART_ERRNO_NONE               = 0x00, // success
+    UART_ERRNO_KBHIT              = 0x01, // keyboard hit
+    UART_ERRNO_FRAMINGERR         = 0x02, // Framing error occurs in the character received
+    UART_ERRNO_PARITYERR          = 0x03, // Parity error occurs in the character received
+    UART_ERRNO_OVERRUNERR         = 0x04, // Overrun error occurs in the receive buffer register
+    UART_ERRNO_BREAKINDICATIONERR = 0x05, // Break Indication Error occurs
+    UART_ERRNO_CHARTIMEOUT        = 0x06, // a character time-out occurs while receiving
+    UART_ERRNO_INVBAUDRATE        = 0x07, // baud rate specified is invalid
+    UART_ERRNO_INVPARITY          = 0x08, // parity option specified is invalid
+    UART_ERRNO_INVSTOPBITS        = 0x09, // stop bits specified is invalid
+    UART_ERRNO_INVDATABITS        = 0x0A, // data bits per character specified is invalid
+    UART_ERRNO_INVTRIGGERLEVEL    = 0x0B, // receive FIFO trigger level specified is invalid
+    UART_ERRNO_FIFOBUFFERFULL     = 0x0C, // transmit FIFO buffer is full
+    UART_ERRNO_FIFOBUFFEREMPTY    = 0x0D, // receive FIFO buffer is empty
+    UART_ERRNO_RECEIVEFIFOFULL    = 0x0E, // software receive FIFO buffer is full
+    UART_ERRNO_RECEIVEFIFOEMPTY   = 0x0F, // software receive FIFO buffer is empty
     UART_ERRNO_PEEKINPOLL         = 0x10, // invalid 'peek a character' while in polling mode
     
-    UART_ERRNO_USRBASE            = 0x11, // The error code base value for user applications.
+    UART_ERRNO_USRBASE            = 0x11, // The error code base value for user applications
 
     UART_ERRNO_RX_DATA_READY      = 0x11, // LSR.DR indicated
     UART_ERRNO_CTS_LOST           = 0x12, // MSR.CTS indicated
@@ -244,6 +254,21 @@ typedef enum _uart_errno
     UART_ERRNO_RI_CALL            = 0x19
 
 } UART_ERRNO;
+
+
+/* UART software flow control
+ *   Software handshaking mode in which either end sends byte XOFF to pause
+ *   transmission. This will usually be done as rx buffers approach full
+ *   capacity. The end that sent XOFF subsequently sends XON to resume
+ *   transmission. These control bytes are inserted into the transmission 
+ *   sequence, and may be delayed. Care must be taken to ensure they are not
+ *   sent out of order: an XON must follow a previous XOFF in the Tx FIFO.
+ */
+typedef enum _uart_sw_flowcontrol
+{
+    UART_SW_FLOWCTRL_XON  = 17,   // ASCII 17 = DC1 (device control 1) = go
+    UART_SW_FLOWCTRL_XOFF = 19    // ASCII 19 = DC3 (device control 3) = pause
+} UART_SW_FLOWCTRL;
 
 
 /*----- Type Definitions ----------------------------------------------------*/

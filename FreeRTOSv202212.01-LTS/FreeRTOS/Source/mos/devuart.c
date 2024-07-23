@@ -84,7 +84,8 @@
  * Non-blocking mode, with one of the Straight-through / Cross-over modes 
  * as follows:
  *
- *    DEV_MODE_UART_NO_MODEM
+ *    DEV_MODE_UART_NO_FLOWCONTROL
+ *    DEV_MODE_UART_SW_FLOWCONTROL
  *      Use:
  *        'No Modem' direct DTE<->DTE signalling; low capacitance (short wires)
  *      Wiring: 
@@ -293,7 +294,7 @@
  *      Standard ISR reti epilogue * /
  * static void uartisr_0( void )
  * {
- *     BaseType_t mosHigherPriorityTaskWoken;
+ *     BaseType_t __higherPriorityTaskWoken;
  *     
  * #   if defined( _DEBUG )
  *         _putchf( 'U' );
@@ -302,7 +303,7 @@
  * 
  * #   if( 1 == configUSE_PREEMPTION )
  *     {
- *         mosHigherPriorityTaskWoken = pdFALSE;
+ *         __higherPriorityTaskWoken = pdFALSE;
  * 
  *         /* run in context of high-priority interrupt handler UartIsrHandlerTask.
  *              Other hardware interrupts may be raised concurrently.
@@ -311,9 +312,9 @@
  *               - or change ( 1 == configUSE_PREEMPTION ) to 0 in order to call 
  *                 uartisr_1 directly from uartisr_0 * /
  *         _putchf( 'V' );
- *         vTaskNotifyGiveFromISR( UartIsrHandlerTaskHandle, &mosHigherPriorityTaskWoken );
+ *         vTaskNotifyGiveFromISR( UartIsrHandlerTaskHandle, &__higherPriorityTaskWoken );
  * 
- *         if( pdTRUE == mosHigherPriorityTaskWoken ) _putchf( 'Y' );
+ *         if( pdTRUE == __higherPriorityTaskWoken ) _putchf( 'Y' );
  *     
  *     }
  * #   else
@@ -327,11 +328,11 @@
  * 
  *     _putchf( 'W' );
  * 
- *     /* If mosHigherPriorityTaskWoken is now set to pdTRUE then a context 
+ *     /* If __higherPriorityTaskWoken is now set to pdTRUE then a context 
  *        switch should be performed to ensure the interrupt returns directly 
  *        to the highest priority task. 
  *        This must be the last function before reti. Refer to port.c::timer_isr * /
- *     vPortYieldFromISR( mosHigherPriorityTaskWoken );
+ *     vPortYieldFromISR( __higherPriorityTaskWoken );
  *     _putchf( 'Z' );
  * 
  *     asm( "\t pop ix      ; epilogue, restore IX pushed in prolog");
@@ -465,7 +466,7 @@
         ( _t ).len, \
         ( _t ).bufTRx, \
         ( _t ).bufRes, \
-        ( _t ).lenTRx );
+        ( _t ).lenTRx )
 #endif
 
 
@@ -506,10 +507,13 @@ typedef enum _uart_fifo_trigger_level
 
 typedef enum _uart_state
 {                        // UART connection and transaction states
-    UART_STATE_INITIAL =( 0<<0 ),
-    UART_STATE_READY   =( 1<<0 ),
-    UART_STATE_READ    =( 1<<1 ),
-    UART_STATE_WRITE   =( 1<<2 )
+    UART_STATE_INITIAL   =( 0<<0 ),  // before uart_open or after uart_close
+    UART_STATE_READY     =( 1<<0 ),  // within uart_open..uart_close
+    UART_STATE_READ      =( 1<<1 ),  // read controls rx data byte storage
+    UART_STATE_READLOCK  =( 1<<2 ),  // readlock ensures at most one reader
+    UART_STATE_WRITE     =( 1<<3 ),  // write controls tx data operation
+    UART_STATE_WRITELOCK =( 1<<4 ),  // writelock ensures at most one writer
+    UART_STATE_PAUSE     =( 1<<5 )   // Xon / Xoff software handshaking
 
 } UART_STATE;
 
@@ -534,6 +538,12 @@ typedef enum _uart_fifo_operation
 #elif( configDRV_UART_BUFFER_SZ > 1024 )
 #   error "configDRV_UART_BUFFER_SZ too large"
 #endif
+
+#define RX_CIRCULAR_BUFFER_NEARLY_FULL \
+        ( configDRV_UART_BUFFER_SZ >> 3 ) /* few spaces free */
+
+#define RX_CIRCULAR_BUFFER_NEARLY_EMPTY \
+        ( configDRV_UART_BUFFER_SZ - RX_CIRCULAR_BUFFER_NEARLY_FULL )  /* many spaces free */
 
 
 #define RX_CIRCULAR_BUFFER_NUM_OCCUPIED( r )        \
@@ -568,7 +578,7 @@ typedef struct _uart_transaction
 {
     unsigned int mode;        // DEV_MODE_BUFFERED or DEV_MODE_UNBUFFERED  IN
     unsigned char *buf;       // Dest or Src buffer                    IN/OUT
-    size_t len;               // number of bytes to     read/write         IN
+    size_t len;               // number of bytes to read/write             IN
     size_t lenTRx;            // local tracker of bytes transceived      TEMP
     size_t *bufTRx;           // destination buffer for lenTRx            OUT
     POSIX_ERRNO *bufRes;      // destination buffer for result            OUT
@@ -582,8 +592,10 @@ static SemaphoreHandle_t uartTxSemaphore = NULL; // for non-buffered blocking-mo
 
 static UART_STATE uartState = UART_STATE_INITIAL;
 
-static UART_BUFFER txPrivBuf ={{ 0 }, 0, 0 };   // a linear buffer, tx from application
-static UART_BUFFER rxPrivBuf ={{ 0 }, 0, 0 };   // a circular buffer, rx as it arrives
+static UART_BUFFER txPrivBuf ={{ 0 }, 0, 0 };   // a linear buffer, tx to remote
+static UART_BUFFER rxPrivBuf ={{ 0 }, 0, 0 };   // a circular buffer, rx from remote
+static _Bool txPending = false;                 // Xon buffer tx side
+static _Bool rxPaused = false;                  // Xon buffer rx side
 
 static UART_TRANSACTION txTransact ={ 0, NULL, 0, 0, NULL, NULL };
 static UART_TRANSACTION rxTransact ={ 0, NULL, 0, 0, NULL, NULL };
@@ -593,7 +605,7 @@ static void( *prevUartISR )( void )= NULL;
 static unsigned short uartRxEvent = 0;
 static unsigned short uartTxEvent = 0;
 
-extern BaseType_t mosHigherPriorityTaskWoken;  // set in ISR to context-switch
+extern BaseType_t __higherPriorityTaskWoken;  // set in ISR to context-switch
 
 
 /*----- Private init functions ----------------------------------------------*/
@@ -648,7 +660,9 @@ static POSIX_ERRNO assertRTSandWaitCTS( void )
     POSIX_ERRNO ret = POSIX_ERRNO_ENONE;
     unsigned char msr;
 
-    if( 0 ==( DEV_MODE_UART_NO_MODEM & pinmode[ MINOR_NUM ]))
+    // check if we're using software or hardware flow control
+    if(( 0 ==( DEV_MODE_UART_NO_FLOWCONTROL & pinmode[ MINOR_NUM ]))&&
+       ( 0 ==( DEV_MODE_UART_SW_FLOWCONTROL & pinmode[ MINOR_NUM ])))
     {
         if(( DEV_MODE_UART_HALF_MODEM & pinmode[ MINOR_NUM ])||
            ( DEV_MODE_UART_FULL_MODEM & pinmode[ MINOR_NUM ]))
@@ -713,28 +727,23 @@ static void uartResetFIFO(
                 unsigned char const mask, 
                 UART_FIFO_OPERATION const op )
 {
-    /* Flush UART1 FIFOs and leave FIFOs enabled 
-       Errata UP004909 Issue 7: looks like we should only clear the FIFOs by
-       setting the UART_FCTL_CLRTxF or UART_FCTL_CLRRxF bits while 
-       UART_FCTL_FIFOEN is cleared */
-    UART1_FCTL = 0x0;
-    UART1_FCTL =( unsigned char )( mask );             // command Flush tx and/or rx hardware FIFO.
-    UART1_FCTL =( unsigned char )( UART_FCTL_FIFOEN ); // execute Flush command and enable the FIFO
+    /* Flush tx and/or rx UART1 FIFO(s) */
+    UART1_FCTL =( unsigned char )0x00;                        // 1. Disable the FIFO
+    UART1_FCTL =( unsigned char )(        UART_FCTL_FIFOEN ); // 2. Enable FIFO
+    UART1_FCTL =( unsigned char )( mask | UART_FCTL_FIFOEN ); // 3. Command FIFO
 
-    /* Initialise Rx Fifo Trigger Level, leaving FIFOs enabled.
-         Maximise use of the FIFO hardware, to maximise task concurrency.
-           'Receiver Data Ready' triggered when RxFIFO depth >= this value.
-           'Receiver Timeout' triggered when RxFIFO depth < this
-            value AND 4 consecutive byte times pass with no further data.
-         Given Errata UP004909 Issue 7: it follows we ought to set the FIFO
-           trigger level while the FIFO is disabled. */
-    UART1_FCTL =( unsigned char )  0x0;                          // disable the FIFO
-    UART1_FCTL =( unsigned char )( UART_FIFO_TRIGLVL_14 << 6 );  // command the required rx trigger level
-    UART1_FCTL =( unsigned char )( UART_FCTL_FIFOEN );           // execute the trigger level command and enable the FIFO
+    UART1_FCTL =( unsigned char )0x00;                        // 1. disable the FIFO
 
-    if( UART_FIFO_DISABLE == op )
+    if( UART_FIFO_ENABLE == op )
     {
-        UART1_FCTL =( unsigned char )0x00;  // disable the FIFO
+        /* Initialise Rx Fifo Trigger Level, leaving FIFOs enabled.
+            Maximise use of the FIFO hardware, to maximise task concurrency.
+            'Receiver Data Ready' triggered when RxFIFO depth >= this value.
+            'Receiver Timeout' triggered when RxFIFO depth < this value AND 4 
+               consecutive byte times pass with no further data. */
+        UART1_FCTL =( unsigned char )(  UART_FCTL_FIFOEN );   // 2. Enable FIFO
+        UART1_FCTL =( unsigned char )(( UART_FIFO_TRIGLVL_14 << 6 )|
+                                        UART_FCTL_FIFOEN  );  // 3. Command rx trigger level
     }
 }
 
@@ -745,15 +754,17 @@ static void uartResetFIFO(
      events result */
 static void uartEnableTxInterrupts( void )
 {
-    unsigned char const wiring = pinmode[ MINOR_NUM ];
+    DEV_MODE const wiring = pinmode[ MINOR_NUM ];
     unsigned char ier;
-    
+
     ier =( unsigned char )( UART_IER_TRANSMITINT | UART_IER_TRANSCOMPLETEINT );
 
-    if(( DEV_MODE_UART_HALF_MODEM & wiring )     ||
-       ( DEV_MODE_UART_HALF_NULL_MODEM & wiring )||
-       ( DEV_MODE_UART_FULL_MODEM & wiring )     ||
-       ( DEV_MODE_UART_FULL_NULL_MODEM & wiring ))
+    if(( DEV_MODE_UART_HALF_MODEM |
+         DEV_MODE_UART_HALF_NULL_MODEM |
+         DEV_MODE_UART_FULL_MODEM |
+         DEV_MODE_UART_FULL_NULL_MODEM )
+       &
+       wiring )
     {
         ier |=( unsigned char )UART_IER_MODEMINT;
     }
@@ -766,23 +777,25 @@ static void uartEnableTxInterrupts( void )
      disable interrupts after a tx transaction completes */
 static void uartDisableTxInterrupts( unsigned char iirEvent )
 {
-    unsigned char const wiring = pinmode[ MINOR_NUM ];
+    DEV_MODE const wiring = pinmode[ MINOR_NUM ];
     unsigned char ier =( unsigned char )UART_IER_TRANSMITINT;
 
     if( UART_IIR_TRANSCOMPLETE == iirEvent )
     {
         ier |=( unsigned char )UART_IER_TRANSCOMPLETEINT;
 
-        if(( DEV_MODE_UART_HALF_MODEM & wiring )||
-           ( DEV_MODE_UART_HALF_NULL_MODEM & wiring ))
+        if(( DEV_MODE_UART_HALF_MODEM |
+             DEV_MODE_UART_HALF_NULL_MODEM )
+           & wiring )
         {
             ier |=( unsigned char )UART_IER_MODEMINT;
         }
         else
         if( 0 == rxTransact.mode )
         {
-            if(( DEV_MODE_UART_FULL_MODEM & wiring )||
-               ( DEV_MODE_UART_FULL_NULL_MODEM & wiring ))
+            if(( DEV_MODE_UART_FULL_MODEM |
+                 DEV_MODE_UART_FULL_NULL_MODEM )
+               & wiring )
             {
                 ier |=( unsigned char )UART_IER_MODEMINT;
             }
@@ -799,16 +812,17 @@ static void uartDisableTxInterrupts( unsigned char iirEvent )
      events result */
 static void uartEnableRxInterrupts( void )
 {
-    unsigned char const wiring = pinmode[ MINOR_NUM ];
+    DEV_MODE const wiring = pinmode[ MINOR_NUM ];
     unsigned char ier;
 
     ier =   ( unsigned char )( UART_IER_RECEIVEINT | 
                                UART_IER_LINESTATUSINT );
 
-    if(( DEV_MODE_UART_HALF_MODEM & wiring )||
-       ( DEV_MODE_UART_HALF_NULL_MODEM & wiring )||
-       ( DEV_MODE_UART_FULL_MODEM & wiring )||
-       ( DEV_MODE_UART_FULL_NULL_MODEM & wiring ))
+    if(( DEV_MODE_UART_HALF_MODEM |
+         DEV_MODE_UART_HALF_NULL_MODEM |
+         DEV_MODE_UART_FULL_MODEM |
+         DEV_MODE_UART_FULL_NULL_MODEM )
+       & wiring )
     {
         ier |=( unsigned char )UART_IER_MODEMINT;
     }
@@ -821,21 +835,23 @@ static void uartEnableRxInterrupts( void )
      disable interrupts after a tx transaction completes */
 static void uartDisableRxInterrupts( void )
 {
-    unsigned char const wiring = pinmode[ MINOR_NUM ];
+    DEV_MODE const wiring = pinmode[ MINOR_NUM ];
     unsigned char ier;
     
     ier =     ( unsigned char )UART_IER_RECEIVEINT;
 
-    if(( DEV_MODE_UART_HALF_MODEM & wiring )||
-       ( DEV_MODE_UART_HALF_NULL_MODEM & wiring ))
+    if(( DEV_MODE_UART_HALF_MODEM |
+         DEV_MODE_UART_HALF_NULL_MODEM )
+       & wiring )
     {
         ier |=( unsigned char )UART_IER_MODEMINT;
     }
     else
     if( 0 == txTransact.mode )
     {
-        if(( DEV_MODE_UART_FULL_MODEM & wiring )||
-           ( DEV_MODE_UART_FULL_NULL_MODEM & wiring ))
+        if(( DEV_MODE_UART_FULL_MODEM |
+             DEV_MODE_UART_FULL_NULL_MODEM )
+           & wiring )
         {
             ier |=( unsigned char )UART_IER_MODEMINT;
         }
@@ -862,61 +878,6 @@ static void loadTxBuffer( unsigned char *buffer, size_t const sz )
 }
 
 
-/* storeRxBuffer
-     rxPrivBuf is operated as a circular buffer
-     memcpy may be in two parts, over the circular boundary */
-static unsigned short storeRxBuffer( void )
-{
-    unsigned short cnt = rxTransact.lenTRx;
-    unsigned short numStored;
-    unsigned short const od = rxPrivBuf.Outdex;  // start point
-    unsigned short l;
-    unsigned short numLeft;
-
-    RX_CIRCULAR_BUFFER_NUM_OCCUPIED( numStored );
-    if( numStored < cnt ) cnt = numStored;
-
-    numLeft = cnt + od;
-
-    //avoid calling MOS functions from within an ISR
-    //printf( " <numStored = %d> <cnt = %d> <od = %d> ", numStored, cnt, od );
-
-    if( configDRV_UART_BUFFER_SZ <= numLeft )
-    {
-        // this case is wrapped around the circular boundary
-        for( l = od; configDRV_UART_BUFFER_SZ > l; l++ )
-        {
-            *( rxTransact.buf )= rxPrivBuf._[ l ];
-            ( rxTransact.buf )++;
-        }
-        numLeft -= configDRV_UART_BUFFER_SZ;
-        for( l = 0; numLeft > l; l++ )
-        {
-            *( rxTransact.buf ) = rxPrivBuf._[ l ];
-            ( rxTransact.buf )++;
-        }
-    }
-    else
-    {
-        // this case has not wrapped around
-        for( l = od; numLeft > l; l++ )
-        {
-            *( rxTransact.buf ) = rxPrivBuf._[ l ];
-            ( rxTransact.buf )++;
-        }
-    }
-
-    // adjust current Outdex    
-    rxPrivBuf.Outdex += cnt;
-    if( configDRV_UART_BUFFER_SZ < rxPrivBuf.Outdex )
-    {
-        rxPrivBuf.Outdex -= configDRV_UART_BUFFER_SZ;
-    }
-    
-    return( cnt );
-}
-
-
 /* transmitChar
      a fast version if only transmitting one char at a time
      FIFO is not used */
@@ -935,21 +896,30 @@ static void transmitNextBlock( unsigned char * numTxBytes )
     unsigned char numB = txPrivBuf.Index - txPrivBuf.Outdex;  // not circular
     int i;
 
-    numB =( THR_FIFO_MAX < numB )
-        ? THR_FIFO_MAX
-        : numB;
-
-    for( i = 0; numB > i; i++ )
+    if( 0 ==( UART_STATE_PAUSE & uartState ))  // in XON state
     {
-        UART1_THR = txPrivBuf._[ txPrivBuf.Outdex++ ];
+        numB =( THR_FIFO_MAX < numB )
+            ? THR_FIFO_MAX
+            : numB;
+
+        for( i = 0; numB > i; i++ )
+        {
+            UART1_THR = txPrivBuf._[ txPrivBuf.Outdex++ ];
+        }
+        ( *numTxBytes )= numB;
+
+        if( 0 < numB )
+        {
+            /* only enable interrupts AFTER the tx FIFO has been loaded,
+               otherwise an empty tx fifo interrupt will immediately fire */
+            uartEnableTxInterrupts( );
+        }
     }
-    ( *numTxBytes )= numB;
-
-    if( 0 < numB )
+    else
     {
-        /* only enable interrupts AFTER the tx FIFO has been loaded,
-           otherwise an empty tx fifo interrupt will immediately fire */
-        uartEnableTxInterrupts( );
+        /* remember to transmit when XOFF is received */
+        *numTxBytes = 0;
+        txPending = true;
     }
 }
 
@@ -974,16 +944,86 @@ static void finaliseTxTransaction( POSIX_ERRNO const ret )
 }
 
 
+/* storeRxBuffer
+     rxPrivBuf is operated as a circular buffer
+     memcpy may be in two parts, over the circular boundary
+     Can be called from within ISR or from uart_read */
+static unsigned short storeRxBuffer( void )
+{
+    unsigned short cnt;
+    unsigned short numStored;
+    unsigned short const od = rxPrivBuf.Outdex;  // start point
+    unsigned short l;
+    unsigned short numLeft;
+
+    // determine how many rx data bytes we can store in user task buffer
+    RX_CIRCULAR_BUFFER_NUM_OCCUPIED( numStored );
+    cnt =( rxTransact.len > numStored )
+          ? numStored
+          : rxTransact.len;
+
+    numLeft = cnt + od;
+
+    //avoid calling MOS functions from within an ISR
+    //printf( " <numStored = %d> <cnt = %d> <od = %d> ", numStored, cnt, od );
+
+    if( configDRV_UART_BUFFER_SZ <= numLeft )
+    {
+        /* This case wraps around the circular boundary;
+            first do the part at the top of the circular buffer */
+        for( l = od; configDRV_UART_BUFFER_SZ > l; l++ )
+        {
+            *( rxTransact.buf )= rxPrivBuf._[ l ];
+            ( rxTransact.buf )++;
+        }
+        numLeft -= configDRV_UART_BUFFER_SZ;
+        /*  second do the part at the bottom of the circular buffer */
+        for( l = 0; numLeft > l; l++ )
+        {
+            *( rxTransact.buf ) = rxPrivBuf._[ l ];
+            ( rxTransact.buf )++;
+        }
+    }
+    else
+    {
+        /* This case has not wrapped around;
+            all content is in the middle of the circular buffer */
+        for( l = od; numLeft > l; l++ )
+        {
+            *( rxTransact.buf ) = rxPrivBuf._[ l ];
+            ( rxTransact.buf )++;
+        }
+    }
+
+    // adjust current Outdex    
+    rxPrivBuf.Outdex += cnt;
+    if( configDRV_UART_BUFFER_SZ < rxPrivBuf.Outdex )
+    {
+        rxPrivBuf.Outdex -= configDRV_UART_BUFFER_SZ;
+    }
+    
+    return( cnt );
+}
+
+
 /* receiveNextBlock
      recover the next bytes from the rx fifo
      The FIFO is enabled, so up to 16 bytes can be read at once */
 static UART_ERRNO receiveNextBlock( unsigned char * numRxBytes )
 {
+    _Bool const swFlowCtrl =
+        ( DEV_MODE_UART_SW_FLOWCONTROL & pinmode[ MINOR_NUM ])
+            ? true
+            : false;
     UART_ERRNO res = UART_ERRNO_NONE;
     int i;
     unsigned char numB;
     unsigned char rbr;
+    unsigned char numTxBytes;
+    _Bool copyByte;
 
+
+//_putchf( 'g' );
     RX_CIRCULAR_BUFFER_NUM_FREE( numB );
     numB =( RHR_FIFO_MAX < numB )
         ? RHR_FIFO_MAX
@@ -993,15 +1033,37 @@ static UART_ERRNO receiveNextBlock( unsigned char * numRxBytes )
 
     for( i = 0; numB > i; i++ )
     {
-_putchf( 'g' );
         if( UART1_LSR & UART_LSR_DR )
         {
-_putchf( '1' );
             rbr = UART1_RBR;  // read byte from UART
-            
-            if( UART_STATE_READY <= uartState )  // _READY, _READ and _WRITE
+
+            copyByte = true;
+            if( true == swFlowCtrl )
             {
-_putchf( '2' );
+                if( UART_SW_FLOWCTRL_XON == rbr )
+                {    // remote end buffer space available
+//_putchf( '1' );
+                    copyByte = false;
+                    uartState &=( UART_STATE )( ~UART_STATE_PAUSE );
+                    if( true == txPending )
+                    {
+                        // re-start pending transmit
+                        transmitNextBlock( &numTxBytes );
+                        txTransact.lenTRx += numTxBytes;
+                        txPending = false;
+                    }
+                }
+                else
+                if( UART_SW_FLOWCTRL_XOFF == rbr )
+                {    // remote end buffer space full
+//_putchf( '2' );
+                    copyByte = false;
+                    uartState |= UART_STATE_PAUSE;
+                }
+            }
+            
+            if(( UART_STATE_READY & uartState )&&( true == copyByte ))
+            {
                 rxPrivBuf._[ rxPrivBuf.Index++ ]= rbr;
                 ( *numRxBytes )++;
 
@@ -1016,25 +1078,32 @@ _putchf( '2' );
             break;
     }
 
+    uart_rxXonXoff( );  /* Check receive-side Xon/Xoff; 
+                           should be called by Idle or Tick for best performance */
+
     /* if there are more rx bytes in the FIFO then rxPrivBuf is full,
-        raise the error condition */
+        raise the error condition.
+        We could also get here with Xoff if the remote end transmitted many
+        bytes before receiving our Xoff */
     if( UART1_LSR & UART_LSR_DR )
     {
         res = UART_ERRNO_RECEIVEFIFOFULL;
         
-_putchf( '3' );
-        // Flush the RxFIFO, which contains excess data
+//_putchf( '3' );
+        // Flush the RxFIFO??
         uartResetFIFO( UART_FCTL_CLRRxF, UART_FIFO_ENABLE );
     }
     else
-    if( 0 == *numRxBytes )
+    if(( 0 == *numRxBytes )     // we received nothing
+       /*( false == swFlowCtrl )*/) // except a sole Xon / Xoff control byte
     {
-_putchf( '4' );
+//_putchf( '4' );
         // TRIGGER LEVEL interrupt fired with nothing to read
-        // Reset the RxFIFO then enable the FIFOs
+        //   Reset the RxFIFO then enable the FIFOs
         uartResetFIFO( UART_FCTL_CLRRxF, UART_FIFO_ENABLE );
     }
 
+//_putchf( '0' );
     return( res );
 }
 
@@ -1058,6 +1127,46 @@ static void finaliseRxTransaction( POSIX_ERRNO const ret )
 
 
 /*------- Private Interrupt Handling functions ------------------------------*/
+/* uart_rxXonXoff
+     Manage Receiver-side Xon / Xoff for software flow control.
+     Not a formal interrupt routine, but to be called by either (best) the tick 
+     ISR, or (second best) the Idle Task.
+     Can also be called by receiveNextBlock - but that alone is not enough */
+void uart_rxXonXoff( void )
+{
+    if( UART_STATE_READY & uartState )  // is uart device open?
+    {
+        // the tick ISR needs to be fast, so we nest the locals
+        _Bool const swFlowCtrl =
+            ( DEV_MODE_UART_SW_FLOWCONTROL & pinmode[ MINOR_NUM ])
+                ? true
+                : false;
+        unsigned char numB;
+
+        if( true == swFlowCtrl )        // using software flow control?
+        {
+            RX_CIRCULAR_BUFFER_NUM_FREE( numB );
+
+            /* If rxPrivBuf is nearly full then send an XOFF to pause remote end 
+               transmission */
+            if(( RX_CIRCULAR_BUFFER_NEARLY_FULL > numB )&&( false == rxPaused ))
+            {
+//_putchf( 'i' );
+                ( void )transmitChar(( unsigned char )UART_SW_FLOWCTRL_XOFF );
+                rxPaused = true;  // remote end paused (assumption)
+            }
+            else
+            if(( RX_CIRCULAR_BUFFER_NEARLY_EMPTY < numB )&&( true == rxPaused ))
+            {
+//_putchf( 'j' );
+                ( void )transmitChar(( unsigned char )UART_SW_FLOWCTRL_XON );
+                rxPaused = false;  // remote end resumed (assumption)
+            }
+        }
+    }
+}
+
+
 /* clearDownLineStatus
      Refer to Zilog PS015317 UART Line Status Register table 64 */
 static UART_ERRNO clearDownLineStatus( void )
@@ -1097,6 +1206,7 @@ static UART_ERRNO clearDownLineStatus( void )
         {
             temp = UART_ERRNO_OVERRUNERR;   // Rx FIFO full
               // we treat this as an error as we have lost rx data
+              // very likely due to too much putchf debug
         }
     }
 
@@ -1104,7 +1214,9 @@ static UART_ERRNO clearDownLineStatus( void )
        ( UART_ERRNO_BREAKINDICATIONERR != temp ))
     {
         // Flush the RxFIFO, which contains corrupted data
+        uartDisableRxInterrupts( );
         uartResetFIFO( UART_FCTL_CLRRxF, UART_FIFO_ENABLE );
+        uartEnableRxInterrupts( );
     }
     else
     if( UART_LSR_DATA_READY & lsr )
@@ -1191,7 +1303,8 @@ static UART_ERRNO clearDownModemStatus( void )
     }
 
     /*
-    if( DEV_MODE_UART_NO_MODEM & pinmode[ MINOR_NUM ])
+    if(( DEV_MODE_UART_NO_FLOWCONTROL & pinmode[ MINOR_NUM ])||
+       ( DEV_MODE_UART_SW_FLOWCONTROL & pinmode[ MINOR_NUM ]))
     {
         // nothing to do; how did we get here, nobody knows :-?
     }
@@ -1234,17 +1347,25 @@ _putchf('a');
             if( UART_ERRNO_NONE != _uart_errno )
             {
 _putchf('1');
-                if( UART_STATE_READY <= uartState )  // _READY, _READ and _WRITE
+                /* error conditions are one of UART_LSR_FRAMINGERR,
+                   UART_LSR_PARITYERR, UART_LSR_OVERRRUNERR. 
+                   clearDownLineStatus will have called uartResetFIFO on
+                   the Rx path, taken down an re-enabled Rx interrupts */
+                
+                if( UART_STATE_READY & uartState )
                 {
                     uartRxEvent |=( 1 << UART_EVENT_RX_ERROR );
                 }
 
                 if( UART_STATE_READ & uartState )
                 {
-                    uartDisableRxInterrupts( );
-
                     if( DEV_MODE_UNBUFFERED == rxTransact.mode )
                     {
+                        /* we clear UART_STATE_READ here because another
+                           interrupt may follow immediately, before the user task 
+                           is able to run and do likewise. Where semantics of 
+                           UART_STATE_READ and UART_STATE_READLOCK diverge */
+                        uartState &=( UART_STATE )( ~UART_STATE_READ );
                         xSemaphoreGiveFromISR( uartRxSemaphore, NULL );
                     }
                     else
@@ -1254,13 +1375,18 @@ _putchf('1');
                         CLEAR_UART_TRANSACTION( rxTransact );
                         
                         uartRxEvent = 0;
-                        uartState &= ~UART_STATE_READ;
+                        uartState &=
+                            ( UART_STATE )~( UART_STATE_READ | UART_STATE_READLOCK );
                     }
                 }
             }
         }
 
-        /* A receiver time-out interrupt (UART_IIR_CHARTIMEOUT) is generated 
+        /* According to Zilog PS015317 section UART Receiver Interrupts, RDR is 
+           generated if the number of bytes in the receiver FIFO is greater 
+           than or equal to the trigger level. If the FIFO is not enabled, RDR 
+           is generated if the receive buffer contains a data byte.
+           A receiver time-out interrupt (UART_IIR_CHARTIMEOUT) is generated 
            when there are fewer data bytes in the receiver FIFO than the 
            trigger level and there are no reads and writes to or from the 
            receiver FIFO for four consecutive byte times (32-bit times) - 
@@ -1271,40 +1397,51 @@ _putchf('1');
         if(( UART_IIR_DATAREADY_TRIGLVL ==( iir & UART_IIR_ISCMASK ))||
            ( UART_IIR_CHARTIMEOUT ==( iir & UART_IIR_ISCMASK )))
         {
-_putchf('b');
-if( UART_IIR_DATAREADY_TRIGLVL ==( iir & UART_IIR_ISCMASK )) _putchf('1');
-if( UART_IIR_CHARTIMEOUT ==( iir & UART_IIR_ISCMASK )) _putchf('2');
+//_putchf('b');
+//if( UART_IIR_DATAREADY_TRIGLVL ==( iir & UART_IIR_ISCMASK )) _putchf('1');
+//if( UART_IIR_CHARTIMEOUT ==( iir & UART_IIR_ISCMASK )) _putchf('2');
             _uart_errno = receiveNextBlock( &numTRxBytes );
 
             if( UART_ERRNO_RECEIVEFIFOFULL == _uart_errno )
             {
-_putchf('3');
+//_putchf('3');
                 uartRxEvent |=( 1 << UART_EVENT_RX_FULL );
             }
 
             if( UART_STATE_READ & uartState )
             {
-_putchf('4');
+//_putchf('4');
                 rxTransact.lenTRx += numTRxBytes;
                 if( rxTransact.lenTRx >= rxTransact.len )
                 {
                     uartRxEvent |=( 1 << UART_EVENT_RX_READY );
-                    uartDisableRxInterrupts( );
+                    /*
+                    Unlike uartDisableTxInterrupts, which is transaction-based, 
+                    uartDisableRxInterrupts is error-based. We only invoke 
+                    uartDisableRxInterrupts as an error-recovery method; after 
+                    which we will re-start the background read activity. 
+                    */
 
                     if( DEV_MODE_UNBUFFERED == rxTransact.mode )
                     {
-_putchf('5');
+//_putchf('5');
+                        /* we clear UART_STATE_READ here because another
+                           interrupt may follow immediately, before the user task 
+                           is able to run and do likewise. Where semantics of 
+                           UART_STATE_READ and UART_STATE_READLOCK diverge */
+                        uartState &=( UART_STATE )( ~UART_STATE_READ );
                         xSemaphoreGiveFromISR( uartRxSemaphore, NULL );
                     }
                     else
                     {
-_putchf('6');
+//_putchf('6');
                         storeRxBuffer( );
                         finaliseRxTransaction( _uart_errno | uartRxEvent );
                         CLEAR_UART_TRANSACTION( rxTransact );
                         
                         uartRxEvent = 0;
-                        uartState &= ~UART_STATE_READ;
+                        uartState &=
+                            ( UART_STATE )~( UART_STATE_READ | UART_STATE_READLOCK );
                     }
                 }
             }
@@ -1312,7 +1449,7 @@ _putchf('6');
             if(( UART_STATE_READY & uartState )||
                ( UART_STATE_WRITE & uartState ))
             {
-_putchf('7');
+//_putchf('7');
                 uartRxEvent |=( 1 << UART_EVENT_RX_READY );
             }
         }
@@ -1323,46 +1460,52 @@ _putchf('7');
             // the serial device Transmit Shift Register and the Transmit Hold 
             // Register are empty. Continuously - need to disable the interrupt.
             // This should signify we have no more data to send
-_putchf('c');
+//_putchf('c');
             if( UART_STATE_WRITE & uartState )
             {
-_putchf('1');
+//_putchf('1');
                 uartDisableTxInterrupts( UART_IIR_TRANSCOMPLETE );
                 // reset Tx FIFO and leave Rx Fifo enabled
                 uartResetFIFO( UART_FCTL_CLRTxF, UART_FIFO_ENABLE );
 
                 if( txTransact.lenTRx < rxTransact.len )
                 {
-_putchf('2');
+//_putchf('2');
                     uartTxEvent |=( 1 << UART_EVENT_TX_ERROR );
                 }
                 else
                 {
-_putchf('3');
+//_putchf('3');
                     uartTxEvent |=( 1 << UART_EVENT_TX_DONE );
                 }
 
                 if( DEV_MODE_BUFFERED == txTransact.mode )
                 {
-_putchf('4');
+//_putchf('4');
                     finaliseTxTransaction( POSIX_ERRNO_ENONE | uartTxEvent );
                     CLEAR_UART_TRANSACTION( txTransact );
                         
                     uartTxEvent = 0;
-                    uartState &= ~UART_STATE_WRITE;
+                    uartState &=( UART_STATE )
+                        ~( UART_STATE_WRITE | UART_STATE_WRITELOCK );
                 }
                 else
                 {
-_putchf('5');
+//_putchf('5');
+                    /* we clear UART_STATE_WRITE here because another
+                       interrupt may follow immediately, before the user task 
+                       is able to run and do likewise. Where semantics of 
+                       UART_STATE_WRITE and UART_STATE_WRITELOCK diverge */
+                    uartState &=( UART_STATE )( ~UART_STATE_WRITE );
                     xSemaphoreGiveFromISR( 
-                        uartTxSemaphore, &mosHigherPriorityTaskWoken );
+                        uartTxSemaphore, &__higherPriorityTaskWoken );
                 }
             }
             else
             if(( UART_STATE_READY & uartState )||
                ( UART_STATE_READ & uartState ))
             {
-_putchf('6');
+//_putchf('6');
                 uartTxEvent |=( 1 << UART_EVENT_TX_UNEXPECTED );
                 uartDisableTxInterrupts( UART_IIR_TRANSCOMPLETE );
                 // reset Tx FIFO and leave Rx Fifo enabled
@@ -1374,16 +1517,16 @@ _putchf('6');
         {
             // Transmit Buffer Empty (TCIE) is generated when the Transmit Hold
             // Register is empty.
-_putchf('d');
+//_putchf('d');
             if( UART_STATE_WRITE & uartState )
             {
-_putchf('1');
+//_putchf('1');
                 transmitNextBlock( &numTRxBytes );
                 txTransact.lenTRx += numTRxBytes;
                 // if there's nothing more to send, disable UART_IIR_TRANSBUFFEREMPTY
                 if( 0 == numTRxBytes )
                 {
-_putchf('2');
+//_putchf('2');
                     // wait for UART_IIR_TRANSCOMPLETE after last byte shifted out
                     uartDisableTxInterrupts( UART_IIR_TRANSBUFFEREMPTY );
                 }
@@ -1392,7 +1535,7 @@ _putchf('2');
             if(( UART_STATE_READY & uartState )||
                ( UART_STATE_READ & uartState ))
             {
-_putchf('3');
+//_putchf('3');
                 uartTxEvent |=( 1 << UART_EVENT_TX_UNEXPECTED );
                 uartDisableTxInterrupts( UART_IIR_TRANSCOMPLETE );
                 // reset Tx FIFO and leave Rx Fifo enabled
@@ -1430,12 +1573,18 @@ _putchf('e');
                         CLEAR_UART_TRANSACTION( rxTransact );
 
                         uartRxEvent = 0;
-                        uartState &= ~UART_STATE_READ;
+                        uartState &=
+                            ( UART_STATE )~( UART_STATE_READ | UART_STATE_READLOCK );
                     }
                     else
                     {
+                        /* we clear UART_STATE_READ here because another
+                           interrupt may follow immediately, before the user task 
+                           is able to run and do likewise. Where semantics of 
+                           UART_STATE_READ and UART_STATE_READLOCK diverge */
+                        uartState &=( UART_STATE )( ~UART_STATE_READ );
                         xSemaphoreGiveFromISR( 
-                            uartRxSemaphore, &mosHigherPriorityTaskWoken );
+                            uartRxSemaphore, &__higherPriorityTaskWoken );
                     }
                 }
 
@@ -1447,12 +1596,18 @@ _putchf('e');
                         CLEAR_UART_TRANSACTION( txTransact );
 
                         uartTxEvent = 0;
-                        uartState &= ~UART_STATE_WRITE;
+                        uartState &=( UART_STATE )
+                            ~( UART_STATE_WRITE | UART_STATE_WRITELOCK );
                     }
                     else
                     {
+                        /* we clear UART_STATE_WRITE here because another
+                           interrupt may follow immediately, before the user task 
+                           is able to run and do likewise. Where semantics of 
+                           UART_STATE_WRITE and UART_STATE_WRITELOCK diverge */
+                        uartState &=( UART_STATE )( ~UART_STATE_WRITE );
                         xSemaphoreGiveFromISR( 
-                            uartTxSemaphore, &mosHigherPriorityTaskWoken );
+                            uartTxSemaphore, &__higherPriorityTaskWoken );
                     }
                 }
             }
@@ -1470,22 +1625,22 @@ static void uartisr_0( void )
     /* The current task context SHALL be saved first on entry to an ISR */
     portSAVE_CONTEXT( );
 
-#   if defined( _DEBUG )
+#   if defined( _DEBUG )&& 0
         _putchf( 'U' );
 #   endif
 
-    mosHigherPriorityTaskWoken = pdFALSE;
+    __higherPriorityTaskWoken = pdFALSE;
 
     /* run in context of this ISR.
          Other hardware interrupts are blocked out for the duration. */
     uartisr_1( );
 
-    /* If mosHigherPriorityTaskWoken is now set to pdTRUE then a 
+    /* If __higherPriorityTaskWoken is now set to pdTRUE then a 
        context switch should be performed to ensure the 
        interrupt returns directly to the highest priority task */
-    if( pdTRUE == mosHigherPriorityTaskWoken )
+    if( pdTRUE == __higherPriorityTaskWoken )
     {
-#       if defined( _DEBUG )
+#       if defined( _DEBUG )&& 0
             _putchf( 'V' );
 #       endif
 
@@ -1495,7 +1650,7 @@ static void uartisr_0( void )
     else
     {
         asm( "\t                            ; reti from here" );
-#       if defined( _DEBUG )
+#       if defined( _DEBUG )&& 0
             _putchf( 'W' );
 #       endif
 
@@ -1569,7 +1724,9 @@ POSIX_ERRNO uart_dev_open(
 
 #   if( 0 == configUSE_DEV_SAFEGUARDS )
     {
-        /* 0. remember the pinmode for hardware flow control in the ISR */
+        /* 0. remember the pinmode for hardware flow control in the ISR
+           This is done with SAFEGUARDS enabled, but we must do so explicitly
+           otherwise. */
         pinmode[ MINOR_NUM ]= mode;
     }
 #   endif
@@ -1588,7 +1745,7 @@ POSIX_ERRNO uart_dev_open(
     }
     else
     {
-        endpin = UART_1_RXD; //last pin used without handshaking
+        endpin = UART_1_RXD; //last pin used without hardware handshaking
     }
 
     for( i = UART_1_TXD, setmask = 0x00, clrmask = 0xff; endpin >= i; i++ )
@@ -1647,10 +1804,11 @@ POSIX_ERRNO uart_dev_open(
     uartResetFIFO( UART_FCTL_CLRRxF | UART_FCTL_CLRTxF, UART_FIFO_ENABLE );
  
     /* 2.7 Initialise Interrupt Enable Register
-           We only initialise Rx interrupts when we're ready to receive,
-           And tx interrupts when we're ready to transmit;
-           Otherwise "empty" interrupts fire evermore */
-    UART1_IER = /*ier_mask =*/ 0x00;
+           Enable Rx interrupts.
+           We only initialise Tx interrupts when we're ready to receive,
+           otherwise "empty" interrupts fire evermore */
+    UART1_IER = 0x00;
+    uartEnableRxInterrupts( );
 
     /* 2.8 Assert /DTR to signal we are ready for transceiving */
     if(( DEV_MODE_UART_FULL_MODEM & mode )||
@@ -1660,10 +1818,6 @@ POSIX_ERRNO uart_dev_open(
     }
     
 uart_dev_open_end:
-#if defined( _DEBUG )&& 0
-    ( void )printf( "devuart.c : %d\r\n", __LINE__ );
-#endif
-
     return( ret );
 }
 
@@ -1686,6 +1840,13 @@ void uart_dev_close(
     unsigned char setmask;
     unsigned char clrmask;
     int i;
+
+    // 0. Make sure we release Xoff
+    if( true == rxPaused )
+    {
+        ( void )transmitChar(( unsigned char )UART_SW_FLOWCTRL_XON );
+        rxPaused = false;  // remote end resumed (assumption)
+    }
 
     // 1. Disable UART
     UART1_IER = /*ier_mask =*/ 0x00;  // Disable UART1 interrupts
@@ -1783,9 +1944,9 @@ POSIX_ERRNO uart_dev_read(
     if( configDRV_UART_BUFFER_SZ >= num_bytes_to_read )
     {
         portENTER_CRITICAL( );
-        if( 0 ==( UART_STATE_READ & uartState ))
+        if( 0 ==( UART_STATE_READLOCK & uartState ))
         {
-            uartState |= UART_STATE_READ;
+            uartState |=( UART_STATE_READ | UART_STATE_READLOCK );
             portEXIT_CRITICAL( );
 
             CREATE_UART_TRANSACTION( 
@@ -1800,19 +1961,21 @@ POSIX_ERRNO uart_dev_read(
             if( rxTransact.lenTRx >= rxTransact.len )
             {
                 // enough is already buffered to return immediately
-                storeRxBuffer( );
-                finaliseRxTransaction( ret );
-                CLEAR_UART_TRANSACTION( rxTransact );
+                portENTER_CRITICAL( );
+                {
+                    storeRxBuffer( );
+                    finaliseRxTransaction( ret );
+                    CLEAR_UART_TRANSACTION( rxTransact );
+                }
+                portEXIT_CRITICAL( );
 
                 ret = POSIX_ERRNO_EALREADY | uartRxEvent;
                 uartRxEvent = 0;
                 
-                uartState &= ~UART_STATE_READ;
+                uartState &=( UART_STATE )( ~UART_STATE_READ );
             }
             else
             {
-                uartEnableRxInterrupts( );
-            
                 if( DEV_MODE_BUFFERED == modeB )
                 {
                     /* DEV_MODE_BUFFERED mode: the calling task will not block.
@@ -1830,24 +1993,34 @@ POSIX_ERRNO uart_dev_read(
                                       configDRV_UART_UNBUFFERED_DELAY ))
                     {
                         // calling task should check callback result
-                        ret = POSIX_ERRNO_EALREADY;  // num_bytes_to_read
+                        ret = POSIX_ERRNO_EALREADY;  // = num_bytes_to_read
                     }
                     else
                     {
                         // calling task should check callback result
-                        ret = POSIX_ERRNO_ETIMEDOUT; // less than num_bytes_to_read
+                        ret = POSIX_ERRNO_ETIMEDOUT; // < num_bytes_to_read
                     }
 
-                    ret |= uartRxEvent;
-                    uartRxEvent = 0;
+                    portENTER_CRITICAL( );
+                    {
+                        ret |= uartRxEvent;
+                        uartRxEvent = 0;
 
-                    storeRxBuffer( );
-                    finaliseRxTransaction( ret );
-                    CLEAR_UART_TRANSACTION( rxTransact );
+                        storeRxBuffer( );
+                        finaliseRxTransaction( ret );
+                        CLEAR_UART_TRANSACTION( rxTransact );
 
-                    uartState &= ~UART_STATE_READ;
+                        /* uartisr0 will clear UART_STATE_READ before giving 
+                           the semaphore. We need to clear it here too in case 
+                           of no interrupt and POSIX_ERRNO_ETIMEDOUT */
+                        uartState &=( UART_STATE )( ~UART_STATE_READ );
+                        uartState &=( UART_STATE )( ~UART_STATE_PAUSE );
+                    }
+                    portEXIT_CRITICAL( );
                 }
             }
+
+            uartState &=( UART_STATE )( ~UART_STATE_READLOCK );
         }
         else
         {
@@ -1891,24 +2064,23 @@ POSIX_ERRNO uart_dev_write(
     if( configDRV_UART_BUFFER_SZ >= num_bytes_to_write )
     {
         portENTER_CRITICAL( );
-        if( 0 ==( UART_STATE_WRITE & uartState ))  // if not already writing
+        if( 0 ==( UART_STATE_WRITELOCK & uartState ))  // if not already writing
         {
-            uartState |= UART_STATE_WRITE;
+            uartState |= UART_STATE_WRITELOCK;
             portEXIT_CRITICAL( );
 
             ret = assertRTSandWaitCTS( );
             if( POSIX_ERRNO_EPROTO == ret )
             {
-                uartState &= ~UART_STATE_WRITE;
+                uartState &=( UART_STATE )( ~UART_STATE_WRITELOCK );
                 goto uart_dev_write_1;
             }
 
             // Good to go
             if( 1 == num_bytes_to_write )
             {
-                // don't use the FIFO for just one byte
+                // don't use the FIFO for just one byte (uart_putch)
                 ret = transmitChar((( char * )buffer )[ 0 ]);
-                uartState &= ~UART_STATE_WRITE;
                 if( DEV_MODE_BUFFERED == modeB )
                 {
                     *num_bytes_written = 1;
@@ -1927,7 +2099,8 @@ POSIX_ERRNO uart_dev_write(
 
                 loadTxBuffer(( unsigned char * )buffer, num_bytes_to_write );
 
-                    // kick off the write transaction
+                // kick off the write transaction
+                uartState |= UART_STATE_WRITE;
                 transmitNextBlock( &numTxBytes );
                 txTransact.lenTRx += numTxBytes;
 
@@ -1945,9 +2118,6 @@ POSIX_ERRNO uart_dev_write(
                        when the calling task will resume.
                         xSemaphoreTake doesn't timeout indefinitely despite
                         what FreeRTOS API says */
-UBaseType_t cnt = uxSemaphoreGetCount( uartTxSemaphore );
-
-_putchf( 'P' );
                     if( pdTRUE == xSemaphoreTake( 
                                       uartTxSemaphore, 
                                       configDRV_UART_UNBUFFERED_DELAY ))
@@ -1958,18 +2128,26 @@ _putchf( 'P' );
                     {
                         ret = POSIX_ERRNO_ETIMEDOUT;  //0x6E
                     }
-_putchf( 'Q' );
 
-                    ret |= uartTxEvent;
-                    uartTxEvent = 0;
+                    portENTER_CRITICAL( );  // technically but likely unnecessary
+                    {
+                        ret |= uartTxEvent;
+                        uartTxEvent = 0;
 
-                    finaliseTxTransaction( ret );
-                    CLEAR_UART_TRANSACTION( txTransact );
+                        finaliseTxTransaction( ret );
+                        CLEAR_UART_TRANSACTION( txTransact );
 
-                    uartState &= ~UART_STATE_WRITE;
-_putchf( 'R' );
+                        /* uartisr0 will clear UART_STATE_WRITE before giving 
+                           the semaphore. We need to clear it here too in case 
+                           of no interrupt and POSIX_ERRNO_ETIMEDOUT */
+                        uartState &=( UART_STATE )
+                            ~( UART_STATE_WRITE | UART_STATE_PAUSE );
+                    }
+                    portEXIT_CRITICAL( );
                 }
             }
+            
+            uartState &=( UART_STATE )( ~UART_STATE_WRITELOCK );
         }
         else
         {

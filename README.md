@@ -143,8 +143,8 @@ them, copy them to your Agon Light SD card, load, and run them from the MOS
 prompt.
 
 <h4>Alpha Demos</h4>
-Alpha demos are found in ./FreeRTOSv202212.01-LTS/FreeRTOS/Demo/DemoAgonC/ 
-and ./FreeRTOSv202212.01-LTS/FreeRTOS/Demo/DemoAgonP/. You can open the 
+Alpha demos are found in ./FreeRTOSv202212.01-LTS/FreeRTOS/Demo/Alpha/DemoAgonC/ 
+and ./FreeRTOSv202212.01-LTS/FreeRTOS/Demo/Alpha/DemoAgonP/. You can open the 
 .../DemoAgonC/Debug/DemoAgonC.zdsproj and .../DemoAgonC/Debug/DemoAgonP.zdsproj
 files in ZDSII. You can find the pre-built executable files in
 .../DemoAgonC/Debug/DemoAgonC.bin and .../DemoAgonP/Debug/DemoAgonP.bin
@@ -167,13 +167,14 @@ better demonstrate the speed of FreeRTOS / MOS on Agon.
 <p>
 
 <h4>Beta Demos</h4>
-A Beta demo is found in ./FreeRTOSv202212.01-LTS/FreeRTOS/Demo/DemoMOS/.
+A Beta demo is found in ./FreeRTOSv202212.01-LTS/FreeRTOS/Demo/Beta/DemoMOS/.
 DemoMOS uses the MOS API to access MOS services, including files, directory,
 and MOS devices including the keyboard, Uart, and I2C interfaces. 
 <p>
 
-A second Beta demo is found in ./FreeRTOSv202212.01-LTS/FreeRTOS/Demo/DemoDEV/.
-This demonstrates the new DEV API capabilities. 
+A second Beta demo is found in ./FreeRTOSv202212.01-LTS/FreeRTOS/Demo/Beta/DemoDEV/.
+This demonstrates the new DEV API capabilities. Currently that is the full GPIO 
+API, with a subset of the UART API still in development.
 
 <h3>License</h3>
 FreeRTOS / MOS for Agon is released under the MIT license. This is done mainly
@@ -184,8 +185,8 @@ Because one FreeRTOS task may block another, and because MOS is non-reentrant
 (see below), FreeRTOS / MOS provides a "soft" real-time solution (rather than 
 a "hard" one.) A "soft" solution is one in which the response time is not 
 guaranteed, and may lag real time by a period (for now we might assume in the 
-order of a milli-second, though some tests are needed to provide actual 
-measurement data). 
+order of a milli-second, though tests are needed to provide actual measurement 
+data). 
 
 
 <h2>Build</h2>
@@ -197,8 +198,9 @@ provides header and library files used by FreeRTOS for Agon.
 
 The FreeRTOS port has been developed using using ZDS II - eZ80Acclaim! 5.3.5 
 (Build 23020901) with Compiler Version 3.4 (19101101). Other recent versions 
-of these tools should be okay; though the state of tool maintenance may result 
-in errors different to those encountered and worked around.
+of these tools should be okay. The FreeRTOS code is mainly written in standard
+C with some assembler. But it may be configuration differences manifest with 
+other versions of the Zilog tools. 
 
 <h3>hex2bin</h3>
 The output from successful compilation will be a ".hex" file. This needs to be
@@ -210,7 +212,7 @@ https://sourceforge.net/projects/hex2bin/files/latest/download
 <h2>Debugging</h2>
 In general, you will not need a debugger to build FreeRTOS applications. But it 
 may speed up your development time and help you to find bugs if you do use one. 
-I now possess a $100 ZUSBASC0200ZADG Acclaim! Smart Cable (ASC) debug device 
+I now possess a $100 ZUSBASC0200ZADG Acclaim! Smart Cable (ASC) debug device, 
 bought from
 https://www.mouser.com/datasheet/2/240/Littelfuse_ZUSBASC0200ZACG_Data_Sheet-3078266.pdf
 To use this hardware debugger, you will need version 5.3.5 of the ZDSII tools.
@@ -218,15 +220,16 @@ To use this hardware debugger, you will need version 5.3.5 of the ZDSII tools.
 
 It turns out the Zilog Acclaim Smart Cable device driver (found in
 ZDSII_eZ80Acclaim!_5.3.5\device drivers\USB\AcclaimSmartCable) is not digitally 
-signed (Windows Device Manager Code 52). So that installing it requires UEFI 
-Secure Boot to be disabled in the host PC BIOS settings. This is the official 
-Zilog solution, as per a customer support ticket. 
+signed. This results in a Windows Device Manager Code 52 exclamation sign. So 
+that enabling it requires UEFI Secure Boot to be disabled in the PC BIOS 
+settings. This is the official Zilog solution, as per a customer support 
+ticket. Refer to:
+https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/disabling-secure-boot?view=windows-11
 <p>
 
-To give an example of its benefit: I knew there was a flaw in the "Alpha" 
-context switch code, such that FreeRTOS wasn't exiting interrupts properly; but 
-I hadn't been able to pinpoint the cause. I needed the debugger to breakpoint 
-the executable to identify the cause. And this enabled me to provide a 
+To give an example of its benefit: there was a flaw in the "Alpha" context 
+switch code, such that FreeRTOS wasn't exiting interrupts properly. I used the 
+debugger to breakpoint the executable and identify the cause. This enabled a 
 satisfactory fix, so the context switch now works exactly as it should. 
 Moreover, I now understand a bit more about ADL mode call stacks on the eZ80. 
 
@@ -244,12 +247,12 @@ Your solution is to guard such calls to library functions by use of a semaphore
 or similar method available in FreeRTOS. 
 <p>
 
-To give an example, my first demo programs contained two tasks, each of which 
-used a loop counter that was modulo tested (<it>if( 0 ==( ctr % 80 ))</it>...). 
-Modulo <it>%</it> is implemented in Zilog using the math library. It took
-several days until that 'doh' moment, to realise what was causing random
-hardware resets. My solution was just to change the loop tests, but I could
-have used semaphores around the <it>if</it> statement.
+To give an example, DemoAgonC contains two tasks, each of which originally used 
+a loop counter that was modulo tested (<it>if( 0 ==( ctr % 80 ))</it>...). 
+Modulo <it>%</it> is implemented using the Zilog math library. It took several 
+days until that 'doh' moment, to realise what was causing random hardware 
+resets. My solution was just to change the loop tests, but I could have used 
+semaphores around the <it>if</it> statement.
 <p>
 
 MOS itself is likewise non-rentrant. The port of FreeRTOS / MOS project takes 
@@ -271,7 +274,8 @@ memory solution (there are five options in
 ./FreeRTOSv202212.01-LTS/FreeRTOS/Source/portable/MemMang). 
 <p>
 
-A small number of Zilog header files are used with the ZDS port, such as ez80.h 
-and eZ80F92.h. It should be possible to copy them over or replace them with
-equivalent AgDev ones. Similarly, the Zilog specific libraries linked are for 
-the C runtime, so that replacing them with AgDev ones should be doable. 
+A small number of Zilog header files are used with the ZDS port, such as 
+ez80.h, eZ80F92.h in Alpha, and uartdefs.h in Beta. It should be possible to 
+copy them over or replace them with equivalent AgDev ones. Similarly, the Zilog 
+specific libraries linked are for the C runtime, so that replacing them with 
+AgDev ones should be doable. 

@@ -156,7 +156,7 @@ DEV_MODE pinmode[ NUM_DEV_MINOR ]=
 
 /* Global variable tested to decide if a context switch is necessary on exit 
    from an ISR */
-BaseType_t mosHigherPriorityTaskWoken = pdFALSE;
+BaseType_t __higherPriorityTaskWoken = pdFALSE;
 
 
 /*----- Private functions ---------------------------------------------------*/
@@ -1124,7 +1124,8 @@ POSIX_ERRNO uart_open(
         // mode may also contain DEV_MODE_BUFFERED_MASK
     switch( DEV_MODE_UART_MASK & mode )
     {
-        case DEV_MODE_UART_NO_MODEM :
+        case DEV_MODE_UART_NO_FLOWCONTROL :
+        case DEV_MODE_UART_SW_FLOWCONTROL :
         case DEV_MODE_UART_HALF_MODEM :
         case DEV_MODE_UART_HALF_NULL_MODEM :
         case DEV_MODE_UART_FULL_MODEM :

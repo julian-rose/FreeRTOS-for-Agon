@@ -63,7 +63,7 @@
 extern unsigned int _heaptop;  // defined in the linker directive file
 extern unsigned int _heapbot;  //   "
 
-extern BaseType_t mosHigherPriorityTaskWoken;  // set in ISR to context-switch
+extern BaseType_t __higherPriorityTaskWoken;  // set in ISR to context-switch
 
 
 /*----- Local Types ---------------------------------------------------------*/
@@ -95,7 +95,8 @@ static void doGPIOWriteTest( void );
 static void doGPIOReadWriteTest( void );
 static void doGPIOCallbackTest( void );
 static void doYieldFromISRTest( void );
-static void doUARTEchoTest( void );
+static void doUARTRxTxTest( void );
+static void doXonXoffTest( void );
 
 
 /*----- Function Definitions ------------------------------------------------*/
@@ -150,7 +151,8 @@ static void * menu( void )
         { '1', "Test DEV GPIO read write", doGPIOReadWriteTest },
         { '2', "Test DEV GPIO ISR", doGPIOCallbackTest },
         { '3', "Test ISR Yield", doYieldFromISRTest },
-        { '4', "Test DEV UART echo test", doUARTEchoTest },
+        { '4', "Test DEV UART Rx/Tx", doUARTRxTxTest },
+        { '5', "Test DEV UART Xon/Xoff software flow control", doXonXoffTest },
         { 'q', "End tests", NULL }
     };
     void ( *ret )( void )=( void* )-1;  /* any non-NULL value */
@@ -427,9 +429,9 @@ void myYieldHndlr( DEV_NUM_MAJOR const major, DEV_NUM_MINOR const minor )
     putchar( '*' );
 
     /* run in context of high-priority interrupt handler gpioisr */
-    vTaskNotifyGiveFromISR( isrTestTaskHandle, &mosHigherPriorityTaskWoken );
+    vTaskNotifyGiveFromISR( isrTestTaskHandle, &__higherPriorityTaskWoken );
     
-    /* mosHigherPriorityTaskWoken will be tested in ISR */
+    /* __higherPriorityTaskWoken will be tested in ISR */
 }
 
 /* doYieldFromISRTest
@@ -523,15 +525,17 @@ static void doYieldFromISRTest( void )
 }
 
 
-/* doUARTEchoTest
+/* doUARTRxTxTest
  *   Try out DEV API UART functions
- *   Connect UART1 tx pin 17 to UART1 rx pin 18
- *   Read a string (terminator character ctrl-Z) and Echo it back
+ *   Connect UART1 tx pin 17 to UART1 rx pin 18 for loopback
+ *    or tx pin 17 to remote (CP2102) Rx and rx pin 18 to remote Tx
+ *   Send a string (and Echo it back in loopback)
+ *    or receive remote end data (and display it) in remote test
 */
-static void doUARTEchoTest( void )
+static void doUARTRxTxTest( void )
 {
     UART_PARAMS const uparm =
-        { UART_BAUD_9600, UART_DATABITS_8, UART_STOPBITS_1, UART_PARITY_ODD };
+        { UART_BAUD_9600, UART_DATABITS_8, UART_STOPBITS_1, UART_PARITY_NONE };
     int const escbyte =((( 113 - 1 )& 0xF8 )>> 3 );
     int const escbit =  (( 113 - 1 )& 0x07 );
     KEYMAP *kbmap;
@@ -541,11 +545,13 @@ static void doUARTEchoTest( void )
 
     ( void )printf( "\r\n\r\nRunning UART echo test\r\n" );
 
-    ( void )printf( "Wire UART1 tx pin 17 to UART1 rx pin 18\r\n" );
+    ( void )printf( "Either wire UART1 tx pin 17 to UART1 rx pin 18 (loopback)\r\n" );
+    ( void )printf( "Or wire UART1 tx pin 17 to remote Rx, "
+                     "and rx pin 18 to remote Tx\r\n" );
     ( void )printf( "Wire GPIO pin 13 (task activity) "
-                    "-> LED+220ohm resistor -> GND\r\n" );
+                    "-> red LED+220ohm resistor -> GND\r\n" );
     ( void )printf( "Wire GPIO pin 26 (idle activity) "
-                    "-> LED+220ohm resistor -> GND\r\n" );
+                    "-> green LED+150ohm resistor -> GND\r\n" );
 
     ( void )printf( "Press 'ESC' key to exit test\r\n" );
     kbmap = mos_getkbmap( );  // only need do this once at startup
@@ -555,10 +561,9 @@ static void doUARTEchoTest( void )
     ( void )printf( "gpio_open(13) output returns : %d\r\n", res );
 
     // no flow control (simple rx.tx connection)
-    res = uart_open( DEV_MODE_UART_NO_MODEM, &uparm );
+    res = uart_open( DEV_MODE_UART_NO_FLOWCONTROL, &uparm );
     ( void )printf( "uart_open returns : %d\r\n", res );
 
-    // read input until a terminator character is read (^-Z)
     for( i = 1; ; i = 1 - i )
     {
         ( void )gpio_write( GPIO_13, i );  // toggle pin 13 (LED)
@@ -569,7 +574,6 @@ static void doUARTEchoTest( void )
 
         vTaskDelay( 5 );  // delay 0.5s
 
-#if 1
         portENTER_CRITICAL( );
         {
             // always safeguard use of Zilog library calls
@@ -582,7 +586,76 @@ static void doUARTEchoTest( void )
         ( void )printf( "buf = (" );
         for( j=0; 16 > j; j++ ) printf( "0x%x ",( unsigned char )( b[ j ]));
         ( void )printf( ")\r\n" );
-#endif
+
+        /* scan keyboard for ESC */
+        if((( char* )kbmap )[ escbyte ]&( 1 << escbit ))
+        {
+            break;
+        }
+    }
+
+    ( void )printf( "uart_close\r\n" );
+    uart_close( );
+    ( void )printf( "gpio_close\r\n" );
+    gpio_close( GPIO_13 );
+}
+
+
+/* doXonXoffTest
+ *   Try out DEV API UART software flow control Xon / Xoff
+ *   Connect UART1 Tx pin 17 to remote (CP2102) Rx, 
+ *     and Rx pin 18 to remote Tx
+ *   Open UART1 using DEV_MODE_UART_SW_FLOWCONTROL
+ *   Agon to receive a file larger than configDRV_UART_BUFFER_SZ
+*/
+static void doXonXoffTest( void )
+{
+    UART_PARAMS const uparm =
+        { UART_BAUD_9600, UART_DATABITS_8, UART_STOPBITS_1, UART_PARITY_NONE };
+    int const escbyte =((( 113 - 1 )& 0xF8 )>> 3 );
+    int const escbit =  (( 113 - 1 )& 0x07 );
+    KEYMAP *kbmap;
+    POSIX_ERRNO res;
+    char b[ 32 ];
+    int i, j;
+
+    ( void )printf( "\r\n\r\nRunning UART Xon / Xoff test\r\n" );
+
+    ( void )printf( "Wire UART1 tx pin 17 to remote Rx, "
+                    "and rx pin 18 to remote Tx\r\n" );
+    ( void )printf( "Wire GPIO pin 13 (task activity) "
+                    "-> red LED+220ohm resistor -> GND\r\n" );
+    ( void )printf( "Wire GPIO pin 26 (idle activity) "
+                    "-> green LED+150ohm resistor -> GND\r\n" );
+
+    ( void )printf( "Press 'ESC' key to exit test\r\n" );
+    kbmap = mos_getkbmap( );  // only need do this once at startup
+
+    // open GPIO:13 as an output, initial value 0
+    ( void )gpio_open( GPIO_13, DEV_MODE_GPIO_OUT, 0 );
+
+    // software flow control
+    res = uart_open( DEV_MODE_UART_SW_FLOWCONTROL, &uparm );
+    ( void )printf( "uart_open returns : %d\r\n", res );
+
+    // read input until a terminator character is read (^-Z)
+    for( i = 1; ; i = 1 - i )
+    {
+        ( void )gpio_write( GPIO_13, i );  // toggle pin 13 (LED)
+
+        portENTER_CRITICAL( );
+        {
+            // always safeguard use of Zilog library calls
+            memset( b, 0, sizeof( b ));
+        }
+        portEXIT_CRITICAL( );
+        ( void )printf( "uart_read( ) [[" );
+        res = uart_read( &b, 16 );
+//        _printb( );
+        ( void )printf( "]] res = 0x%x\r\n", res );
+        ( void )printf( "buf = (" );
+        for( j=0; 16 > j; j++ ) printf( "0x%x ",( unsigned char )( b[ j ]));
+        ( void )printf( ")\r\n" );
 
         /* scan keyboard for ESC */
         if((( char* )kbmap )[ escbyte ]&( 1 << escbit ))
@@ -652,8 +725,13 @@ void vApplicationIdleHook( void )
     if( 30000 < toggle ) 
     {
         toggle = 0;
-_putchf( 'I' );
+#       if defined( _DEBUG )&& 0
+            _putchf( 'I' );
+#       endif
         led = 1 - led;
         ( void )gpio_write( GPIO_26, led );
     }
+    
+    /* check UART Xon/Xoff condition */
+    uart_rxXonXoff( );    
 }

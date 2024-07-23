@@ -113,9 +113,9 @@ unsigned char const pin_vector[ NUM_PINS_GPIO ]=
 */
 static INTERRUPT_HANDLER intrhndl[ NUM_PINS_GPIO ][ 2 ]={ NULL };
 
-/* mosHigherPriorityTaskWoken can be set by a user interrupt handler.
+/* __higherPriorityTaskWoken can be set by a user interrupt handler.
    It needs to be tested by the gpioisr. */
-extern BaseType_t mosHigherPriorityTaskWoken;
+extern BaseType_t __higherPriorityTaskWoken;
 
 
 /*----- Private functions ---------------------------------------------------*/
@@ -726,7 +726,7 @@ static void gpioisr( DEV_NUM_MINOR const minor )
     // 2. call user-program Interrupt Handler
     if( ih )
     {
-        // invoke user Interrupt Handler; may set mosHigherPriorityTaskWoken
+        // invoke user Interrupt Handler; may set __higherPriorityTaskWoken
         ( *ih )( DEV_NUM_GPIO, minor );
     }
 }
@@ -739,14 +739,14 @@ static void gpio13isr( void )
     /* The current task context SHALL be saved first on entry to an ISR */
     portSAVE_CONTEXT( );
 
-    mosHigherPriorityTaskWoken = pdFALSE;
+    __higherPriorityTaskWoken = pdFALSE;
 
     gpioisr( GPIO_13 );
 
-    /* If mosHigherPriorityTaskWoken is now set to pdTRUE then a 
+    /* If __higherPriorityTaskWoken is now set to pdTRUE then a 
        context switch should be performed to ensure the 
        interrupt returns directly to the highest priority task */
-    if( pdTRUE == mosHigherPriorityTaskWoken )
+    if( pdTRUE == __higherPriorityTaskWoken )
     {
         asm( "\txref _vPortYieldFromISR_2   ; reti from vPortYieldFromISR" );
         asm( "\tJP _vPortYieldFromISR_2     ;   with saved context" );
@@ -772,14 +772,14 @@ static void gpio14isr( void )
     /* The current task context SHALL be saved first on entry to an ISR */
     portSAVE_CONTEXT( );
 
-    mosHigherPriorityTaskWoken = pdFALSE;
+    __higherPriorityTaskWoken = pdFALSE;
 
     gpioisr( GPIO_14 );
 
-    /* If mosHigherPriorityTaskWoken is now set to pdTRUE then a 
+    /* If __higherPriorityTaskWoken is now set to pdTRUE then a 
        context switch should be performed to ensure the 
        interrupt returns directly to the highest priority task */
-    if( pdTRUE == mosHigherPriorityTaskWoken )
+    if( pdTRUE == __higherPriorityTaskWoken )
     {
         asm( "\txref _vPortYieldFromISR_2   ; reti from vPortYieldFromISR" );
         asm( "\tJP _vPortYieldFromISR_2     ;   with saved context" );
@@ -805,14 +805,14 @@ static void gpio15isr( void )
     /* The current task context SHALL be saved first on entry to an ISR */
     portSAVE_CONTEXT( );
 
-    mosHigherPriorityTaskWoken = pdFALSE;
+    __higherPriorityTaskWoken = pdFALSE;
 
     gpioisr( GPIO_15 );
 
-    /* If mosHigherPriorityTaskWoken is now set to pdTRUE then a 
+    /* If __higherPriorityTaskWoken is now set to pdTRUE then a 
        context switch should be performed to ensure the 
        interrupt returns directly to the highest priority task */
-    if( pdTRUE == mosHigherPriorityTaskWoken )
+    if( pdTRUE == __higherPriorityTaskWoken )
     {
         asm( "\txref _vPortYieldFromISR_2   ; reti from vPortYieldFromISR" );
         asm( "\tJP _vPortYieldFromISR_2     ;   with saved context" );
@@ -838,14 +838,14 @@ static void gpio16isr( void )
     /* The current task context SHALL be saved first on entry to an ISR */
     portSAVE_CONTEXT( );
 
-    mosHigherPriorityTaskWoken = pdFALSE;
+    __higherPriorityTaskWoken = pdFALSE;
 
     gpioisr( GPIO_16 );
 
-    /* If mosHigherPriorityTaskWoken is now set to pdTRUE then a 
+    /* If __higherPriorityTaskWoken is now set to pdTRUE then a 
        context switch should be performed to ensure the 
        interrupt returns directly to the highest priority task */
-    if( pdTRUE == mosHigherPriorityTaskWoken )
+    if( pdTRUE == __higherPriorityTaskWoken )
     {
         asm( "\txref _vPortYieldFromISR_2   ; reti from vPortYieldFromISR" );
         asm( "\tJP _vPortYieldFromISR_2     ;   with saved context" );
@@ -871,14 +871,14 @@ static void gpio17isr( void )
     /* The current task context SHALL be saved first on entry to an ISR */
     portSAVE_CONTEXT( );
 
-    mosHigherPriorityTaskWoken = pdFALSE;
+    __higherPriorityTaskWoken = pdFALSE;
 
     gpioisr( GPIO_17 );
 
-    /* If mosHigherPriorityTaskWoken is now set to pdTRUE then a 
+    /* If __higherPriorityTaskWoken is now set to pdTRUE then a 
        context switch should be performed to ensure the 
        interrupt returns directly to the highest priority task */
-    if( pdTRUE == mosHigherPriorityTaskWoken )
+    if( pdTRUE == __higherPriorityTaskWoken )
     {
         asm( "\txref _vPortYieldFromISR_2   ; reti from vPortYieldFromISR" );
         asm( "\tJP _vPortYieldFromISR_2     ;   with saved context" );
@@ -904,14 +904,14 @@ static void gpio18isr( void )
     /* The current task context SHALL be saved first on entry to an ISR */
     portSAVE_CONTEXT( );
 
-    mosHigherPriorityTaskWoken = pdFALSE;
+    __higherPriorityTaskWoken = pdFALSE;
 
     gpioisr( GPIO_18 );
 
-    /* If mosHigherPriorityTaskWoken is now set to pdTRUE then a 
+    /* If __higherPriorityTaskWoken is now set to pdTRUE then a 
        context switch should be performed to ensure the 
        interrupt returns directly to the highest priority task */
-    if( pdTRUE == mosHigherPriorityTaskWoken )
+    if( pdTRUE == __higherPriorityTaskWoken )
     {
         asm( "\txref _vPortYieldFromISR_2   ; reti from vPortYieldFromISR" );
         asm( "\tJP _vPortYieldFromISR_2     ;   with saved context" );
@@ -937,14 +937,14 @@ static void gpio19isr( void )
     /* The current task context SHALL be saved first on entry to an ISR */
     portSAVE_CONTEXT( );
 
-    mosHigherPriorityTaskWoken = pdFALSE;
+    __higherPriorityTaskWoken = pdFALSE;
 
     gpioisr( GPIO_19 );
 
-    /* If mosHigherPriorityTaskWoken is now set to pdTRUE then a 
+    /* If __higherPriorityTaskWoken is now set to pdTRUE then a 
        context switch should be performed to ensure the 
        interrupt returns directly to the highest priority task */
-    if( pdTRUE == mosHigherPriorityTaskWoken )
+    if( pdTRUE == __higherPriorityTaskWoken )
     {
         asm( "\txref _vPortYieldFromISR_2   ; reti from vPortYieldFromISR" );
         asm( "\tJP _vPortYieldFromISR_2     ;   with saved context" );
@@ -970,14 +970,14 @@ static void gpio20isr( void )
     /* The current task context SHALL be saved first on entry to an ISR */
     portSAVE_CONTEXT( );
 
-    mosHigherPriorityTaskWoken = pdFALSE;
+    __higherPriorityTaskWoken = pdFALSE;
 
     gpioisr( GPIO_20 );
 
-    /* If mosHigherPriorityTaskWoken is now set to pdTRUE then a 
+    /* If __higherPriorityTaskWoken is now set to pdTRUE then a 
        context switch should be performed to ensure the 
        interrupt returns directly to the highest priority task */
-    if( pdTRUE == mosHigherPriorityTaskWoken )
+    if( pdTRUE == __higherPriorityTaskWoken )
     {
         asm( "\txref _vPortYieldFromISR_2   ; reti from vPortYieldFromISR" );
         asm( "\tJP _vPortYieldFromISR_2     ;   with saved context" );
@@ -1003,14 +1003,14 @@ static void gpio21isr( void )
     /* The current task context SHALL be saved first on entry to an ISR */
     portSAVE_CONTEXT( );
 
-    mosHigherPriorityTaskWoken = pdFALSE;
+    __higherPriorityTaskWoken = pdFALSE;
 
     gpioisr( GPIO_21 );
 
-    /* If mosHigherPriorityTaskWoken is now set to pdTRUE then a 
+    /* If __higherPriorityTaskWoken is now set to pdTRUE then a 
        context switch should be performed to ensure the 
        interrupt returns directly to the highest priority task */
-    if( pdTRUE == mosHigherPriorityTaskWoken )
+    if( pdTRUE == __higherPriorityTaskWoken )
     {
         asm( "\txref _vPortYieldFromISR_2   ; reti from vPortYieldFromISR" );
         asm( "\tJP _vPortYieldFromISR_2     ;   with saved context" );
@@ -1036,14 +1036,14 @@ static void gpio22isr( void )
     /* The current task context SHALL be saved first on entry to an ISR */
     portSAVE_CONTEXT( );
 
-    mosHigherPriorityTaskWoken = pdFALSE;
+    __higherPriorityTaskWoken = pdFALSE;
 
     gpioisr( GPIO_22 );
 
-    /* If mosHigherPriorityTaskWoken is now set to pdTRUE then a 
+    /* If __higherPriorityTaskWoken is now set to pdTRUE then a 
        context switch should be performed to ensure the 
        interrupt returns directly to the highest priority task */
-    if( pdTRUE == mosHigherPriorityTaskWoken )
+    if( pdTRUE == __higherPriorityTaskWoken )
     {
         asm( "\txref _vPortYieldFromISR_2   ; reti from vPortYieldFromISR" );
         asm( "\tJP _vPortYieldFromISR_2     ;   with saved context" );
@@ -1069,14 +1069,14 @@ static void gpio23isr( void )
     /* The current task context SHALL be saved first on entry to an ISR */
     portSAVE_CONTEXT( );
 
-    mosHigherPriorityTaskWoken = pdFALSE;
+    __higherPriorityTaskWoken = pdFALSE;
 
     gpioisr( GPIO_23 );
 
-    /* If mosHigherPriorityTaskWoken is now set to pdTRUE then a 
+    /* If __higherPriorityTaskWoken is now set to pdTRUE then a 
        context switch should be performed to ensure the 
        interrupt returns directly to the highest priority task */
-    if( pdTRUE == mosHigherPriorityTaskWoken )
+    if( pdTRUE == __higherPriorityTaskWoken )
     {
         asm( "\txref _vPortYieldFromISR_2   ; reti from vPortYieldFromISR" );
         asm( "\tJP _vPortYieldFromISR_2     ;   with saved context" );
@@ -1102,14 +1102,14 @@ static void gpio24isr( void )
     /* The current task context SHALL be saved first on entry to an ISR */
     portSAVE_CONTEXT( );
 
-    mosHigherPriorityTaskWoken = pdFALSE;
+    __higherPriorityTaskWoken = pdFALSE;
 
     gpioisr( GPIO_24 );
 
-    /* If mosHigherPriorityTaskWoken is now set to pdTRUE then a 
+    /* If __higherPriorityTaskWoken is now set to pdTRUE then a 
        context switch should be performed to ensure the 
        interrupt returns directly to the highest priority task */
-    if( pdTRUE == mosHigherPriorityTaskWoken )
+    if( pdTRUE == __higherPriorityTaskWoken )
     {
         asm( "\txref _vPortYieldFromISR_2   ; reti from vPortYieldFromISR" );
         asm( "\tJP _vPortYieldFromISR_2     ;   with saved context" );
@@ -1135,14 +1135,14 @@ static void gpio26isr( void )
     /* The current task context SHALL be saved first on entry to an ISR */
     portSAVE_CONTEXT( );
 
-    mosHigherPriorityTaskWoken = pdFALSE;
+    __higherPriorityTaskWoken = pdFALSE;
 
     gpioisr( GPIO_26 );
 
-    /* If mosHigherPriorityTaskWoken is now set to pdTRUE then a 
+    /* If __higherPriorityTaskWoken is now set to pdTRUE then a 
        context switch should be performed to ensure the 
        interrupt returns directly to the highest priority task */
-    if( pdTRUE == mosHigherPriorityTaskWoken )
+    if( pdTRUE == __higherPriorityTaskWoken )
     {
         asm( "\txref _vPortYieldFromISR_2   ; reti from vPortYieldFromISR" );
         asm( "\tJP _vPortYieldFromISR_2     ;   with saved context" );
