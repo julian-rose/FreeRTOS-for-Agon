@@ -96,7 +96,8 @@ static void doGPIOReadWriteTest( void );
 static void doGPIOCallbackTest( void );
 static void doYieldFromISRTest( void );
 static void doUARTRxTxTest( void );
-static void doXonXoffTest( void );
+static void doUARTXonXoffTest( void );
+static void doUARTRtsCtsTest( void );
 
 
 /*----- Function Definitions ------------------------------------------------*/
@@ -152,7 +153,8 @@ static void * menu( void )
         { '2', "Test DEV GPIO ISR", doGPIOCallbackTest },
         { '3', "Test ISR Yield", doYieldFromISRTest },
         { '4', "Test DEV UART Rx/Tx", doUARTRxTxTest },
-        { '5', "Test DEV UART Xon/Xoff software flow control", doXonXoffTest },
+        { '5', "Test DEV UART Xon/Xoff software flow control", doUARTXonXoffTest },
+        { '6', "Test DEV UART RTS/CTS hardware flow control", doUARTRtsCtsTest },
         { 'q', "End tests", NULL }
     };
     void ( *ret )( void )=( void* )-1;  /* any non-NULL value */
@@ -538,23 +540,21 @@ static void doUARTRxTxTest( void )
         { UART_BAUD_9600, UART_DATABITS_8, UART_STOPBITS_1, UART_PARITY_NONE };
     int const escbyte =((( 113 - 1 )& 0xF8 )>> 3 );
     int const escbit =  (( 113 - 1 )& 0x07 );
-    KEYMAP *kbmap;
+    KEYMAP * const kbmap = mos_getkbmap( );  // only need do this once at startup
     POSIX_ERRNO res;
     char b[ 32 ];
     int i, j;
 
     ( void )printf( "\r\n\r\nRunning UART echo test\r\n" );
-
-    ( void )printf( "Either wire UART1 tx pin 17 to UART1 rx pin 18 (loopback)\r\n" );
-    ( void )printf( "Or wire UART1 tx pin 17 to remote Rx, "
-                     "and rx pin 18 to remote Tx\r\n" );
-    ( void )printf( "Wire GPIO pin 13 (task activity) "
+    ( void )printf( "Either wire Agon UART1 TxD pin 17 to UART1 RxD pin 18 (loopback)\r\n" );
+    ( void )printf( "Or crosswire UART1 TxD pin 17 to remote RxD, "
+                     "and UART1 RxD pin 18 to remote TxD\r\n" );
+    ( void )printf( "Wire Agon GPIO pin 13 (task activity) "
                     "-> red LED+220ohm resistor -> GND\r\n" );
-    ( void )printf( "Wire GPIO pin 26 (idle activity) "
+    ( void )printf( "Wire Agon GPIO pin 26 (idle activity) "
                     "-> green LED+150ohm resistor -> GND\r\n" );
 
     ( void )printf( "Press 'ESC' key to exit test\r\n" );
-    kbmap = mos_getkbmap( );  // only need do this once at startup
 
     // open GPIO:13 as an output, initial value 0
     res = gpio_open( GPIO_13, DEV_MODE_GPIO_OUT, 0 );
@@ -601,40 +601,38 @@ static void doUARTRxTxTest( void )
 }
 
 
-/* doXonXoffTest
+/* doUARTXonXoffTest
  *   Try out DEV API UART software flow control Xon / Xoff
  *   Connect UART1 Tx pin 17 to remote (CP2102) Rx, 
  *     and Rx pin 18 to remote Tx
  *   Open UART1 using DEV_MODE_UART_SW_FLOWCONTROL
  *   Agon to receive a file larger than configDRV_UART_BUFFER_SZ
 */
-static void doXonXoffTest( void )
+static void doUARTXonXoffTest( void )
 {
     UART_PARAMS const uparm =
         { UART_BAUD_9600, UART_DATABITS_8, UART_STOPBITS_1, UART_PARITY_NONE };
     int const escbyte =((( 113 - 1 )& 0xF8 )>> 3 );
     int const escbit =  (( 113 - 1 )& 0x07 );
-    KEYMAP *kbmap;
+    KEYMAP * const kbmap = mos_getkbmap( );  // only need do this once at startup
     POSIX_ERRNO res;
     char b[ 32 ];
     int i, j;
 
     ( void )printf( "\r\n\r\nRunning UART Xon / Xoff test\r\n" );
-
-    ( void )printf( "Wire UART1 tx pin 17 to remote Rx, "
-                    "and rx pin 18 to remote Tx\r\n" );
-    ( void )printf( "Wire GPIO pin 13 (task activity) "
+    ( void )printf( "Crosswire Agon UART1 TxD pin 17 to remote RxD, "
+                    "and RxD pin 18 to remote TxD\r\n" );
+    ( void )printf( "Wire Agon GPIO pin 13 (task activity) "
                     "-> red LED+220ohm resistor -> GND\r\n" );
-    ( void )printf( "Wire GPIO pin 26 (idle activity) "
+    ( void )printf( "Wire Agon GPIO pin 26 (idle activity) "
                     "-> green LED+150ohm resistor -> GND\r\n" );
 
     ( void )printf( "Press 'ESC' key to exit test\r\n" );
-    kbmap = mos_getkbmap( );  // only need do this once at startup
 
     // open GPIO:13 as an output, initial value 0
     ( void )gpio_open( GPIO_13, DEV_MODE_GPIO_OUT, 0 );
 
-    // software flow control
+    // Xon/Xoff software flow control
     res = uart_open( DEV_MODE_UART_SW_FLOWCONTROL, &uparm );
     ( void )printf( "uart_open returns : %d\r\n", res );
 
@@ -652,6 +650,88 @@ static void doXonXoffTest( void )
         ( void )printf( "uart_read( ) [[" );
         res = uart_read( &b, 16 );
 //        _printb( );
+        ( void )printf( "]] res = 0x%x\r\n", res );
+        ( void )printf( "buf = (" );
+        for( j=0; 16 > j; j++ ) printf( "0x%x ",( unsigned char )( b[ j ]));
+        ( void )printf( ")\r\n" );
+
+        /* scan keyboard for ESC */
+        if((( char* )kbmap )[ escbyte ]&( 1 << escbit ))
+        {
+            break;
+        }
+    }
+
+    ( void )printf( "uart_close\r\n" );
+    uart_close( );
+    ( void )printf( "gpio_close\r\n" );
+    gpio_close( GPIO_13 );
+}
+
+
+/* doUARTRtsCtsTest
+ *   Try out DEV API UART software flow control RTS / CTS
+ *   The CP2102 USB-UART bridge is wired (to present the host PC) as a DTE.
+ *     So NULL modem wiring between the CP2102 and the Agon (a DTE):
+ *       Connect Agon UART1 Tx pin 17 to CP2102 Rx, 
+ *       Connect Agon UART1 Rx pin 18 to CP2102 Tx
+ *       Connect Agon UART1 RTS pin 19 to CP2102 CTS
+ *       Connect Agon UART1 CTS pin 17 to CP2102 RTS
+ *   Open UART1 using DEV_MODE_UART_HALF_NULL_MODEM.
+ *   Agon to receive a file larger than configDRV_UART_BUFFER_SZ
+ *   Send a string or receive remote end data (and display it)
+*/
+static void doUARTRtsCtsTest( void )
+{
+    UART_PARAMS const uparm =
+        { UART_BAUD_9600, UART_DATABITS_8, UART_STOPBITS_1, UART_PARITY_NONE };
+    int const escbyte =((( 113 - 1 )& 0xF8 )>> 3 );
+    int const escbit =  (( 113 - 1 )& 0x07 );
+    KEYMAP * const kbmap = mos_getkbmap( );  // only need do this once at startup
+    POSIX_ERRNO res;
+    char b[ 32 ];
+    int i, j;
+
+    ( void )printf( "\r\n\r\nRunning UART Half Duplex Null Modem RTS / CTS test\r\n" );
+
+    ( void )printf( "Crosswire Agon UART1 TxD pin 17 to remote RxD, "
+                     "and RxD pin 18 to remote TxD\r\n" );
+    ( void )printf( "Crosswire Agon RTS pin 19 to remote CTS, "
+                     "and CTS pin 20 to remote RTS\r\n" );
+    ( void )printf( "Wire Agon GPIO pin 13 (task activity) "
+                    "-> red LED+220ohm resistor -> GND\r\n" );
+    ( void )printf( "Wire Agon GPIO pin 26 (idle activity) "
+                    "-> green LED+150ohm resistor -> GND\r\n" );
+    ( void )printf( "Press 'ESC' key to exit test\r\n" );
+
+    // open GPIO:13 as an output, initial value 0
+    res = gpio_open( GPIO_13, DEV_MODE_GPIO_OUT, 0 );
+    ( void )printf( "gpio_open(13) output returns : %d\r\n", res );
+
+    // hardware flow control (cross-wired NULL Modem RTS-CTS)
+    res = uart_open( DEV_MODE_UART_HALF_NULL_MODEM, &uparm );
+    ( void )printf( "uart_open( ) returns : %d\r\n", res );
+
+    for( i = 1; ; i = 1 - i )
+    {
+        ( void )gpio_write( GPIO_13, i );  // toggle pin 13 (LED)
+#if 1
+        if( i )
+        {
+            ( void )printf( "uart_write( \"Hello\") [[" );
+            res = uart_write( "Hello ", 6 );
+        }
+        else
+        {    
+            ( void )printf( "uart_write( \"Agon\") [[" );
+            res = uart_write( "Agon ", 5 );
+        }
+        ( void )printf( "]] res = 0x%x\r\n", res );
+#endif
+        
+        for( j=0; sizeof( b )> j; j++ ) b[ j ]= 0;  // empty b
+        ( void )printf( "uart_read( ) [[" );
+        res = uart_read( &b, 16 );
         ( void )printf( "]] res = 0x%x\r\n", res );
         ( void )printf( "buf = (" );
         for( j=0; 16 > j; j++ ) printf( "0x%x ",( unsigned char )( b[ j ]));
@@ -709,7 +789,7 @@ void Task1( void *pvParameters )
 /* vApplicationIdleHook
  *   Runs in context of the idle task.
  *   DO NOT call a BLOCKING function from within the IDLE task;
- *   IDLE must always be in either the READY or the RUN state, and no other. 
+ *    IDLE must always be in either the READY or the RUN state, and no other. 
  *   Typically used to do a heartbeat LED.
 */
 #pragma asm "\tSEGMENT TASKS"
@@ -732,6 +812,10 @@ void vApplicationIdleHook( void )
         ( void )gpio_write( GPIO_26, led );
     }
     
-    /* check UART Xon/Xoff condition */
-    uart_rxXonXoff( );    
+    /* manage UART Xon/Xoff or RTS/CTS flow control */
+    portENTER_CRITICAL( );
+    {
+       uart_rxFlowControl( );    
+    }
+    portEXIT_CRITICAL( );
 }

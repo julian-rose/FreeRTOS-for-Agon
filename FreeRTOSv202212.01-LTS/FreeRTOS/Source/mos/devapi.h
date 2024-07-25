@@ -178,6 +178,7 @@ typedef enum _dev_mode
     DEV_MODE_UART_FULL_MODEM      =( 0x08 << 5 ), // DTE<->DCE RTS/CTS DTR/DSR hw flow control, straight-through
     DEV_MODE_UART_HALF_NULL_MODEM =( 0x14 << 5 ), // DTE<->DTE RTS/CTS hw flow control, cross-over wiring
     DEV_MODE_UART_FULL_NULL_MODEM =( 0x18 << 5 ), // DTE<->DTE RTS/CTS DTR/DSR hw flow control, cross-over
+    DEV_MODE_UART_NULL_MODEM_MASK =( 0x10 << 5 ), // DTE<->DTE RTS/CTS hw flow control, cross-over
     DEV_MODE_UART_MASK            =( 0x1f << 5 ),
 
     /* I2C modes */
@@ -545,12 +546,12 @@ POSIX_ERRNO uart_poll(
             );
 
 
-/* uartRxXonXoff
-     Manage Receiver-side Xon / Xoff for software flow control.
+/* uart_rxFlowControl
+     Manage Receiver-side Xon/Xoff software or RTS/CTS hardware flow control.
      Not a formal interrupt routine, but to be called by either (best) the tick 
      ISR, or (second best) the Idle Task.
      Defined in devuart.c */
-void uart_rxXonXoff( void );
+void uart_rxFlowControl( void );
 
 
 #endif /* DEVAPI_H */
