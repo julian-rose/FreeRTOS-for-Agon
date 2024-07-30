@@ -178,16 +178,17 @@ typedef enum _dev_mode
     DEV_MODE_UART_FULL_MODEM      =( 0x08 << 5 ), // DTE<->DCE RTS/CTS DTR/DSR hw flow control, straight-through
     DEV_MODE_UART_HALF_NULL_MODEM =( 0x14 << 5 ), // DTE<->DTE RTS/CTS hw flow control, cross-over wiring
     DEV_MODE_UART_FULL_NULL_MODEM =( 0x18 << 5 ), // DTE<->DTE RTS/CTS DTR/DSR hw flow control, cross-over
-    DEV_MODE_UART_NULL_MODEM_MASK =( 0x10 << 5 ), // DTE<->DTE RTS/CTS hw flow control, cross-over
-    DEV_MODE_UART_MASK            =( 0x1f << 5 ),
+    DEV_MODE_UART_NULL_MODEM_MASK =( 0x10 << 5 ),
+    DEV_MODE_UART_LOOPBACK        =( 0x20 << 5 ), // DTE<> loopback, no flow control
+    DEV_MODE_UART_MASK            =( 0x2f << 5 ),
 
     /* I2C modes */
-    DEV_MODE_I2C_DEFAULT          =( 0x1 << 10 ),
-    DEV_MODE_I2C_MASK             =( 0x1 << 10 ),
+    DEV_MODE_I2C_DEFAULT          =( 0x1 << 11 ),
+    DEV_MODE_I2C_MASK             =( 0x1 << 11 ),
 
     /* SPI modes */
-    DEV_MODE_SPI_DEFAULT          =( 0x1 << 11 ),
-    DEV_MODE_SPI_MASK             =( 0x1 << 11 ),
+    DEV_MODE_SPI_DEFAULT          =( 0x1 << 12 ),
+    DEV_MODE_SPI_MASK             =( 0x1 << 12 ),
 
 } DEV_MODE;
 
@@ -222,6 +223,20 @@ typedef enum _gpio_pin_num
 } GPIO_PIN_NUM;
 
 #define NUM_PINS_GPIO ( GPIO_26 - GPIO_13 + 1 )
+
+
+typedef enum _dev_ioctl
+{
+    DEV_IOCTL_NULL = 0,
+    
+    DEV_IOCTL_UART_EXEC_RX_FLOW_CONTROL = 1,
+    DEV_IOCTL_UART_WRITE_MODEM          = 2,
+    DEV_IOCTL_UART_SET_DTR              = 3,
+    DEV_IOCTL_UART_GET_DSR              = 4,
+    DEV_IOCTL_UART_GET_DCD              = 5,
+    DEV_IOCTL_UART_GET_RI               = 6
+
+} DEV_IOCTL;
 
 
 typedef enum _uart_baud_rate   // BRG = 18,432,000 /( 16 * BAUD )
@@ -328,6 +343,20 @@ typedef struct _uart_params      // UART descriptor
     UART_PARITY_BIT  parity;     // parity bit per character
 
 } UART_PARAMS;
+
+
+typedef struct _uart_mode_status // Modem (DCE) state descriptor
+{                                //      Agon = DTE
+    unsigned char ri : 1;        // DCE->Agon Ring Indication (signal high)
+    unsigned char dcd: 1;        // DCE->Agon Data Carrier Detect (Remote connected)
+    unsigned char dsr: 1;        // DCE->Agon Data Set Ready (Modem ready)
+    unsigned char dtr: 1;        // DCE<-Agon Data Terminal Ready (Agon ready)
+    unsigned char cts: 1;        // DCE->Agon Clear To Send (Remote ready)
+    unsigned char rts: 1;        // DCE<-Agon Request To Send (Agon write request)
+    unsigned char rxd: 1;        // DCE->Agon Receive Data stream (remote to Agon)
+    unsigned char txd: 1;        // DCE<-Agon Transmit Data stream (Agon to remote)
+    
+} UART_MODEM_STATUS;
 
 
 /*----- Function Declarations -----------------------------------------------*/
@@ -452,7 +481,6 @@ POSIX_ERRNO spi_write(
 POSIX_ERRNO uart_open( 
                 DEV_MODE const mode,
                 UART_PARAMS const * params
-                //TIMEOUT
             );
 
 
@@ -538,20 +566,27 @@ POSIX_ERRNO uart_putch(
 
 
     /* DEV_API: uart_poll
-       Poll previously opened UART1
+       Poll previously opened UART1.
+       Any of the parameters can be a buffer of designated type or NULL.
        Defined in devapi.c */
 POSIX_ERRNO uart_poll(
-                size_t * num_bytes_to_read,    // content of uart input buffer
-                size_t * num_bytes_to_write    // free space in uart output buffer
+                size_t * num_bytes_to_read,     // input buffer ready
+                size_t * num_bytes_to_write,    // output buffer free space
+                UART_MODEM_STATUS *modem_status // modem activity
             );
 
 
-/* uart_rxFlowControl
-     Manage Receiver-side Xon/Xoff software or RTS/CTS hardware flow control.
-     Not a formal interrupt routine, but to be called by either (best) the tick 
-     ISR, or (second best) the Idle Task.
-     Defined in devuart.c */
-void uart_rxFlowControl( void );
+    /* DEV_API: uart_ioctl
+       Perform an IO Control function on previously opened UART1
+       I/O operations can be one of three types:
+         Executive - in which param is generally NULL
+         Set - in which param is an input
+         Get - in which param is an output
+       Defined in devapi.c */
+POSIX_ERRNO uart_ioctl( 
+                DEV_IOCTL const cmd,
+                void * const param
+            );
 
 
 #endif /* DEVAPI_H */

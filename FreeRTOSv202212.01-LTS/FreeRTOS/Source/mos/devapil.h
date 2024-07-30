@@ -244,14 +244,15 @@ typedef enum _uart_errno
     UART_ERRNO_USRBASE            = 0x11, // The error code base value for user applications
 
     UART_ERRNO_RX_DATA_READY      = 0x11, // LSR.DR indicated
-    UART_ERRNO_CTS_LOST           = 0x12, // MSR.CTS indicated
-    UART_ERRNO_CTS_FOUND          = 0x13,
-    UART_ERRNO_DSR_LOST           = 0x14, // MSR.DSR indicated
-    UART_ERRNO_DSR_FOUND          = 0x15,
-    UART_ERRNO_DCD_LOST           = 0x16, // MSR.DCD indicated
-    UART_ERRNO_DCD_FOUND          = 0x17,
-    UART_ERRNO_RI_HANGUP          = 0x18, // MSR.RI indicated
-    UART_ERRNO_RI_CALL            = 0x19
+    UART_ERRNO_CTS_LOST           = 0x12, // MSR.CTS indication
+    UART_ERRNO_CTS_FOUND          = 0x13, //    "
+    UART_ERRNO_DSR_LOST           = 0x14, // MSR.DSR indication
+    UART_ERRNO_DSR_FOUND          = 0x15, //    "
+    UART_ERRNO_DCD_LOST           = 0x16, // MSR.DCD indication
+    UART_ERRNO_DCD_FOUND          = 0x17, //    "
+    UART_ERRNO_RI_CALLING         = 0x18, // MSR.RI indication (low-level)
+      // Note we cannot indicate higher values (1 << UART_ERRNO)
+    UART_ERRNO_RI_SILENT          = 0x19  //    "              (high-level)
 
 } UART_ERRNO;
 
@@ -419,8 +420,8 @@ extern POSIX_ERRNO spi_dev_write(
 /* uart_dev_open
    Device-specific uart1 open function device configuration */
 extern POSIX_ERRNO uart_dev_open(
-                       DEV_MODE const mode,
-                       UART_PARAMS const * params
+                       DEV_MODE const mode,              // IN
+                       UART_PARAMS const * params        // IN
                    );
 
 /* uart_dev_close
@@ -445,6 +446,22 @@ extern POSIX_ERRNO uart_dev_write(
                        size_t const num_bytes_to_write,  // IN
                        size_t * num_bytes_written,       // OUT
                        POSIX_ERRNO *result               // OUT
+                   );
+
+/* uart_dev_poll
+   Device-specific UART1 poll function */
+extern POSIX_ERRNO uart_dev_poll( 
+                       size_t * num_tx_bytes_buffered,   // OUT
+                       size_t * num_rx_bytes_buffered,   // OUT
+                       UART_MODEM_STATUS *modem_status   // OUT
+                   );
+
+
+/* uart_dev_ioctl
+   Device-specific UART1 ioctl function */
+extern POSIX_ERRNO uart_dev_ioctl( 
+                       DEV_IOCTL const cmd,             // IN
+                       void * param                     // IN/OUT
                    );
 
 
@@ -500,8 +517,23 @@ extern POSIX_ERRNO dev_write(
 extern POSIX_ERRNO dev_poll( 
                        DEV_NUM_MAJOR const major,
                        unsigned short const minor,
-                       size_t * num_bytes_buffered,    // content of uart input buffer
-                       size_t * num_bytes_free         // free space in uart output buffer
+                       size_t * num_bytes_buffered,  // write buffer status
+                       size_t * num_bytes_free,      // read buffer status
+                       void * status                 // general status word
+                   );
+
+
+/* dev_ioctl
+   Perform an I/O Operation on a previously opened device
+   I/O operations can be one of three types:
+     Executive - in which param is generally NULL
+     Set - in which param is an input
+     Get - in which param is an output */
+extern POSIX_ERRNO dev_ioctl( 
+                       DEV_NUM_MAJOR const major,
+                       unsigned short const minor,
+                       DEV_IOCTL const cmd,          // operation to perform
+                       void * param                  // operation arguments
                    );
 
 

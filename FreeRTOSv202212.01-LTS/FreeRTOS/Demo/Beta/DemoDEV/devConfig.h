@@ -104,7 +104,7 @@
                                       bytes in size.
                                       Values in range 16..1024
      configDRV_UART_UNBUFFERED_DELAY  uart_read and uart_write timeout in ticks
-                                      before returning incomplete.
+                                      before returning incomplete.transaction.
                                       uart_read_buffered and uart_write_buffered
                                       always return without waiting.
                                       Values in range 0..portMAX_DELAY

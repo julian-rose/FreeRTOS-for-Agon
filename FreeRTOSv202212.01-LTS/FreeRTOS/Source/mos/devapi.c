@@ -249,14 +249,13 @@ static POSIX_ERRNO pins_alloc(
             {
                 PIN_NUM end;
             
-                if(( DEV_MODE_UART_HALF_NULL_MODEM & mode )||
-                   ( DEV_MODE_UART_HALF_MODEM & mode ))
+                if( DEV_MODE_UART_HALF_MODEM & mode )  // HALF or HALF_NULL
                 {
                     end = UART_1_CTS;
                 }
                 else
-                if(( DEV_MODE_UART_FULL_NULL_MODEM & mode )||
-                   ( DEV_MODE_UART_FULL_MODEM & mode ))
+                if(( DEV_MODE_UART_FULL_MODEM & mode )||  // FULL or FULL_NULL
+                   ( DEV_MODE_UART_LOOPBACK & mode ))
                 {
                     end = UART_1_RI;
                 }
@@ -264,7 +263,6 @@ static POSIX_ERRNO pins_alloc(
                 {
                     end = UART_1_RXD;
                 }
-printf( "devapi.c : %d : end = %d\r\n", __LINE__, end );
 
                 for( i = UART_1_TXD; end >= i; i++ )
                 {
@@ -285,7 +283,6 @@ printf( "devapi.c : %d : end = %d\r\n", __LINE__, end );
 
                         pinstate[ mnri ]= PIN_STATE_INUSE;
                         pinmode[ mnri ]= mode;
-printf( "devapi.c : %d : pinmode[ %d ]= %d\r\n", __LINE__, mnri, mode );
                     }
                 }
             }
@@ -379,14 +376,13 @@ static POSIX_ERRNO pins_free(
             {
                 PIN_NUM end;
 
-                if(( DEV_MODE_UART_FULL_NULL_MODEM & pinmode[ UART_1_DTR - PIN_NUM_START ])||
-                   ( DEV_MODE_UART_FULL_MODEM & pinmode[ UART_1_DTR - PIN_NUM_START ]))
+                if(( DEV_MODE_UART_FULL_MODEM & pinmode[ UART_1_DTR - PIN_NUM_START ])||  // FULL or FULL_NULL
+                   ( DEV_MODE_UART_LOOPBACK & pinmode[ UART_1_DTR - PIN_NUM_START ]))
                 {
                     end = UART_1_RI;
                 }
                 else
-                if(( DEV_MODE_UART_HALF_NULL_MODEM & pinmode[ UART_1_RTS - PIN_NUM_START ])||
-                   ( DEV_MODE_UART_HALF_MODEM & pinmode[ UART_1_RTS - PIN_NUM_START ]))
+                if( DEV_MODE_UART_HALF_MODEM & pinmode[ UART_1_RTS - PIN_NUM_START ]) // HALF or HALF_NULL
                 {
                     end = UART_1_CTS;
                 }
@@ -840,11 +836,198 @@ static POSIX_ERRNO dev_write(
 static POSIX_ERRNO dev_poll( 
                        DEV_NUM_MAJOR const major,
                        unsigned short const minor,
-                       size_t * num_bytes_buffered,    // content of uart input buffer
-                       size_t * num_bytes_free         // free space in uart output buffer
+                       size_t * num_tx_bytes_buffered,  // write buffer status
+                       size_t * num_rx_bytes_buffered,  // read buffer status
+                       void * status                    // general status word
                    )
 {
-    return( POSIX_ERRNO_ENONE );
+    POSIX_ERRNO ret = POSIX_ERRNO_ENONE;
+
+    switch( major )
+    {
+        case DEV_NUM_GPIO:
+        {
+            if(( GPIO_13 > minor )||( GPIO_26 < minor ))
+            {
+                ret = POSIX_ERRNO_ENODEV;
+            }
+            else
+            if( GPIO_25 == minor )   // PB2 (cannot be assigned due to MOS SPI software)
+            {
+                ret = POSIX_ERRNO_EADDRINUSE;
+            }
+            else
+            if( DEV_MODE_UNBUFFERED == pinmode[( minor - PIN_NUM_START )])
+            {
+                ret = POSIX_ERRNO_ENSRCH;
+            }
+            else
+            {
+                if( num_tx_bytes_buffered ) *num_tx_bytes_buffered = 0;
+                if( num_rx_bytes_buffered ) *num_rx_bytes_buffered = 0;
+                if( status ) *status = 0;
+            }
+        }
+        break;
+
+        case DEV_NUM_UART:
+        {
+            if( DEV_MODE_UNBUFFERED == pinmode[( UART_1_TXD - PIN_NUM_START )])
+            {
+                ret = POSIX_ERRNO_ENSRCH;
+            }
+            else
+            if( 1 != minor ))
+            {
+                ret = POSIX_ERRNO_ENODEV;
+            }
+            else
+            {
+                ret = uart_dev_poll(
+                          num_tx_bytes_buffered,   // write buffer status
+                          num_tx_bytes_buffered,  // read buffer status
+                          status               // general status word
+                );
+            }
+        }
+        break;
+
+        case DEV_NUM_SPI:
+        {
+            if( DEV_MODE_UNBUFFERED == pinmode[( SPI_SS - PIN_NUM_START )])
+            {
+                ret = POSIX_ERRNO_ENSRCH;
+            }
+            else
+            {
+                if( num_tx_bytes_buffered ) *num_tx_bytes_buffered = 0;
+                if( num_rx_bytes_buffered ) *num_rx_bytes_buffered = 0;
+                if( status ) *status = 0;
+            }
+        }
+        break;
+
+        case DEV_NUM_I2C:
+        {
+            if( DEV_MODE_UNBUFFERED == pinmode[( I2C_SDA - PIN_NUM_START )])
+            {
+                ret = POSIX_ERRNO_ENSRCH;
+            }
+            else
+            {
+                if( num_tx_bytes_buffered ) *num_tx_bytes_buffered = 0;
+                if( num_rx_bytes_buffered ) *num_rx_bytes_buffered = 0;
+                if( status ) *status = 0;
+            }
+        }
+        break;
+
+        default:
+        {
+            ret = POSIX_ERRNO_ENODEV;
+        }
+        break;
+    }
+
+    return( ret );
+}
+
+
+/* dev_ioctl
+   Perform an I/O control operation on a previously opened device
+     I/O operations can be one of three types:
+       Executive - in which param is generally NULL
+       Set - in which param is an input
+       Get - in which param is an output */
+static POSIX_ERRNO dev_ioctl( 
+                       DEV_NUM_MAJOR const major,
+                       unsigned short const minor,
+                       DEV_IOCTL const cmd,          // operation to perform
+                       void * param                  // operation arguments
+                   )
+{
+    POSIX_ERRNO ret = POSIX_ERRNO_ENONE;
+
+    switch( major )
+    {
+        case DEV_NUM_GPIO:
+        {
+            if(( GPIO_13 > minor )||( GPIO_26 < minor ))
+            {
+                ret = POSIX_ERRNO_ENODEV;
+            }
+            else
+            if( GPIO_25 == minor )   // PB2 (cannot be assigned due to MOS SPI software)
+            {
+                ret = POSIX_ERRNO_EADDRINUSE;
+            }
+            else
+            if( DEV_MODE_UNBUFFERED == pinmode[( minor - PIN_NUM_START )])
+            {
+                ret = POSIX_ERRNO_ENSRCH;
+            }
+            else
+            {
+                ret = POSIX_ERRNO_EIO;
+            }
+        }
+        break;
+
+        case DEV_NUM_UART:
+        {
+            if( DEV_MODE_UNBUFFERED == pinmode[( UART_1_TXD - PIN_NUM_START )])
+            {
+                ret = POSIX_ERRNO_ENSRCH;
+            }
+            else
+            if( 1 != minor ))
+            {
+                ret = POSIX_ERRNO_ENODEV;
+            }
+            else
+            {
+                ret = uart_dev_ioctl(
+                          cmd,
+                          param
+                );
+            }
+        }
+        break;
+
+        case DEV_NUM_SPI:
+        {
+            if( DEV_MODE_UNBUFFERED == pinmode[( SPI_SS - PIN_NUM_START )])
+            {
+                ret = POSIX_ERRNO_ENSRCH;
+            }
+            else
+            {
+                ret = POSIX_ERRNO_EIO;
+            }
+        }
+        break;
+
+        case DEV_NUM_I2C:
+        {
+            if( DEV_MODE_UNBUFFERED == pinmode[( I2C_SDA - PIN_NUM_START )])
+            {
+                ret = POSIX_ERRNO_ENSRCH;
+            }
+            else
+            {
+                ret = POSIX_ERRNO_EIO;
+            }
+        }
+        break;
+
+        default:
+        {
+            ret = POSIX_ERRNO_ENODEV;
+        }
+        break;
+    }
+
+    return( ret );
 }
 
 #endif  /*( 1 == configUSE_DEV_SAFEGUARDS )*/
@@ -1130,6 +1313,7 @@ POSIX_ERRNO uart_open(
         case DEV_MODE_UART_HALF_NULL_MODEM :
         case DEV_MODE_UART_FULL_MODEM :
         case DEV_MODE_UART_FULL_NULL_MODEM :
+        case DEV_MODE_UART_LOOPBACK :
         {
 #           if( 1 == configUSE_DEV_SAFEGUARDS )
             {
@@ -1350,14 +1534,63 @@ POSIX_ERRNO uart_putch(
 }
 
 
-
 /* DEV_API: uart_poll
    Poll previously opened UART1 */
 POSIX_ERRNO uart_poll(
-                size_t * num_bytes_to_read,    // content of uart input buffer
-                size_t * num_bytes_to_write    // free space in uart output buffer
+                size_t * num_tx_bytes_buffered,  // write buffer status
+                size_t * num_rx_bytes_buffered,  // read buffer status
+                UART_MODEM_STATUS *modem_status  // modem activity
             )
 {
-    return( POSIX_ERRNO_ENONE );
+    POSIX_ERRNO ret;
+
+#   if( 1 == configUSE_DEV_SAFEGUARDS )
+    {
+        ret = dev_poll( 
+                  DEV_NUM_UART, 1, 
+                  num_tx_bytes_buffered,
+                  num_rx_bytes_buffered,
+                  modem_status
+                  );
+    }
+#   else
+    {
+        ret = uart_dev_poll(
+                  num_tx_bytes_buffered,
+                  num_rx_bytes_buffered,
+                  modem_status
+                  );
+    }
+#   endif
+    
+    return( ret );
 }
+
+
+/* DEV_API: uart_ioctl
+       Perform an IO Control function on previously opened UART1 */
+POSIX_ERRNO uart_ioctl(
+                DEV_IOCTL const cmd,
+                void * param
+            )
+{
+    POSIX_ERRNO ret;
+
+#   if( 1 == configUSE_DEV_SAFEGUARDS )
+    {
+        ret = dev_ioctl( 
+                  DEV_NUM_UART, 1, cmd, param
+                  );
+    }
+#   else
+    {
+        ret = uart_dev_ioctl(
+                  cmd, param
+                  );
+    }
+#   endif
+    
+    return( ret );
+}
+
 #endif /* configUSE_DRV_UART */

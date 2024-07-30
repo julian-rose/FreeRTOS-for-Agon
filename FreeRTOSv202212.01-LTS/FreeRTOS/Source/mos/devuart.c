@@ -68,68 +68,57 @@
 
 
 /*---- Notes ----------------------------------------------------------------*/
-/* NOTE 1: DTE - MODEM wiring
+/* NOTE 1: Wiring Modes and Use Cases
  *
  * Refer to https://en.wikipedia.org/wiki/RS-232#3-wire_and_5-wire_RS-232 for
  *   DTE<->DCE "modem" wiring
- *     DTE is Data Terminal Equipment, "computer" (Agon), or target device
- *     DCE is Data Communication Equipment, "modem" or "wifi router"
+ *     DTE is Data Terminal Equipment: Agon, PC, or other end-point device
+ *     DCE is Data Communication Equipment, "bridge", "modem", "router", "switch"
  * And http://www.nullmodem.com/NullModem.htm for DTE<->DTE "NULL modem" wiring.
- *     Also https://en.wikipedia.org/wiki/Null_modem#Wiring_diagrams
+ * Also https://en.wikipedia.org/wiki/Null_modem#Wiring_diagrams
  *
- * DEV API can be opened any one of five modes, for a combination of:
- *    Non-blocking / Blocking with Straight-through / Cross-Over wiring
- *
- * Bitor DEV_MODE_UNBUFFERED for Blocking mode, or DEV_MODE_BUFFERED for 
- * Non-blocking mode, with one of the Straight-through / Cross-over modes 
- * as follows:
+ * DEV API can be opened any one of six modes, for a combination of:
+ *    Non-blocking / Blocking with Straight-through / Cross-Over wiring.
+ *    Each mode is bit-or'ed either with DEV_MODE_UNBUFFERED for task Blocking
+ *    mode, or with DEV_MODE_BUFFERED for task Non-blocking mode, as follows:
  *
  *    DEV_MODE_UART_NO_FLOWCONTROL
  *    DEV_MODE_UART_SW_FLOWCONTROL
- *      Use:
- *        'No Modem' direct DTE<->DTE signalling; low capacitance (short wires)
+ *      Use Case:
+ *        'No Modem' direct DTE<->DTE data transfer; low capacitance (short wires)
  *      Wiring: 
  *        DTE1.Tx  --> DTE2.Rx    cross-over
  *        DTE1.Rx  <-- DTE2.Tx
  *      Protocol:
+ *        There is no DTE-DTE set-up; rather DTEs are 'always on'. 
+ *        Transmission and Reception are not controlled by hardware status, and
+ *         are simultaneously possible. 
+ *        With DEV_MODE_UART_NO_FLOWCONTROL, there are no end-to-end flow
+ *         control command bytes. This incurs zero overhead, but the receive
+ *         buffer may overflow and lose data.
+ *        With DEV_MODE_UART_SW_FLOWCONTROL, Xon / Xoff flow control command 
+ *         bytes can be sent in-stream from either end to the other. These
+ *         are used to put the sender on pause to avoid buffer overflow. This
+ *         incurs overhead as the receiver has to parse every byte received,
+ *         but is less likely to result in data loss.
  *        UART1_MCTL is fixed at 0x00, with /RTS and /DTR de-asserted (high)
- *        Transmission and Reception are not controlled by hardware status.
- *        There should be no UART_IIR_MODEMSTAT events.
- *
- *    DEV_MODE_UART_HALF_MODEM
- *      Use:
- *        DTE<->DCE half-duplex signalling
- *      Wiring: 
- *        DTE1.Tx  --> DCE1.Tx
- *        DTE1.Rx  <-- DCE1.Rx
- *        DTE1.RTS --> DCE1.RTS   straight-through
- *        DTE1.CTS <-- DCE1.CTS
- *      Protocol:
- *        Transmission and Reception are mutually exclusive (half-duplex). 
- *        Reception is possible while /RTS is de-asserted (high).
- *        /RTS (Request To Send) shall be asserted (low) when the DTE is ready
- *          to TRANSMIT.
- *        Prior to transmission, /RTS must be asserted (low) and /CTS assertion 
- *          tested (low). 
- *        If during transmission /CTS becomes de-asserted (high), then 
- *          transmission must pause, and LCTL.SB set to indicate a break. 
- *          Once /CTS is re-asserted (low) SB shall be cleared and transmission 
- *          resumed.
- *          With ( 1 == configUSE_PREEMPTION ) configured in FreeRTOSConfig.h, 
- *          we could set a timeout on /CTS re-assertion, on which we abandon 
- *          the transmission.
- *        On transmission completion or abandon, /RTS must be de-asserted (high)
+ *         There should be no UART_IIR_MODEMSTAT events.
  *
  *    DEV_MODE_UART_HALF_NULL_MODEM 
- *      Use:
- *        DTE<->DTE half-duplex signalling
+ *      Use Case:
+ *        'No Modem' direct DTE<->DTE signalling; low capacitance (short wires)
  *      Wiring: 
  *        DTE1.Tx  --> DTE2.Rx 
  *        DTE1.Rx  <-- DTE2.Tx
  *        DTE1.RTS --> DTE2.CTS   cross-over
  *        DTE1.CTS <-- DTE2.RTS
  *      Protocol:
- *        Transmission and Reception are mutually exclusive (half-duplex). 
+ *        There is no DTE-DTE set-up; rather DTEs are 'always on'. 
+ *        Reception is always possible; transmission is by /RTS-/CTS handshake.
+ *        With DEV_MODE_UART_HALF_MODEM, hardware takes the place of in-stream
+ *         Xon / Xoff software command bytes. This exchanges the overhead of in-
+ *         stream data byte parsing for managing hardware signalling. The 
+ *         liklihood of data loss is comparable to that of Xon / Xoff.
  *        With crossover wiring /RTS shall be asserted (low) when the DTE is 
  *          Ready to RECEIVE. Think of it as Remote To Send..
  *        /RTS (Remote To Send) shall be de-asserted (high) when the DTE is 
@@ -143,52 +132,23 @@
  *        On transmission completion or abandon, /RTS must be asserted (low),
  *          so that reception remains possible.
  *
- *    DEV_MODE_UART_FULL_MODEM 
- *      Use:
- *        DTE<->DCE full-duplex signalling
- *      Wiring: 
- *        DTE1.Tx  --> DCE1.Tx
- *        DTE1.Rx  <-- DCE1.Rx
- *        DTE1.RTS --> DCE1.RTS   straight-through
- *        DTE1.CTS <-- DCE1.CTS
- *        DTE1.DTR --> DCE1.DTR
- *        DTE1.DSR <-- DCE1.DSR
- *        DTE1.DCD <-- DCE1.DCD
- *        DTE1.RI  <-- DCE1.RI
- *      Protocol:
- *        Transmission and Reception may be simultaneous (full-duplex). 
- *        /DTR shall be asserted (low) when the DTE is opened, and de-asserted
- *          when the DTE is closed
- *        Reception is possible with /RTS asserted (low) or de-asserted (high).
- *        /RTS (Request To Send) shall be asserted (low) when the DTE is ready
- *          to TRANSMIT.
- *        Prior to transmission, /RTS must be asserted (low) and /CTS assertion 
- *          tested (low). 
- *        If during transmission /CTS becomes de-asserted (high), then 
- *          transmission must pause, and LCTL.SB set to indicate a break. 
- *          Once /CTS is re-asserted (low) SB shall be cleared and transmission 
- *            resumed.
- *          With ( 1 == configUSE_PREEMPTION ) configured in FreeRTOSConfig.h, 
- *          we could set a timeout on /CTS re-assertion, on which we abandon 
- *          the transmission.
- *        If during transmission either /DCD or /DSR become de-asserted (high), 
- *          then transmission must be abandoned.
- *        On transmission completion or abandon, /RTS must be de-asserted (high).
- *
  *    DEV_MODE_UART_FULL_NULL_MODEM
- *      Use:
- *        DTE<->DTE full-duplex signalling
+ *      Use Case:
+ *        'No Modem' direct DTE<->DTE signalling; low capacitance (short wires)
  *      Wiring: 
  *        DTE1.Tx  --> DTE2.Rx
  *        DTE1.Rx  <-- DTE2.Tx
  *        DTE1.RTS --> DTE2.CTS   cross-over
  *        DTE1.CTS <-- DTE2.RTS
  *        DTE1.DTR --> DTE2.DCD
- *                 --> DTE2.DSR
+ *              '----> DTE2.DSR
  *        DTE1.DSR <-- DTE2.DTR
- *        DTE1.DCD <--
+ *        DTE1.DCD <----'
  *      Protocol:
- *        Transmission and Reception may be simultaneous (full-duplex). 
+ *        The DTE end-points handshake connection set-up and take-down through  
+ *         the additional /DTR, /DSR and /DCD wires; 'switched on'.
+ *        Once the connection is 'set-up', reception is always possible and
+ *         transmission is by /RTS-/CTS handshake.
  *        /DTR shall be asserted (low) when the DEV UART is opened, and de-
  *          asserted (high) when DEV UART is closed
  *        With crossover wiring /RTS shall be asserted (low) when the DTE is 
@@ -199,26 +159,136 @@
  *          transmission must pause, and LCTL.SB set to indicate a break. 
  *          Once /CTS is re-asserted (low) SB shall be cleared and transmission 
  *          resumed.
- *          With ( 1 == configUSE_PREEMPTION ) configured in FreeRTOSConfig.h, 
- *          we could set a timeout on /CTS re-assertion, on which we abandon 
- *          the transmission.
  *        If during transmission either /DCD or /DSR become de-asserted (high), 
  *          then transmission must be abandoned.
  *        On transmission completion or abandon, /RTS must be asserted (low)
  *
+ *
+ * NOTE 1a: DEV_MODE_UART_HALF_MODEM and DEV_MODE_UART_FULL_MODEM require
+ *          external "modem", "bridge", "router", or "switch" DCE. 
+ *          Note DEV UART does not emulate a modem.
+ *
+ * NOTE 1b: DEV_MODE_UART_HALF_MODEM has not been extensively tested, but 
+ *          functions exactly as per DEV_MODE_HALF_NULL_MODEM. 
+ *
+ *    DEV_MODE_UART_HALF_MODEM
+ *      Use Case:
+ *        Both DTE<->DCE and DTE<->DTE control flow signalling; long-distance 
+ *        wiring.
+ *      Wiring: 
+ *        DTE1.Tx  --> DCE1.Tx
+ *        DTE1.Rx  <-- DCE1.Rx
+ *        DTE1.RTS --> DCE1.RTS   straight-through
+ *        DTE1.CTS <-- DCE1.CTS
+ *      Protocol:
+ *        There is no DTE-DTE set-up; rather DTEs are 'always on'. (DTE knows
+ *         nothing about the connection state of the DCE 'modem', which may
+ *         be 'always on' or 'woken up'.)
+ *        Reception is always possible; transmission is by /RTS-/CTS handshake.
+ *        In addition to DTE endpoint /RTS - /CTS control-flow management, the 
+ *         'modems' or 'bridges' that sit in-between the DTE end-points may 
+ *         manage the control flow (by de-asserting /CTS) depending on signal 
+ *         quality, further reducing chance of data loss. 
+ *        /RTS (Request To Send) shall be asserted (low) when the DTE is ready
+ *          to TRANSMIT.
+ *        Prior to transmission, /RTS must be asserted (low) and /CTS assertion 
+ *          tested (low). 
+ *        If during transmission /CTS becomes de-asserted (high), then 
+ *          transmission must pause, and LCTL.SB set to indicate a break. 
+ *          Once /CTS is re-asserted (low) SB shall be cleared and transmission 
+ *          resumed.
+ *        On transmission completion or abandon, /RTS must be de-asserted (high)
+ *
+ *
+ * NOTE 1c: DEV_MODE_UART_FULL_MODEM has not been tested. This is the only
+ *          mode that requires application task involvement in UART signalling:
+ *          for connection set-up in a switched network (such as ATDT dialling).
+ *
+ *    DEV_MODE_UART_FULL_MODEM 
+ *      Use Case:
+ *        DTE<->DCE switching; and DTE<->DTE control flow signalling; long-
+ *        distance wiring.
+ *      Wiring: 
+ *        DTE1.Tx  --> DCE1.Tx
+ *        DTE1.Rx  <-- DCE1.Rx
+ *        DTE1.RTS --> DCE1.RTS   straight-through
+ *        DTE1.CTS <-- DCE1.CTS
+ *        DTE1.DTR --> DCE1.DTR
+ *        DTE1.DSR <-- DCE1.DSR
+ *        DTE1.DCD <-- DCE1.DCD
+ *        DTE1.RI  <-- DCE1.RI
+ *      Protocol:
+ *        The DTE handshakes connection set-up and take-down with its local DCE 
+ *         'modem' through the additional /DTR, /DSR, /DCD and /RI wires. This 
+ *         differs to the fixed point-to-point connection models of other modes
+ *         by allowing switched networks with multiple end-points. 
+ *        /DTR shall be asserted (low) when the DTE wishes to write or when an 
+ *         incoming /RI is indicated; either of which initiate 'call set-up'. 
+ *         /DTR shall be de-asserted on transmission end, or when one of /DSR 
+ *         or /DCD is de-asserted which initiate 'call take-down'.
+ *        Once a connection is set-up, reception is always possible; 
+ *         transmission is by handshake.
+ *        Reception is possible with /RTS asserted (low) or de-asserted (high).
+ *        /RTS (Request To Send) shall be asserted (low) when the DTE is ready
+ *          to TRANSMIT.
+ *        Prior to transmission, /RTS must be asserted (low) and /CTS assertion 
+ *          tested (low). 
+ *        If during transmission /CTS becomes de-asserted (high), then 
+ *          transmission must pause, and LCTL.SB set to indicate a break. 
+ *          Once /CTS is re-asserted (low) SB shall be cleared and transmission 
+ *            resumed.
+ *        If during transmission either /DCD or /DSR become de-asserted (high), 
+ *          then transmission must be abandoned.
+ *        On transmission completion or abandon, /RTS must be de-asserted (high).
+ *
+ * NOTE 1d: Connection set-up
+ *    Each 'Modem' defines its own connection setup language and protocol (such
+ *      as Hayes "AT" commands, or TCP/IP packets), so it is not practical to 
+ *      embed in DEV UART. Rather, DEV UART supports connection setup as 
+ *      follows:
+ *        1. uart_open in DEV_MODE_UART_FULL_MODEM (or DEV_MODE_UART_LOOPBACK)
+ *        2i. Initiate a connection:
+ *           a. uart_ioctl DEV_IOCTL_UART_WRITE_MODEM param=1
+ *           b. uart_ioctl DEV_IOCTL_UART_SET_DTR param=1
+ *           c. uart_ioctl DEV_IOCTL_UART_GET_DSR until param = 1
+ *           d. uart_write "connect request data" (iterate)
+ *           e. uart_read "modem confirmation data" (iterate)
+ *           f. uart_ioctl DEV_IOCTL_UART_GET_DCD until param = 1
+ *           g. uart_ioctl DEV_IOCTL_UART_WRITE_MODEM param=0
+ *        3. uart_read and uart_write the remote end-point
+ *        4. [optional] Drop the connection:
+ *           a. uart_ioctl DEV_IOCTL_UART_WRITE_MODEM param=1
+ *           b. uart_write "disconnect request data" (iterate)
+ *           c. uart_read "modem confirmation" (iterate)
+ *           d. uart_ioctl DEV_IOCTL_UART_WRITE_MODEM param=0
+ *        5. uart_close, which performs the following:
+ *           a. uart_ioctl DEV_IOCTL_UART_SET_DTR param=0
+ *           b. uart_ioctl DEV_IOCTL_UART_GET_DCD until param = 0
+ *           c. uart_ioctl DEV_IOCTL_UART_GET_DSR until param = 0
+ * 
+ *        2ii. Respond to a call:
+ *           a. uart_ioctl DEV_IOCTL_UART_GET_RI if param = 1
+ *           b. uart_ioctl DEV_IOCTL_UART_WRITE_MODEM param=1
+ *           c. uart_ioctl DEV_IOCTL_UART_SET_DTR param=1
+ *           d. uart_ioctl DEV_IOCTL_UART_GET_DSR until param = 1
+ *           e. uart_read "modem indication data" (iterate)
+ *           f. uart_write "connect response data" (iterate)
+ *           g. uart_ioctl DEV_IOCTL_UART_GET_DCD until param = 1
+ *           h. uart_ioctl DEV_IOCTL_UART_WRITE_MODEM param=0
+ *
  *-----------------------------------------------------------------------------
  * NOTE 2: eZ80 IIR handling
  *
- * If you mask out IER then the corresponding bits in IIR are cleared at the 
- *     same time. So, sadly, masking such as:
+ * If eZ80 IER is masked out then the corresponding bits in IIR are cleared at
+ *     the same time. So, sadly, masking such as:
  *         ier_mask = UART1_IER;
  *         UART1_IER = 0x0;  // mask off IER until IIR is processed
  *     is not possible. And if you exit an ISR with bits still set in IIR, then 
  *     the ISR will immediately re-enter. So, it is not possible to notify a 
- *     highest-priority task to run as an Interrupt Handler (such as below). 
- *     Instead, the handling must be done within the ISR context, which means 
- *     other interrupts are disabled for the duration of executing uartisr_1. 
- *     Sigh.* /
+ *     highest-priority task to run as an Interrupt Handler (such as follows). 
+ *     Instead, all interrupt handling must be done within the ISR context, 
+ *     which means other interrupts are disabled for the duration of executing 
+ *     uartisr_1. Sigh.
  *
  * #if( 1 == configUSE_PREEMPTION )
  *   static TaskHandle_t UartIsrHandlerTaskHandle = NULL;
@@ -291,17 +361,12 @@
  * #endif
  *
  *
- * uartisr_0 - address written into the interrupt vector table
+ * /* uartisr_0 - address written into the interrupt vector table
  *      Standard ISR reti epilogue * /
  * static void uartisr_0( void )
  * {
  *     BaseType_t __higherPriorityTaskWoken;
  *     
- * #   if defined( _DEBUG )
- *         _putchf( 'U' );
- * #   endif
- * 
- * 
  * #   if( 1 == configUSE_PREEMPTION )
  *     {
  *         __higherPriorityTaskWoken = pdFALSE;
@@ -327,14 +392,11 @@
  *     }
  * #   endif
  * 
- *     _putchf( 'W' );
- * 
  *     /* If __higherPriorityTaskWoken is now set to pdTRUE then a context 
  *        switch should be performed to ensure the interrupt returns directly 
  *        to the highest priority task. 
  *        This must be the last function before reti. Refer to port.c::timer_isr * /
  *     vPortYieldFromISR( __higherPriorityTaskWoken );
- *     _putchf( 'Z' );
  * 
  *     asm( "\t pop ix      ; epilogue, restore IX pushed in prolog");
  *     asm( "               ; like github.com/breakintoprogram/agon-mos/blob/main/src_startup/vectors16.asm" );
@@ -346,7 +408,7 @@
  * }
  *
  *-----------------------------------------------------------------------------
- * NOTE 3: DEV UART initial State design
+ * NOTE 3: initial DEV UART State design (details changed during implementation)
  *
  *   In UART_STATE_INITIAL we are not connected to the uart.
  *     On all interrupts:
@@ -439,6 +501,30 @@
 #define MINOR_NUM        ( UART_1_TXD - PIN_NUM_START )
 
 
+static unsigned short int const brg[ NUM_UART_BAUD ]=
+{           // Constants for BRG divisor computed at compile time
+    0x1E00, // UART_BAUD_150
+    0x0F00, // UART_BAUD_300
+    0x03C0, // UART_BAUD_1200
+    0x01E0, // UART_BAUD_2400
+    0x00F0, // UART_BAUD_4800
+    0x0078, // UART_BAUD_9600
+    0x0064, // UART_BAUD_11520
+    0x0050, // UART_BAUD_14400
+    0x003C, // UART_BAUD_19200
+    0x0028, // UART_BAUD_28800
+    0x001E, // UART_BAUD_38400
+    0x0014, // UART_BAUD_57600
+    0x000A, // UART_BAUD_115200
+    0x0008, // UART_BAUD_144000
+    0x0006, // UART_BAUD_192000
+    0x0004, // UART_BAUD_288000
+    0x0003, // UART_BAUD_384000
+    0x0002, // UART_BAUD_576000
+    0x0001  // UART_BAUD_1152000
+};
+
+
 #define CREATE_UART_TRANSACTION( _t, _tMode, _buf, _tSz, _bufSz, _bufResult )\
     ( _t ).mode =( _tMode ), \
     ( _t ).buf =( _buf ), \
@@ -471,28 +557,34 @@
 #endif
 
 
-static unsigned short int const brg[ NUM_UART_BAUD ]=
-{           // Constants for BRG divisor computed at compile time
-    0x1E00, // UART_BAUD_150
-    0x0F00, // UART_BAUD_300
-    0x03C0, // UART_BAUD_1200
-    0x01E0, // UART_BAUD_2400
-    0x00F0, // UART_BAUD_4800
-    0x0078, // UART_BAUD_9600
-    0x0064, // UART_BAUD_11520
-    0x0050, // UART_BAUD_14400
-    0x003C, // UART_BAUD_19200
-    0x0028, // UART_BAUD_28800
-    0x001E, // UART_BAUD_38400
-    0x0014, // UART_BAUD_57600
-    0x000A, // UART_BAUD_115200
-    0x0008, // UART_BAUD_144000
-    0x0006, // UART_BAUD_192000
-    0x0004, // UART_BAUD_288000
-    0x0003, // UART_BAUD_384000
-    0x0002, // UART_BAUD_576000
-    0x0001  // UART_BAUD_1152000
-};
+#define MODEM_TXD_OFF( )    modemStatus.txd = 0
+#define MODEM_TXD_ON( )     modemStatus.txd = 1
+#define MODEM_RXD_OFF( )    modemStatus.rxd = 0
+#define MODEM_RXD_ON( )     modemStatus.rxd = 1
+#define MODEM_RTS_OFF( )    modemStatus.rts = 0
+#define MODEM_RTS_ON( )     modemStatus.rts = 1
+#define MODEM_CTS_OFF( )    modemStatus.cts = 0
+#define MODEM_CTS_ON( )     modemStatus.cts = 1
+#define MODEM_DTR_OFF( )    modemStatus.dtr = 0
+#define MODEM_DTR_ON( )     modemStatus.dtr = 1
+#define MODEM_DSR_OFF( )    modemStatus.dsr = 0
+#define MODEM_DSR_ON( )     modemStatus.dsr = 1
+#define MODEM_DCD_OFF( )    modemStatus.dcd = 0
+#define MODEM_DCD_ON( )     modemStatus.dcd = 1
+#define MODEM_RI_OFF( )     modemStatus.ri = 0
+#define MODEM_RI_ON( )      modemStatus.ri = 1
+
+#define testCTS( ) \
+            ( UART1_MSR & UART_MSR_CTS )
+
+#define testDSR( ) \
+            ( UART1_MSR & UART_MSR_DCD )
+
+#define testDCD( ) \
+            ( UART1_MSR & UART_MSR_DCD )
+
+#define testRI( ) \
+            ( UART1_MSR & UART_MSR_RI )
 
 
 /*----- Enum Type Definitions -----------------------------------------------*/
@@ -509,7 +601,7 @@ typedef enum _uart_fifo_trigger_level
 typedef enum _uart_state
 {                        // UART connection and transaction states
     UART_STATE_INITIAL   =( 0<<0 ),  // before uart_open or after uart_close
-    UART_STATE_READY     =( 1<<0 ),  // within uart_open..uart_close
+    UART_STATE_READY     =( 1<<0 ),  // after uart_open and before uart_close
     UART_STATE_READ      =( 1<<1 ),  // read controls rx data byte storage
     UART_STATE_READLOCK  =( 1<<2 ),  // readlock ensures at most one reader
     UART_STATE_WRITE     =( 1<<3 ),  // write controls tx data operation
@@ -592,14 +684,13 @@ static SemaphoreHandle_t uartRxSemaphore = NULL; // for non-buffered blocking-mo
 static SemaphoreHandle_t uartTxSemaphore = NULL; // for non-buffered blocking-mode user task
 
 static UART_STATE uartState = UART_STATE_INITIAL;
+static UART_MODEM_STATUS modemStatus ={ 0 };
+static _Bool connection_establishment = false;
 
 static UART_BUFFER txPrivBuf ={{ 0 }, 0, 0 };    // a linear buffer, tx to remote
 static UART_BUFFER rxPrivBuf ={{ 0 }, 0, 0 };    // a circular buffer, rx from remote
 static _Bool txPending = false;                  // Xon buffer tx side
 static _Bool rxPaused = false;                   // Xon buffer rx side
-
-static _Bool _fixup001 = false;                  // fixup for rare RTS/CTS behaviour
-
 
 static UART_TRANSACTION txTransact ={ 0, NULL, 0, 0, NULL, NULL };
 static UART_TRANSACTION rxTransact ={ 0, NULL, 0, 0, NULL, NULL };
@@ -610,6 +701,10 @@ static unsigned short uartRxEvent = 0;           // buffer for rx function resul
 static unsigned short uartTxEvent = 0;           // buffer for tx function results
 
 extern BaseType_t __higherPriorityTaskWoken;     // set in ISR to context-switch
+
+
+/*---- Private Function Declarations ----------------------------------------*/
+static void uart_rxFlowControl( void );
 
 
 /*----- Private init functions ----------------------------------------------*/
@@ -652,46 +747,92 @@ static POSIX_ERRNO initialiseUartSemaphore( SemaphoreHandle_t * const s )
 
 
 /*------ Private Modem Functions --------------------------------------------*/
-/* assertDTR
-     set /DTR output to its 'true' value, that is value 0
+/* DTRready
+     Set /DTR output to its 'asserted' value, that is value 0.
+     Only used in FULL (or FULL_NULL, or Loopback) wiring.
 */
-static void assertDTR( void )
+static void DTRready( void )
 {
     DEV_MODE const wiring = pinmode[ MINOR_NUM ];
+    unsigned char const mlo =
+        ( UART_MCTL_LOOP | UART_MCTL_OUT1 | UART_MCTL_OUT2 );
     unsigned char v;
 
-    /* check if we're using full modem (null or straight-through) hardware flow 
-       control */
-_putchf( 'm' );
-    if( DEV_MODE_UART_FULL_MODEM & wiring )  // FULL or FULL_NULL
+//_putchf( 'h' );
+    if(( DEV_MODE_UART_FULL_MODEM & wiring )||  // FULL or FULL_NULL MODEM
+       ( DEV_MODE_UART_LOOPBACK == wiring ))
     {
-_putchf( '1' );
-        v = UART1_MCTL;
-        v &= UART_MCTL_RTS;      // leave exactly RTS intact
-        v |= UART_MCTL_DTR;      // set /DTR
-        UART1_MCTL = v;
+//_putchf( '1' );
+        v = UART1_MCTL &( mlo | UART_MCTL_RTS );   // leave /RTS intact
+        UART1_MCTL =( v | UART_MCTL_DTR );         // set /DTR
+        MODEM_DTR_ON( );
     }
 }
 
 
-/* deassertDTR
-     de-assert /DTR output to its 'false' value, that is value 1
+/* DTRnotReady
+     Set /DTR output to its 'de-asserted' value, that is value 1.
+     Only used in FULL (or FULL_NULL, or Loopback) wiring
 */
-static void deassertDTR( void )
+static void DTRnotReady( void )
 {
     DEV_MODE const wiring = pinmode[ MINOR_NUM ];
+    unsigned char const mlo =
+        ( UART_MCTL_LOOP | UART_MCTL_OUT1 | UART_MCTL_OUT2 );
     unsigned char v;
 
-    /* check if we're using full modem (null or straight-through) hardware flow 
-       control */
-_putchf( 'n' );
-    if( DEV_MODE_UART_FULL_MODEM & wiring )  // FULL or FULL_NULL
+//_putchf( 'i' );
+    if(( DEV_MODE_UART_FULL_MODEM & wiring )||  // FULL or FULL_NULL MODEM
+       ( DEV_MODE_UART_LOOPBACK == wiring ))
     {
-_putchf( '1' );
-        v = UART1_MCTL;
-        v &= UART_MCTL_RTS;      // leave exactly RTS intact
-        UART1_MCTL = v;          // clear UART_MCTL_DTR
+//_putchf( '1' );
+        v = UART1_MCTL &( mlo | UART_MCTL_RTS );   // leave /RTS intact
+        UART1_MCTL = v;                            // clear /DTR
+        MODEM_DTR_OFF( );
     }
+}
+
+
+/* waitDSR
+     Data Set Ready is an input, set by the modem (or by mctl.DTR in 
+       loopback wiring.)
+     Can only be called within a task context, not ISR: use of vTaskDelay
+*/
+static POSIX_ERRNO waitDSR( void )
+{
+    DEV_MODE const wiring = pinmode[ MINOR_NUM ];
+    POSIX_ERRNO ret = POSIX_ERRNO_ENONE;
+
+    MODEM_DSR_OFF( );
+    if(( DEV_MODE_UART_FULL_MODEM & wiring )||  // FULL or FULL_NULL MODEM
+       ( DEV_MODE_UART_LOOPBACK == wiring ))
+    {
+//_putchf( 'n' );
+        if( 0 == testDSR( ))
+        {
+            TickType_t const ms100 = configTICK_RATE_HZ / 10;
+
+//_putchf( '1' );
+            /* The logic here is we are prepared to wait a short period for CTS
+               to be asserted following our RTS assertion. We chose 100mS
+               arbitarily - perhaps we could have a devConfig setting? It would
+               also be better to start a timer and poll MSR, giving up on 
+               timerout. */
+            vTaskDelay( ms100 );       // wait 100mS for /DSR to be asserted
+            if( 0 == testDSR( ))
+            {
+//_putchf( '2' );
+                ret = POSIX_ERRNO_EPROTO;  // no /CTS from the remote end
+            }
+        }
+
+        if( POSIX_ERRNO_ENONE == ret )
+        {
+            MODEM_DSR_ON( );
+        }
+    }
+
+    return( ret );
 }
 
 
@@ -704,30 +845,31 @@ _putchf( '1' );
 static void RTSforSend( void )
 {
     DEV_MODE const wiring = pinmode[ MINOR_NUM ];
+    unsigned char const mlo =
+        ( UART_MCTL_LOOP | UART_MCTL_OUT1 | UART_MCTL_OUT2 );
     unsigned char v;
 
     // check if we're using software or hardware flow control
-_putchf( 'h' );
-    if( 0 ==(( DEV_MODE_UART_NO_FLOWCONTROL == wiring )||
-             ( DEV_MODE_UART_SW_FLOWCONTROL == wiring )))
+//_putchf( 'j' );
+    if( 0 ==(( DEV_MODE_UART_NO_FLOWCONTROL | DEV_MODE_UART_SW_FLOWCONTROL )&
+              wiring ))
     {
         if(( DEV_MODE_UART_HALF_MODEM == wiring )||
            ( DEV_MODE_UART_FULL_MODEM == wiring ))
         {                                 // straight-through wiring
-_putchf( '1' );
-            v = UART1_MCTL;
-            v &= UART_MCTL_DTR;  // leave exactly DTR intact
-            v |= UART_MCTL_RTS;  // RTS high inverted to low by UART hardware
-            UART1_MCTL = v;
+//_putchf( '1' );
+            v = UART1_MCTL &( mlo | UART_MCTL_DTR );   // leave /DTR intact
+            UART1_MCTL =( v | UART_MCTL_RTS );         // set /RTS
+            MODEM_RTS_ON( );
         }
         else
         if(( DEV_MODE_UART_HALF_NULL_MODEM == wiring )||
            ( DEV_MODE_UART_FULL_NULL_MODEM == wiring ))
         {                                 // crossover wiring
-_putchf( '2' );
-            v = UART1_MCTL;
-            v &= UART_MCTL_DTR;  // leave exactly DTR intact
-            UART1_MCTL = v;      // RTS low inverted to high by UART hardware
+//_putchf( '2' );
+            v = UART1_MCTL &( mlo | UART_MCTL_DTR );   // leave /DTR intact
+            UART1_MCTL = v;                            // clear /RTS
+            MODEM_RTS_OFF( );
         }
     }
 }
@@ -743,73 +885,207 @@ _putchf( '2' );
 static void RTSforReceive( void )
 {
     DEV_MODE const wiring = pinmode[ MINOR_NUM ];
+    unsigned char const mlo =
+        ( UART_MCTL_LOOP | UART_MCTL_OUT1 | UART_MCTL_OUT2 );
     unsigned char v;
 
-    if( 0 ==(( DEV_MODE_UART_NO_FLOWCONTROL == wiring )||
-             ( DEV_MODE_UART_SW_FLOWCONTROL == wiring )))
+    if( 0 ==(( DEV_MODE_UART_NO_FLOWCONTROL | DEV_MODE_UART_SW_FLOWCONTROL )&
+              wiring ))
     {
-_putchf( 'k' );
+//_putchf( 'k' );
         if(( DEV_MODE_UART_HALF_MODEM == wiring )||
            ( DEV_MODE_UART_FULL_MODEM == wiring ))
         {                               // straight-through wiring
-_putchf( '1' );
-            v = UART1_MCTL;
-            v &= UART_MCTL_DTR;  // leave exactly DTR intact
-            UART1_MCTL = v;      // RTS low inverted to high by UART hardware
+//_putchf( '1' );
+            v = UART1_MCTL &( mlo | UART_MCTL_DTR );   // leave /DTR intact
+            UART1_MCTL = v;                            // clear /RTS
+            MODEM_RTS_OFF( );
         }
         else
         if(( DEV_MODE_UART_HALF_NULL_MODEM == wiring )||
            ( DEV_MODE_UART_FULL_NULL_MODEM == wiring ))
         {                               // crossover wiring
-_putchf( '2' );
-            v = UART1_MCTL;
-            v &= UART_MCTL_DTR;  // leave exactly DTR intact
-            v |= UART_MCTL_RTS;  // RTS high inverted to low by UART hardware
-            UART1_MCTL = v;
+//_putchf( '2' );
+            v = UART1_MCTL &( mlo | UART_MCTL_DTR );   // leave /DTR intact
+            UART1_MCTL =( v | UART_MCTL_RTS );         // set /RTS 
+            MODEM_RTS_ON( );
         }
     }
 }
 
 
 /* waitCTS
-     For straight-through (Modem) wiring, we assert /RTS (low) to signal 
-       "Request To Send" prior to transmission. 
-     For cross-over (NULL modem) wiring, we de-assert /RTS (high) to signal 
-       "Remote To Send" (sets remote Clear To Send) prior to transmission. 
+     Clear To Send is an input, set by the remote end (or by /RTS in loopback
+       wiring)
      Can only be called within a task context, not ISR: use of vTaskDelay
 */
 static POSIX_ERRNO waitCTS( void )
 {
     DEV_MODE const wiring = pinmode[ MINOR_NUM ];
-    TickType_t const ms100 = configTICK_RATE_HZ / 10;
     POSIX_ERRNO ret = POSIX_ERRNO_ENONE;
-    unsigned char msr;
 
-    if( 0 ==(( DEV_MODE_UART_NO_FLOWCONTROL == wiring )||
-             ( DEV_MODE_UART_SW_FLOWCONTROL == wiring )))
+    MODEM_CTS_OFF( );
+    if( 0 ==(( DEV_MODE_UART_NO_FLOWCONTROL | DEV_MODE_UART_SW_FLOWCONTROL )&
+              wiring ))
     {
-_putchf( 'j' );
-        msr = UART1_MSR;
-        if( 0 ==( UART_MSR_CTS & msr ))
+//_putchf( 'l' );
+        if( 0 == testCTS( ))
         {
-_putchf( '1' );
+            TickType_t const ms100 = configTICK_RATE_HZ / 10;
+
+//_putchf( '1' );
             /* The logic here is we are prepared to wait a short period for CTS
                to be asserted following our RTS assertion. We chose 100mS
                arbitarily - perhaps we could have a devConfig setting? It would
-               also be better to start a timer and poll MSR, giving up on timer-
-               out. We could also add CTS (and DSR, DCD) to uart_poll to move
-               this delay into user task space. */
+               also be better to start a timer and poll MSR, giving up on 
+               timerout. */
             vTaskDelay( ms100 );       // wait 100mS for /CTS to be asserted
+            if( 0 == testCTS( ))
+            {
+//_putchf( '2' );
+                ret = POSIX_ERRNO_EPROTO;  // no /CTS from the remote end
+            }
         }
-        msr = UART1_MSR;
-        if( 0 ==( UART_MSR_CTS & msr ))
+
+        if( POSIX_ERRNO_ENONE == ret )
         {
-_putchf( '2' );
-            ret = POSIX_ERRNO_EPROTO;  // no /CTS from the remote end
+            MODEM_CTS_ON( );
         }
     }
 
     return( ret );
+}
+
+
+/* DCDloopReady
+     In loopback mode, set /DCD output to its 'true' value, that is value 0
+*/
+static void DCDloopReady( void )
+{
+    DEV_MODE const wiring = pinmode[ MINOR_NUM ];
+    unsigned char const mlo =( UART_MCTL_LOOP | UART_MCTL_OUT1 );
+    unsigned char v;
+
+    /* check if we're using full modem (null or straight-through) hardware flow 
+       control */
+//_putchf( 'l' );
+    if( DEV_MODE_UART_LOOPBACK & wiring )
+    {
+//_putchf( '1' );
+        v = UART1_MCTL &( mlo | UART_MCTL_RTS | UART_MCTL_DTR );
+        UART1_MCTL =( v | UART_MCTL_OUT2 );   // set /DCD via OUT2 in loopback
+        MODEM_DCD_ON( );
+    }
+}
+
+
+/* DCDloopNotReady
+     In loopback mode de-assert /DCD output to its 'false' value, that is value 1
+*/
+static void DCDloopNotReady( void )
+{
+    DEV_MODE const wiring = pinmode[ MINOR_NUM ];
+    unsigned char const mlo =( UART_MCTL_LOOP | UART_MCTL_OUT1 );
+    unsigned char v;
+
+    /* check if we're using full modem (null or straight-through) hardware flow 
+       control */
+//_putchf( 'i' );
+    if( DEV_MODE_UART_LOOPBACK & wiring )  // FULL or FULL_NULL
+    {
+//_putchf( '1' );
+        v = UART1_MCTL &( mlo | UART_MCTL_RTS | UART_MCTL_DTR );
+        UART1_MCTL = v;                      // clear /DCD through out2 in loopback
+        MODEM_DCD_OFF( );
+    }
+}
+
+
+/* waitDCD
+     Data Carrier Detect is an input, set by the modem (or by mctl.out2 in 
+       loopback wiring.) It's usual meaning is 'local modem - remote modem 
+       connection established'. 
+     Can only be called within a task context, not ISR: use of vTaskDelay
+*/
+static POSIX_ERRNO waitDCD( void )
+{
+    DEV_MODE const wiring = pinmode[ MINOR_NUM ];
+    POSIX_ERRNO ret = POSIX_ERRNO_ENONE;
+
+    MODEM_DCD_OFF( );
+    if(( DEV_MODE_UART_FULL_MODEM & wiring )||  // FULL or FULL_NULL MODEM
+       ( DEV_MODE_UART_LOOPBACK == wiring ))
+    {
+//_putchf( 'm' );
+        if( 0 == testDCD( ))
+        {
+            TickType_t const ms100 = configTICK_RATE_HZ / 10;
+
+//_putchf( '1' );
+            /* The logic here is we are prepared to wait a short period for CTS
+               to be asserted following our RTS assertion. We chose 100mS
+               arbitarily - perhaps we could have a devConfig setting? It would
+               also be better to start a timer and poll MSR, giving up on 
+               timerout. */
+            vTaskDelay( ms100 );       // wait 100mS for /DCD to be asserted
+            if( 0 == testDCD( ))
+            {
+//_putchf( '2' );
+                ret = POSIX_ERRNO_EPROTO;  // no /CTS from the remote end
+            }
+        }
+
+        if( POSIX_ERRNO_ENONE == ret )
+        {
+            MODEM_DCD_ON( );
+        }
+    }
+
+    return( ret );
+}
+
+
+/* RIloopRing
+     In loopback mode, set /RI input to its 'true' value, that is value 0
+*/
+static void RIloopRing( void )
+{
+    DEV_MODE const wiring = pinmode[ MINOR_NUM ];
+    unsigned char const mlo =( UART_MCTL_LOOP | UART_MCTL_OUT2 );
+    unsigned char v;
+
+    /* check if we're using full modem (null or straight-through) hardware flow 
+       control */
+//_putchf( 'l' );
+    if( DEV_MODE_UART_LOOPBACK & wiring )
+    {
+//_putchf( '3' );
+        v = UART1_MCTL &( mlo | UART_MCTL_RTS | UART_MCTL_DTR );
+        UART1_MCTL =( v | UART_MCTL_OUT1 );   // set /RI via OUT1 in loopback
+        MODEM_RI_ON( );
+    }
+}
+
+
+/* RIloopSilent
+     In loopback mode de-assert /RI input to its 'false' value, that is value 1
+*/
+static void RIloopSilent( void )
+{
+    DEV_MODE const wiring = pinmode[ MINOR_NUM ];
+    unsigned char const mlo =( UART_MCTL_LOOP | UART_MCTL_OUT2 );
+    unsigned char v;
+
+    /* check if we're using full modem (null or straight-through) hardware flow 
+       control */
+//_putchf( 'l' );
+    if( DEV_MODE_UART_LOOPBACK & wiring )  // FULL or FULL_NULL
+    {
+//_putchf( '4' );
+        v = UART1_MCTL &( mlo | UART_MCTL_RTS | UART_MCTL_DTR );
+        UART1_MCTL = v;                      // clear /RI through out1 in loopback
+        MODEM_RI_OFF( );
+    }
 }
 
 
@@ -860,10 +1136,8 @@ static void uartEnableTxInterrupts( void )
 
     ier =( unsigned char )( UART_IER_TRANSMITINT | UART_IER_TRANSCOMPLETEINT );
 
-    if(( DEV_MODE_UART_HALF_MODEM |          // bitor for all 4
-         DEV_MODE_UART_HALF_NULL_MODEM |
-         DEV_MODE_UART_FULL_MODEM |
-         DEV_MODE_UART_FULL_NULL_MODEM )
+    if(( DEV_MODE_UART_HALF_MODEM | DEV_MODE_UART_HALF_NULL_MODEM |
+         DEV_MODE_UART_FULL_MODEM | DEV_MODE_UART_FULL_NULL_MODEM )
        &
        wiring )
     {
@@ -890,7 +1164,7 @@ static void uartDisableTxInterrupts( unsigned char iirEvent )
             ier |=( unsigned char )UART_IER_MODEMINT;
         }
         else
-        if( 0 == rxTransact.mode )
+        if( 0 == rxTransact.mode )  // if there is no active rx transaction
         {
             if( DEV_MODE_UART_FULL_MODEM & wiring )  // FULL or FULL_NULL
             {
@@ -915,10 +1189,8 @@ static void uartEnableRxInterrupts( void )
     ier =   ( unsigned char )( UART_IER_RECEIVEINT | 
                                UART_IER_LINESTATUSINT );
 
-    if(( DEV_MODE_UART_HALF_MODEM |         // bitor for all 4
-         DEV_MODE_UART_HALF_NULL_MODEM |
-         DEV_MODE_UART_FULL_MODEM |
-         DEV_MODE_UART_FULL_NULL_MODEM )
+    if(( DEV_MODE_UART_HALF_MODEM | DEV_MODE_UART_HALF_NULL_MODEM |
+         DEV_MODE_UART_FULL_MODEM | DEV_MODE_UART_FULL_NULL_MODEM )
        & wiring )
     {
         ier |=( unsigned char )UART_IER_MODEMINT;
@@ -942,7 +1214,7 @@ static void uartDisableRxInterrupts( void )
         ier |=( unsigned char )UART_IER_MODEMINT;
     }
     else
-    if( 0 == txTransact.mode )
+    if( 0 == txTransact.mode )  // only if there is no active tx transaction
     {
         if( DEV_MODE_UART_FULL_MODEM & wiring )  // FULL or FULL_NULL
         {
@@ -1137,7 +1409,7 @@ static UART_ERRNO receiveNextBlock( unsigned char * numRxBytes )
     _Bool copyByte;
 
 
-_putchf( 'g' );
+//_putchf( 'g' );
     RX_CIRCULAR_BUFFER_NUM_FREE( numB );
     numB =( RHR_FIFO_MAX < numB )
         ? RHR_FIFO_MAX
@@ -1156,7 +1428,7 @@ _putchf( 'g' );
             {
                 if( UART_SW_FLOWCTRL_XON == rbr )
                 {    // remote end buffer space available
-_putchf( '1' );
+//_putchf( '1' );
                     copyByte = false;
                     uartState &=( UART_STATE )( ~UART_STATE_PAUSE );
                     if( true == txPending )
@@ -1170,7 +1442,7 @@ _putchf( '1' );
                 else
                 if( UART_SW_FLOWCTRL_XOFF == rbr )
                 {    // remote end buffer space full
-_putchf( '2' );
+//_putchf( '2' );
                     copyByte = false;
                     uartState |= UART_STATE_PAUSE;
                 }
@@ -1200,7 +1472,7 @@ _putchf( '2' );
     {
         res = UART_ERRNO_RECEIVEFIFOFULL;
         
-_putchf( '3' );
+//_putchf( '3' );
         // Flush the RxFIFO??
         uartResetFIFO( UART_FCTL_CLRRxF, UART_FIFO_ENABLE );
     }
@@ -1211,7 +1483,7 @@ _putchf( '3' );
     if(( 0 == *numRxBytes )     // we received nothing
        /*( false == swFlowCtrl )*/) // except a sole Xon / Xoff control byte
     {
-_putchf( '9' );
+//_putchf( '9' );
         // TRIGGER LEVEL interrupt fired with nothing to read
         //   Reset the RxFIFO then enable the FIFOs
         uartResetFIFO( UART_FCTL_CLRRxF, UART_FIFO_ENABLE );
@@ -1222,13 +1494,13 @@ _putchf( '9' );
 }
 
 
-/*------- Private Interrupt Handling functions ------------------------------*/
+/*------- IO Control functions ----------------------------------------------*/
 /* uart_rxFlowControl
      Manage Receiver-side Xon/Xoff software or RTS/CTS hardware flow control.
      Not a formal interrupt routine, but to be called by either (best) the tick 
      ISR, or (second best) the Idle Task.
      Can also be called by receiveNextBlock - but that alone may not be enough */
-void uart_rxFlowControl( void )
+static void uart_rxFlowControl( void )
 {
     if( UART_STATE_READY & uartState )  // is uart device open?
     {
@@ -1250,7 +1522,7 @@ void uart_rxFlowControl( void )
             /* If rxPrivBuf is nearly full, pause remote end transmission */
             if(( RX_CIRCULAR_BUFFER_NEARLY_FULL > numB )&&( false == rxPaused ))
             {
-_putchf( 'q' );
+//_putchf( 'q' );
                 if( true == swFlowCtrl )
                 {
                     ( void )transmitChar(( unsigned char )UART_SW_FLOWCTRL_XOFF );
@@ -1265,7 +1537,7 @@ _putchf( 'q' );
             /* If rxPrivBuf is nearly empty, resume remote end transmission */
             if(( RX_CIRCULAR_BUFFER_NEARLY_EMPTY < numB )&&( true == rxPaused ))
             {
-_putchf( 'r' );
+//_putchf( 'r' );
                 if( true == swFlowCtrl )
                 {
                     ( void )transmitChar(( unsigned char )UART_SW_FLOWCTRL_XON );
@@ -1281,6 +1553,7 @@ _putchf( 'r' );
 }
 
 
+/*------- Private Interrupt Handling functions ------------------------------*/
 /* clearDownLineStatus
      Refer to Zilog PS015317 UART Line Status Register table 64 */
 static UART_ERRNO clearDownLineStatus( void )
@@ -1340,6 +1613,7 @@ static UART_ERRNO clearDownLineStatus( void )
         // Rx Data has been transferred from the RBR to the RxFIFO
               // recall Zilog UP0049 errata note 7 on continuous rx interrupts
               // though that configuration combination doesn't apply here
+        MODEM_RXD_ON( );
         temp = UART_ERRNO_RX_DATA_READY;
     }
 
@@ -1357,72 +1631,90 @@ static UART_ERRNO clearDownModemStatus( void )
     UART_ERRNO temp = UART_ERRNO_NONE;
     unsigned char msr;
 
-    msr = UART1_MSR;
+    msr = UART1_MSR;  // reading MSR clears delta bits
 
-    /* Tests are arranged into priority order */
-
-    if( DEV_MODE_UART_FULL_MODEM & wiring )  // FULL or FULL_NULL
+    if(( DEV_MODE_UART_NO_FLOWCONTROL | DEV_MODE_UART_SW_FLOWCONTROL )& wiring )
     {
-        if( UART_MSR_DDSR & msr )
-        {
-            if( DEASSERTED ==( UART_MSR_DSR & msr ))  // remote end gone away
-                temp = UART_ERRNO_DSR_LOST;
-            else
-                temp = UART_ERRNO_DSR_FOUND;
-        }
-        else
-        if( UART_MSR_DDCD & msr )
-        {
-            if( DEASSERTED ==( UART_MSR_DCD & msr ))  // remote end signal lost
-                temp = UART_ERRNO_DCD_LOST;
-            else
-                temp = UART_ERRNO_DCD_FOUND;
-        }
+        // nothing to do
     }
-
-    if(( UART_ERRNO_NONE == temp )&&
-       ( DEV_MODE_UART_HALF_MODEM & wiring ))  // HALF or HALF_NULL
+    else
     {
         if( UART_MSR_DCTS & msr )
         {
-            if( DEASSERTED ==( UART_MSR_CTS & msr ))  // remote end rx buffer full
-            {
+            if( DEASSERTED ==( UART_MSR_CTS & msr ))
+            {   // remote end rx buffer full
                 temp = UART_ERRNO_CTS_LOST;
+                MODEM_CTS_OFF( );
                 if( UART_STATE_WRITE & uartState )
-                {
-                    UART1_LCTL |= UART_LCTL_SB;       // break in transmission
+                {       // break in transmission if we're writing
+                    UART1_LCTL |= UART_LCTL_SB;
                 }
             }
             else
             {
                 temp = UART_ERRNO_CTS_FOUND;
+                MODEM_CTS_ON( );
                 if( UART_STATE_WRITE & uartState )
-                {                                     // resume transmission
+                {       // resume transmission if we're writing
                     UART1_LCTL &=( unsigned char )( 0xff - UART_LCTL_SB );
                 }
             }
         }
-    }
 
-    if(( UART_ERRNO_NONE == temp )&&
-       ( DEV_MODE_UART_FULL_MODEM & wiring ))  // FULL or FULL_NULL
-    {
-        if( UART_MSR_TERI & msr )
+        if( DEV_MODE_UART_FULL_MODEM & wiring )  // FULL or FULL_NULL
         {
-            if( DEASSERTED ==( UART_MSR_RI & msr ))
-                temp = UART_ERRNO_RI_HANGUP;          // remote end hung up
+            if( UART_MSR_DDSR & msr )
+            {           // remote end gone away
+                if( DEASSERTED ==( UART_MSR_DSR & msr ))
+                {
+                    temp = UART_ERRNO_DSR_LOST;
+                    MODEM_DSR_OFF( );
+                }
+                else
+                {
+                    temp = UART_ERRNO_DSR_FOUND;
+                    MODEM_DSR_ON( );
+                }
+            }
             else
-                temp = UART_ERRNO_RI_CALL;            // remote end calling
+            if( UART_MSR_DDCD & msr )
+            {           // remote end signal lost
+                if( DEASSERTED ==( UART_MSR_DCD & msr ))
+                {
+                    temp = UART_ERRNO_DCD_LOST;
+                    MODEM_DCD_OFF( );
+                }
+                else
+                {
+                    temp = UART_ERRNO_DCD_FOUND;
+                    MODEM_DCD_ON( );
+                }
+            }
+            else
+            if( UART_MSR_TERI & msr )
+            {
+                /* Function of RI varies by modem: 
+                     UART_ERRNO_RI_CALLING may indicate a state of ringing; 
+                     or UART_ERRNO_RI_CALLING .. UART_ERRNO_RI_SILENT cycles 
+                      may indicate a specific ring signal encoding, for which
+                      we would need to add a device driver layer for decoding. 
+                     So state is it.
+                   It would be nice to raise a task interrupt; but uart_dev_poll
+                     is probably a good enough place to indicate ring and is
+                     simpler. */
+                if( DEASSERTED ==( UART_MSR_RI & msr ))
+                {       // remote end call level low
+                    temp = UART_ERRNO_RI_SILENT;
+                    MODEM_RI_OFF( );
+                }
+                else
+                {       // remote end call level high
+                    temp = UART_ERRNO_RI_CALLING;
+                    MODEM_RI_ON( );
+                }
+            }
         }
     }
-
-    /*
-    if(( DEV_MODE_UART_NO_FLOWCONTROL == wiring )||
-       ( DEV_MODE_UART_SW_FLOWCONTROL == wiring ))
-    {
-        // nothing to do; how did we get here, nobody knows :-?
-    }
-    */
 
     return( temp );
 }
@@ -1435,6 +1727,7 @@ static UART_ERRNO clearDownModemStatus( void )
  */
 static void uartisr_1( void )
 {
+    DEV_MODE const wiring = pinmode[ MINOR_NUM ];
     unsigned char iir;
     unsigned char irrm;
     unsigned char numTRxBytes;
@@ -1451,7 +1744,7 @@ static void uartisr_1( void )
         if( UART_IIR_LINESTATUS == irrm )
         {
             _uart_errno = clearDownLineStatus( );
-_putchf('a');
+//_putchf('a');
             if(( UART_ERRNO_RX_DATA_READY == _uart_errno )||
                ( UART_ERRNO_BREAKINDICATIONERR == _uart_errno ))
             {
@@ -1463,7 +1756,7 @@ _putchf('a');
             else
             if( UART_ERRNO_NONE != _uart_errno )
             {
-_putchf('1');
+//_putchf('1');
                 /* error conditions are one of UART_LSR_FRAMINGERR,
                    UART_LSR_PARITYERR, UART_LSR_OVERRRUNERR. 
                    clearDownLineStatus will have called uartResetFIFO on
@@ -1482,6 +1775,7 @@ _putchf('1');
                            to take uartRxSemaphore. Semantics of UART_STATE_READ 
                            and UART_STATE_READLOCK now diverge.*/
                         uartState &=( UART_STATE )( ~UART_STATE_READ );
+                        MODEM_RXD_OFF( );
                         xSemaphoreGiveFromISR( uartRxSemaphore, NULL );
                     }
                     else
@@ -1493,6 +1787,7 @@ _putchf('1');
                         uartRxEvent = 0;
                         uartState &=
                             ( UART_STATE )~( UART_STATE_READ | UART_STATE_READLOCK );
+                        MODEM_RXD_OFF( );
                     }
                 }
             }
@@ -1513,20 +1808,20 @@ _putchf('1');
         if(( UART_IIR_DATAREADY_TRIGLVL == irrm )||
            ( UART_IIR_CHARTIMEOUT == irrm ))
         {
-_putchf('b');
-if( UART_IIR_DATAREADY_TRIGLVL == irrm ) _putchf('1');
-if( UART_IIR_CHARTIMEOUT == irrm ) _putchf('2');
+//_putchf('b');
+//if( UART_IIR_DATAREADY_TRIGLVL == irrm ) _putchf('1');
+//if( UART_IIR_CHARTIMEOUT == irrm ) _putchf('2');
             _uart_errno = receiveNextBlock( &numTRxBytes );
 
             if( UART_ERRNO_RECEIVEFIFOFULL == _uart_errno )
             {
-_putchf('3');
+//_putchf('3');
                 uartRxEvent |=( 1 << UART_EVENT_RX_FULL );
             }
 
             if( UART_STATE_READ & uartState )
             {
-_putchf('4');
+//_putchf('4');
                 rxTransact.lenTRx += numTRxBytes;
                 if( rxTransact.lenTRx >= rxTransact.len )
                 {
@@ -1540,17 +1835,18 @@ _putchf('4');
 
                     if( DEV_MODE_UNBUFFERED == rxTransact.mode )
                     {
-_putchf('5');
+//_putchf('5');
                         /* Clear UART_STATE_READ here because another interrupt 
                            may follow immediately, before the user task is able 
                            to take uartRxSemaphore. Semantics of UART_STATE_READ 
                            and UART_STATE_READLOCK now diverge.*/
                         uartState &=( UART_STATE )( ~UART_STATE_READ );
+                        MODEM_RXD_OFF( );
                         xSemaphoreGiveFromISR( uartRxSemaphore, NULL );
                     }
                     else
                     {
-_putchf('6');
+//_putchf('6');
                         storeRxBuffer( );
                         finaliseRxTransaction( _uart_errno | uartRxEvent );
                         CLEAR_UART_TRANSACTION( rxTransact );
@@ -1558,13 +1854,14 @@ _putchf('6');
                         uartRxEvent = 0;
                         uartState &=
                             ( UART_STATE )~( UART_STATE_READ | UART_STATE_READLOCK );
+                        MODEM_RXD_OFF( );
                     }
                 }
             }
             else
             if( UART_STATE_READY & uartState )
             {
-_putchf('7');
+//_putchf('7');
                 uartRxEvent |=( 1 << UART_EVENT_RX_READY );
             }
         }
@@ -1603,6 +1900,7 @@ _putchf('7');
                     uartTxEvent = 0;
                     uartState &=( UART_STATE )
                         ~( UART_STATE_WRITE | UART_STATE_WRITELOCK );
+                    MODEM_TXD_OFF( );
                 }
                 else
                 {
@@ -1612,6 +1910,7 @@ _putchf('7');
                        to take uartTxSemaphore. Semantics of UART_STATE_WRITE 
                        and UART_STATE_WRITELOCK now diverge.*/
                     uartState &=( UART_STATE )( ~UART_STATE_WRITE );
+                    MODEM_TXD_OFF( );
                     xSemaphoreGiveFromISR( 
                         uartTxSemaphore, &__higherPriorityTaskWoken );
                 }
@@ -1659,10 +1958,11 @@ _putchf('7');
         if( UART_IIR_MODEMSTAT == irrm )
         {
             _uart_errno = clearDownModemStatus( );
-_putchf('e');
+//_putchf('e');
             if(( UART_ERRNO_DSR_LOST == _uart_errno )||  // remote end gone away
                ( UART_ERRNO_DCD_LOST == _uart_errno ))   // remote end signal lost
             {
+                uartTxEvent |=( 1 << _uart_errno );
                 if( UART_STATE_WRITE & uartState )
                 {
                     uartTxEvent |=( 1 << UART_EVENT_TX_ERROR );
@@ -1688,6 +1988,7 @@ _putchf('e');
                         uartRxEvent = 0;
                         uartState &=
                             ( UART_STATE )~( UART_STATE_READ | UART_STATE_READLOCK );
+                        MODEM_RXD_OFF( );
                     }
                     else
                     {
@@ -1696,6 +1997,7 @@ _putchf('e');
                            to take uartRxSemaphore. Semantics of UART_STATE_READ 
                            and UART_STATE_READLOCK now diverge.*/
                         uartState &=( UART_STATE )( ~UART_STATE_READ );
+                        MODEM_RXD_OFF( );
                         xSemaphoreGiveFromISR( 
                             uartRxSemaphore, &__higherPriorityTaskWoken );
                     }
@@ -1711,6 +2013,7 @@ _putchf('e');
                         uartTxEvent = 0;
                         uartState &=( UART_STATE )
                             ~( UART_STATE_WRITE | UART_STATE_WRITELOCK );
+                        MODEM_TXD_OFF( );
                     }
                     else
                     {
@@ -1719,6 +2022,7 @@ _putchf('e');
                            to take uartTxSemaphore. Semantics of UART_STATE_WRITE 
                            and UART_STATE_WRITELOCK now diverge.*/
                         uartState &=( UART_STATE )( ~UART_STATE_WRITE );
+                        MODEM_TXD_OFF( );
                         xSemaphoreGiveFromISR( 
                             uartTxSemaphore, &__higherPriorityTaskWoken );
                     }
@@ -1727,7 +2031,7 @@ _putchf('e');
         }
     }
 
-    _putchf('f');
+//_putchf('f');
 }
 
 
@@ -1816,12 +2120,19 @@ POSIX_ERRNO uart_dev_open(
     int i;
 
 
-    /* -2. Create the high-priority interrupt handler task */
-#   if 0 //( 1 == configUSE_PREEMPTION )
+    /* -2. Create the high-priority interrupt handler task * /
+#   if( 1 == configUSE_PREEMPTION )
     {
         ret = createUartIsrHandlerTask( );
     }
 #   endif
+    */
+
+    if( UART_STATE_INITIAL != uartState )
+    {
+        ret = POSIX_ERRNO_EADDRINUSE;
+        goto uart_dev_open_end;
+    }
 
     /* -1. Reset the UART semaphores on each uart_dev_open() */
     ret = initialiseUartSemaphore( &uartRxSemaphore );
@@ -1846,7 +2157,8 @@ POSIX_ERRNO uart_dev_open(
 
     /* 1. set the eZ80 port pin modes for Alternate Function number 0 
           refer to Zilog PS15317 table 6 */
-    if( DEV_MODE_UART_FULL_MODEM & mode )  // FULL or FULL_NULL
+    if(( DEV_MODE_UART_FULL_MODEM & mode )||  // FULL or FULL_NULL
+       ( DEV_MODE_UART_LOOPBACK & mode ))
     {
         endpin = UART_1_RI;  // last pin used in full handshaking
     }
@@ -1883,10 +2195,20 @@ POSIX_ERRNO uart_dev_open(
     UART1_BRG_H =( unsigned char )( brg[ params->baudRate ]& 0xff00 )>> 8;
     UART1_LCTL &=( unsigned char )( 0xff - UART_LCTL_DLAB );  // disable baud rate generator modify
 
-    /* 2.2 Clear the Modem Control register
+    /* 2.2 Initialise the Modem Control register
            This sets pin /DTR high, indicating UART1 is not ready (for full
            or full-null modem mode); it also sets /RTS high */
     UART1_MCTL =( unsigned char )0x00;
+    if( DEV_MODE_UART_LOOPBACK & mode )
+    {
+        /* 2.2.1 Program MCTL in Loopback mode; refer to PS015317 table 63. 
+                 This connects:       rx <- tx [the fifos remain operational];
+                               mctl.OUT2 -> msr.DCD,
+                               mctl.OUT1 -> msr.RI
+                               mctl.RTS  -> msr.CTS
+                               mctl.DTR  -> msr.DSR */
+        UART1_MCTL |= UART_MCTL_LOOP;
+    }
 
     /* 2.3 Set the Line Control Register */
     UART1_LCTL =
@@ -1904,7 +2226,6 @@ POSIX_ERRNO uart_dev_open(
         }
         CLEAR_UART_TRANSACTION( txTransact );
         CLEAR_UART_TRANSACTION( rxTransact );
-
         uartState = UART_STATE_READY;
     }
     portEXIT_CRITICAL( );
@@ -1923,10 +2244,16 @@ POSIX_ERRNO uart_dev_open(
     UART1_IER = 0x00;
     uartEnableRxInterrupts( );
 
-    /* 2.8 Assert /DTR to signal we are ready for transceiving */
-    assertDTR( );
+    /* 2.8 Assert /DTR to signal we are 'up', 
+           unless full modem or loopback wiring, in which case "connection
+           establishment" will follow. */
+    if(( DEV_MODE_UART_FULL_MODEM != mode )&&
+       ( DEV_MODE_UART_LOOPBACK != mode ))
+    {
+        DTRready( );
+    }
 
-    /* 2.9 program RTS; the default behaviour is always ready to receive */
+    /* 2.9 /RTS default behaviour is always ready to receive */
     RTSforReceive( );
 
 uart_dev_open_end:
@@ -1965,8 +2292,9 @@ void uart_dev_close(
     UART1_IER = /*ier_mask =*/ 0x00;  // Disable UART1 interrupts
     UART1_LCTL = 0x00; // Reset line control register
 
-    // 1.5 de-assert DTR to signal we are not ready to transceive
-    deassertDTR( );
+    // 1.5 de-assert /DTR to signal we are 'down'
+    DTRnotReady( );    // signal end of transmission
+    DCDloopNotReady( ); // signal connection dropped
     UART1_MCTL = 0x00; // Reset modem control register (technically redundant)
 
     /* 2 Flush UART1 FIFOs and disable FIFOs
@@ -2039,6 +2367,9 @@ void uart_dev_close(
      then the result POSIX_ERRNO_EBUSY will be immediately returned. We split
      the semantics of UART_STATE_READ (which controls ISR buffering) into 
       UART_STATE_READLOCK (which guarantees at most one reader task or thread). 
+   For DEV_MODE_UART_FULL_MODEM and DEV_MODE_UART_LOOPBACK, the application
+     is responsible for establishing a connection using uart_dev_ioctl's prior
+     to calling uart_dev_write or uart_dev_read.
    Refer to Zilog PS015317 UART Receiver
      And to src/uart/common/readuart1.c, .../fifoget1.c
 */
@@ -2061,6 +2392,7 @@ POSIX_ERRNO uart_dev_read(
         if( 0 ==( UART_STATE_READLOCK & uartState ))
         {
             uartState |=( UART_STATE_READ | UART_STATE_READLOCK );
+            MODEM_RXD_ON( );
             portEXIT_CRITICAL( );
 
             CREATE_UART_TRANSACTION( 
@@ -2086,6 +2418,7 @@ POSIX_ERRNO uart_dev_read(
                     
                     uartState &=
                         ( UART_STATE )~( UART_STATE_READ | UART_STATE_PAUSE );
+                    MODEM_RXD_OFF( );
                 }
                 portEXIT_CRITICAL( );
             }
@@ -2130,6 +2463,7 @@ POSIX_ERRNO uart_dev_read(
                            of no interrupt and POSIX_ERRNO_ETIMEDOUT */
                         uartState &=
                             ( UART_STATE )~( UART_STATE_READ | UART_STATE_PAUSE );
+                        MODEM_RXD_OFF( );
                     }
                     portEXIT_CRITICAL( );
                 }
@@ -2162,6 +2496,10 @@ POSIX_ERRNO uart_dev_read(
      to the application to poll the result.
      If the application makes a uart_write call while another is in progress,
      then the result POSIX_ERRNO_EBUSY will be immediately returned. 
+   For DEV_MODE_UART_FULL_MODEM and DEV_MODE_UART_LOOPBACK, the application
+     is responsible for establishing a connection using uart_dev_ioctl's prior
+     to calling uart_dev_write or uart_dev_read. But this same routine is used
+     to send data directly to the modem, hence uart_dev_write_2.
    Refer to Zilog PS015317 UART Transmit
 */
 POSIX_ERRNO uart_dev_write(
@@ -2172,6 +2510,7 @@ POSIX_ERRNO uart_dev_write(
             )
 {
     POSIX_ERRNO ret;
+    DEV_MODE const wiring = pinmode[ MINOR_NUM ];
     DEV_MODE const modeB =(( NULL != num_bytes_written )&&( NULL != res ))
                              ? DEV_MODE_BUFFERED
                              : DEV_MODE_UNBUFFERED;
@@ -2184,6 +2523,33 @@ POSIX_ERRNO uart_dev_write(
         {
             uartState |= UART_STATE_WRITELOCK;
             portEXIT_CRITICAL( );
+
+            if(( DEV_MODE_UART_FULL_MODEM & wiring )||  // FULL or FULL_NULL MODEM
+               ( DEV_MODE_UART_LOOPBACK == wiring ))
+            {
+                /* If the application has set DEV_IOCTL_UART_WRITE_MODEM for
+                   writing directly to the modem, intended for connection 
+                   establishment, then skip the usual end-point handshaking */
+                if( true == connection_establishment )
+                {
+                    goto uart_dev_write_2;
+                }
+            
+                // check the remote-end connection is established
+                ret = waitDSR( );     // wait for DCE to become ready
+                if( POSIX_ERRNO_EPROTO == ret )
+                {
+                    uartState &=( UART_STATE )( ~UART_STATE_WRITELOCK );
+                    goto uart_dev_write_1;
+                }
+
+                ret = waitDCD( );  // wait for connection with our peer
+                if( POSIX_ERRNO_EPROTO == ret )
+                {
+                    uartState &=( UART_STATE )( ~UART_STATE_WRITELOCK );
+                    goto uart_dev_write_1;
+                }
+            }
 
             RTSforSend( );
             ret = waitCTS( );
@@ -2203,9 +2569,12 @@ POSIX_ERRNO uart_dev_write(
                     *num_bytes_written = 1;
                     *res = ret;
                 }
+                uartState &=( UART_STATE )( ~UART_STATE_WRITELOCK );
             }
             else
             {
+uart_dev_write_2:
+
                 // 2 or more bytes to send, use the FIFO
                 CREATE_UART_TRANSACTION( 
                     txTransact, modeB, 
@@ -2218,6 +2587,7 @@ POSIX_ERRNO uart_dev_write(
 
                 // kick off the write transaction
                 uartState |= UART_STATE_WRITE;
+                MODEM_TXD_ON( );
                 transmitNextBlock( &numTxBytes );
                 txTransact.lenTRx += numTxBytes;
 
@@ -2258,13 +2628,14 @@ POSIX_ERRNO uart_dev_write(
                            the semaphore. We need to clear it here too in case 
                            of no interrupt and POSIX_ERRNO_ETIMEDOUT */
                         uartState &=( UART_STATE )
-                            ~( UART_STATE_WRITE | UART_STATE_PAUSE );
+                            ~( UART_STATE_WRITE | 
+                               UART_STATE_WRITELOCK | 
+                               UART_STATE_PAUSE );
+                        MODEM_TXD_OFF( );
                     }
                     portEXIT_CRITICAL( );
                 }
             }
-            
-            uartState &=( UART_STATE )( ~UART_STATE_WRITELOCK );
         }
         else
         {
@@ -2280,6 +2651,158 @@ POSIX_ERRNO uart_dev_write(
 
 uart_dev_write_1:
 
+    return( ret );
+}
+
+
+/* uart_dev_poll
+   Device-specific UART1 poll function 
+   Set num_bytes_free in private transmit buffer, num_bytes_avail in private
+    receive buffer, and modem status
+*/
+POSIX_ERRNO uart_dev_poll( 
+                size_t * num_tx_bytes_buffered,   // OUT
+                size_t * num_rx_bytes_buffered,   // OUT
+                UART_MODEM_STATUS *modem_status   // OUT
+            )
+{
+    if( num_rx_bytes_buffered )
+    {
+        RX_CIRCULAR_BUFFER_NUM_OCCUPIED( *num_rx_bytes_buffered );
+    }
+
+    if( num_tx_bytes_buffered )
+    {
+        *num_tx_bytes_buffered = txPrivBuf.Index - txPrivBuf.Outdex;
+    }
+
+    if( modem_status )
+    {
+        *modem_status = modemStatus;
+    }
+    
+    return( POSIX_ERRNO_ENONE );
+}
+
+
+/* uart_dev_ioctl
+   Device-specific UART1 IO Control function
+   IOCtl is introduced mainly to support FULL_MODEM (and Loopback) connection
+    establishment. Connection establishment requires a protocol, specific for
+    each kind of 'Modem'. Connection establishment is required to achieve:
+      1. set DTR (either in response to an incoming RI, or to initiate a call)
+      2. wait for DSR
+      3. Negotiate call parameters, by 
+         i. sending tx data to the Modem (with no RTS/CTS handshake)
+         ii. interpreting rx data responses from the Modem
+      4. wait for DCD
+*/
+POSIX_ERRNO uart_dev_ioctl( 
+                DEV_IOCTL const cmd,
+                void * const param
+            )
+{
+    POSIX_ERRNO ret = POSIX_ERRNO_ENONE;
+    
+    switch( cmd )
+    {
+        case DEV_IOCTL_UART_EXEC_RX_FLOW_CONTROL :
+        {
+            uart_rxFlowControl( );
+        }
+        break;
+
+        case DEV_IOCTL_UART_WRITE_MODEM :
+        {
+            if( param )
+            {
+                if( 0 ==( int* )param )
+                {
+                    connection_establishment = false;
+                }
+                else
+                {
+                    connection_establishment = true;
+                }
+            }
+            else
+            {
+                ret = POSIX_ERRNO_EINVAL;
+            }
+        }
+        break;
+        
+
+        case DEV_IOCTL_UART_SET_DTR :
+        {
+            if( param )
+            {
+                if( 0 ==( int* )param )
+                {
+                    DTRnotReady( );     // signal end of transmission
+                    DCDloopNotReady( ); // signal connection dropped in loopback
+                }
+                else
+                {
+                    DTRready( );     // /DTR to signal connection wanted
+                    DCDloopReady( ); // /DCD to signal connection established
+                }
+            }
+            else
+            {
+                ret = POSIX_ERRNO_EINVAL;
+            }
+        }
+        break;
+        
+        case DEV_IOCTL_UART_GET_DSR :
+        {
+            if( param )
+            {
+                ( void )waitDSR( );
+                *(( unsigned char* )param )= testDSR( );
+            }
+            else
+            {
+                ret = POSIX_ERRNO_EINVAL;
+            }
+        }
+        break;
+        
+        case DEV_IOCTL_UART_GET_DCD :
+        {
+            if( param )
+            {
+                ( void )waitDCD( );
+                *(( unsigned char* )param )= testDCD( );
+            }
+            else
+            {
+                ret = POSIX_ERRNO_EINVAL;
+            }
+        }
+        break;
+        
+        case DEV_IOCTL_UART_GET_RI :
+        {
+            if( param )
+            {
+                *(( unsigned char* )param )= testRI( );
+            }
+            else
+            {
+                ret = POSIX_ERRNO_EINVAL;
+            }
+        }
+        break;
+        
+        default:
+        {
+            ret = POSIX_ERRNO_EINVAL;
+        }
+        break;
+    }
+    
     return( ret );
 }
 

@@ -95,9 +95,11 @@ static void doGPIOWriteTest( void );
 static void doGPIOReadWriteTest( void );
 static void doGPIOCallbackTest( void );
 static void doYieldFromISRTest( void );
-static void doUARTRxTxTest( void );
-static void doUARTXonXoffTest( void );
-static void doUARTRtsCtsTest( void );
+static void doUARTRxTxTest( void );     /* DEV_MODE_UART_NO_FLOWCONTROL */
+static void doUARTXonXoffTest( void );  /* DEV_MODE_UART_SW_FLOWCONTROL */
+static void doUARTRtsCtsTest( void );   /* DEV_MODE_UART_HALF_NULL_MODEM */
+static void doUARTFullNullTest( void ); /* DEV_MODE_UART_FULL_NULL_MODEM */
+static void doUARTloopbackTest( void ); /* DEV_MODE_UART_LOOPBACK */
 
 
 /*----- Function Definitions ------------------------------------------------*/
@@ -152,9 +154,11 @@ static void * menu( void )
         { '1', "Test DEV GPIO read write", doGPIOReadWriteTest },
         { '2', "Test DEV GPIO ISR", doGPIOCallbackTest },
         { '3', "Test ISR Yield", doYieldFromISRTest },
-        { '4', "Test DEV UART Rx/Tx", doUARTRxTxTest },
+        { '4', "Test DEV UART Rx/Tx (no flow control)", doUARTRxTxTest },
         { '5', "Test DEV UART Xon/Xoff software flow control", doUARTXonXoffTest },
         { '6', "Test DEV UART RTS/CTS hardware flow control", doUARTRtsCtsTest },
+        { '7', "Test DEV UART Full Null hardware flow control", doUARTFullNullTest },
+        { '8', "Test DEV UART Loopback", doUARTloopbackTest },
         { 'q', "End tests", NULL }
     };
     void ( *ret )( void )=( void* )-1;  /* any non-NULL value */
@@ -670,7 +674,7 @@ static void doUARTXonXoffTest( void )
 
 
 /* doUARTRtsCtsTest
- *   Try out DEV API UART software flow control RTS / CTS
+ *   Try out DEV API UART hardware flow control RTS / CTS
  *   The CP2102 USB-UART bridge is wired (to present the host PC) as a DTE.
  *     So NULL modem wiring between the CP2102 and the Agon (a DTE):
  *       Connect Agon UART1 Tx pin 17 to CP2102 Rx, 
@@ -692,7 +696,7 @@ static void doUARTRtsCtsTest( void )
     char b[ 32 ];
     int i, j;
 
-    ( void )printf( "\r\n\r\nRunning UART Half Duplex Null Modem RTS / CTS test\r\n" );
+    ( void )printf( "\r\n\r\nRunning UART Half Null Modem RTS / CTS test\r\n" );
 
     ( void )printf( "Crosswire Agon UART1 TxD pin 17 to remote RxD, "
                      "and RxD pin 18 to remote TxD\r\n" );
@@ -728,6 +732,167 @@ static void doUARTRtsCtsTest( void )
         }
         ( void )printf( "]] res = 0x%x\r\n", res );
 #endif
+        
+        for( j=0; sizeof( b )> j; j++ ) b[ j ]= 0;  // empty b
+        ( void )printf( "uart_read( ) [[" );
+        res = uart_read( &b, 16 );
+        ( void )printf( "]] res = 0x%x\r\n", res );
+        ( void )printf( "buf = (" );
+        for( j=0; 16 > j; j++ ) printf( "0x%x ",( unsigned char )( b[ j ]));
+        ( void )printf( ")\r\n" );
+
+        /* scan keyboard for ESC */
+        if((( char* )kbmap )[ escbyte ]&( 1 << escbit ))
+        {
+            break;
+        }
+    }
+
+    ( void )printf( "uart_close\r\n" );
+    uart_close( );
+    ( void )printf( "gpio_close\r\n" );
+    gpio_close( GPIO_13 );
+}
+
+
+/* doUARTFullNullTest
+ *   Try out DEV API UART hardware loopback
+ *   The CP2102 USB-UART bridge is wired (to present the host PC) as a DTE.
+ *     No wiring between the CP2102 and the Agon (a DTE)
+ *   Open UART1 using DEV_MODE_UART_LOOPBACK.
+*/
+static void doUARTFullNullTest( void )
+{
+    UART_PARAMS const uparm =
+        { UART_BAUD_9600, UART_DATABITS_8, UART_STOPBITS_1, UART_PARITY_NONE };
+    int const escbyte =((( 113 - 1 )& 0xF8 )>> 3 );
+    int const escbit =  (( 113 - 1 )& 0x07 );
+    KEYMAP * const kbmap = mos_getkbmap( );  // only need do this once at startup
+    POSIX_ERRNO res;
+    char b[ 32 ];
+    int i, j;
+
+    ( void )printf( "\r\n\r\nRunning UART Full Null test\r\n" );
+
+    ( void )printf( "Crosswire Agon UART1 TxD pin 17 to remote RxD, "
+                     "and RxD pin 18 to remote TxD\r\n" );
+    ( void )printf( "Crosswire Agon RTS pin 19 to remote CTS, "
+                     "and CTS pin 20 to remote RTS\r\n" );
+    ( void )printf( "Crosswire Agon DTR pin 21 to remote DSR + DCD, "
+                     "and DSR pin 22 + DCD pin 23 to remote DTR\r\n" );
+    ( void )printf( "Wire Agon GPIO pin 13 (task activity) "
+                    "-> red LED+220ohm resistor -> GND\r\n" );
+    ( void )printf( "Wire Agon GPIO pin 26 (idle activity) "
+                    "-> green LED+150ohm resistor -> GND\r\n" );
+    ( void )printf( "Press 'ESC' key to exit test\r\n" );
+
+    // open GPIO:13 as an output, initial value 0
+    res = gpio_open( GPIO_13, DEV_MODE_GPIO_OUT, 0 );
+    ( void )printf( "gpio_open(13) output returns : %d\r\n", res );
+
+    // hardware flow control (cross-wired NULL Modem RTS-CTS)
+    res = uart_open( DEV_MODE_UART_FULL_NULL_MODEM, &uparm );
+    ( void )printf( "uart_open( ) returns : %d\r\n", res );
+
+    for( i = 1; ; i = 1 - i )
+    {
+        ( void )gpio_write( GPIO_13, i );  // toggle pin 13 (LED)
+
+        if( i )
+        {
+            ( void )printf( "uart_write( \"Hello\") [[" );
+            res = uart_write( "Hello ", 6 );
+        }
+        else
+        {    
+            ( void )printf( "uart_write( \"Agon\") [[" );
+            res = uart_write( "Agon ", 5 );
+        }
+        ( void )printf( "]] res = 0x%x\r\n", res );
+        
+        for( j=0; sizeof( b )> j; j++ ) b[ j ]= 0;  // empty b
+        ( void )printf( "uart_read( ) [[" );
+        res = uart_read( &b, 16 );
+        ( void )printf( "]] res = 0x%x\r\n", res );
+        ( void )printf( "buf = (" );
+        for( j=0; 16 > j; j++ ) printf( "0x%x ",( unsigned char )( b[ j ]));
+        ( void )printf( ")\r\n" );
+
+        /* scan keyboard for ESC */
+        if((( char* )kbmap )[ escbyte ]&( 1 << escbit ))
+        {
+            break;
+        }
+    }
+
+    ( void )printf( "uart_close\r\n" );
+    uart_close( );
+    ( void )printf( "gpio_close\r\n" );
+    gpio_close( GPIO_13 );
+}
+
+
+/* doUARTloopbackTest
+ *   Try out DEV API UART hardware loopback
+ *   The CP2102 USB-UART bridge is wired (to present the host PC) as a DTE.
+ *     No wiring between the CP2102 and the Agon (a DTE)
+ *   Open UART1 using DEV_MODE_UART_LOOPBACK.
+*/
+static void doUARTloopbackTest( void )
+{
+    UART_PARAMS const uparm =
+        { UART_BAUD_9600, UART_DATABITS_8, UART_STOPBITS_1, UART_PARITY_NONE };
+    int const escbyte =((( 113 - 1 )& 0xF8 )>> 3 );
+    int const escbit =  (( 113 - 1 )& 0x07 );
+    KEYMAP * const kbmap = mos_getkbmap( );  // only need do this once at startup
+    POSIX_ERRNO res;
+    char b[ 32 ];
+    int i, j;
+
+    ( void )printf( "\r\n\r\nRunning UART Loopback test\r\n" );
+
+    ( void )printf( "Wire Agon GPIO pin 13 (task activity) "
+                    "-> red LED+220ohm resistor -> GND\r\n" );
+    ( void )printf( "Wire Agon GPIO pin 26 (idle activity) "
+                    "-> green LED+150ohm resistor -> GND\r\n" );
+    ( void )printf( "Unwire all RS232 pins\r\n" );
+    ( void )printf( "Press 'ESC' key to exit test\r\n" );
+
+    // open GPIO:13 as an output, initial value 0
+    res = gpio_open( GPIO_13, DEV_MODE_GPIO_OUT, 0 );
+    ( void )printf( "gpio_open(13) output returns : %d\r\n", res );
+
+    // hardware flow control (loopback)
+    res = uart_open( DEV_MODE_UART_LOOPBACK, &uparm );
+    ( void )printf( "uart_open( ) returns : %d\r\n", res );
+
+    // negotiate call set-up
+    i = 1;
+    uart_ioctl( DEV_IOCTL_UART_SET_DTR, &i );  // sets both DTR and DCD in loopback
+    uart_ioctl( DEV_IOCTL_UART_WRITE_MODEM, &i );
+    for( i=0; 0 == i; ) uart_ioctl( DEV_IOCTL_UART_GET_DSR, &i );
+    uart_write( "ATDT+1234567890", 15 );  // command 'modem' to call 1234567890
+    uart_read( &b, 2 );  // wait for "ok" confirmation
+    uart_ioctl( DEV_IOCTL_UART_GET_DCD, &i );
+    i = 0;
+    uart_ioctl( DEV_IOCTL_UART_WRITE_MODEM, &i );
+
+    // main test loop
+    for( i = 1; ; i = 1 - i )
+    {
+        ( void )gpio_write( GPIO_13, i );  // toggle pin 13 (LED)
+
+        if( i )
+        {
+            ( void )printf( "uart_write( \"Hello\") [[" );
+            res = uart_write( "Hello ", 6 );
+        }
+        else
+        {    
+            ( void )printf( "uart_write( \"Agon\") [[" );
+            res = uart_write( "Agon ", 5 );
+        }
+        ( void )printf( "]] res = 0x%x\r\n", res );
         
         for( j=0; sizeof( b )> j; j++ ) b[ j ]= 0;  // empty b
         ( void )printf( "uart_read( ) [[" );
@@ -815,7 +980,7 @@ void vApplicationIdleHook( void )
     /* manage UART Xon/Xoff or RTS/CTS flow control */
     portENTER_CRITICAL( );
     {
-       uart_rxFlowControl( );    
+        uart_ioctl( DEV_IOCTL_UART_EXEC_RX_FLOW_CONTROL, NULL );
     }
     portEXIT_CRITICAL( );
 }
