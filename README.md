@@ -58,9 +58,10 @@ through SD-cards. Refer to https://agonconsole8.github.io/agon-docs/MOS/.
 <p>
 
 <h4>MOS versions</h4>
-FreeRTOS for Agon is built to MOS version 1.04. Version 1.03 may work, but has 
-not been tested. FreeRTOS will work with Console8 2.x versions of MOS, but has 
-not been tested. Console8-specific MOS and VDP functions are not yet supported. 
+FreeRTOS for Agon is built to Quark MOS version 1.04. Version 1.03 may work, 
+but has not been tested. FreeRTOS will work with Console8 2.x versions of MOS, 
+but has not been tested. Console8-specific MOS and VDP functions are not yet 
+supported. 
 
 <h2>Project</h2>
 FreeRTOS / MOS for Agon Light is a highly configurable, multi-capability 
@@ -177,17 +178,13 @@ This demonstrates the new DEV API capabilities. Currently that is the full GPIO,
 UART and SPI APIs. The DEV I2C API is the last for beta development. 
 
 <h5>SPI</h5>
-Note I read back all zeros from a Bosch BMP280 barometric sensor via SPI, but
-do successfully read an NXP MFRC522 RFID controller IC. I've checked my dodgy 
-soldering with a meter. I don't own a scope to study the waveforms. But even if 
-I could check the waveforms, there is little I can program to affect the eZ80 
-SPI controller output. There may be an incompatability between the eZ80 and 
-BMP280 devices, and potentially other kinds of device. It may be my individual 
-BMP280 is defective; or, it fell out the back of a factory before being tested
-or programmed.  I've ordered another BMP280 from a different supplier, to 
-randomise my chances - I can check the manufacturer code printed on the case - 
-and will re-test that once it arrives. However, the DEV API SPI software looks 
-okay for beta release and moving into its maintenance phase. 
+Note DEV SPI successfully reads an NXP MFRC522 RFID controller IC. But reads 
+back all zeros from a Bosch BMP280 barometric sensor; I get the same outcome 
+using my Arduino, so my individual BMP280 is defective. I've ordered another 
+BMP280 from a different supplier, to randomise my chances - I can check the 
+manufacturer code printed on the case - and will re-test with that one. 
+However, the DEV API SPI software looks okay for beta release and moving into
+the maintenance phase. 
 
 <h3>License</h3>
 FreeRTOS / MOS for Agon is released under the MIT license. This is done mainly
@@ -264,8 +261,9 @@ To give an example, DemoAgonC contains two tasks, each of which originally used
 a loop counter that was modulo tested (<it>if( 0 ==( ctr % 80 ))</it>...). 
 Modulo <it>%</it> is implemented using the Zilog math library. It took several 
 days until that 'doh' moment, to realise what was causing random hardware 
-resets. My solution was just to change the loop tests, but I could have used 
-semaphores around the <it>if</it> statement.
+resets. This was before I owned the debugger. My solution was just to change 
+the loop tests, but I could have used semaphores around the <it>if</it> 
+statement.
 <p>
 
 MOS itself is likewise non-rentrant. The port of FreeRTOS / MOS project takes 

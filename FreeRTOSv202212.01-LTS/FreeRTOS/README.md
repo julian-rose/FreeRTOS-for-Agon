@@ -10,6 +10,7 @@ FreeRTOS port, and contains its own readme file.
 
 For the Agon Light port, added
 + The **FreeRTOS/Source/mos/** directory, which contains the MOS API.
++ The **FreeRTOS/Source/docs/** directory, which documents the DEV API.
 
 See [FreeRTOS/SourceOrganization](http://www.freertos.org/a00017.html) for full details of the directory structure and information on locating the files you require.
 
