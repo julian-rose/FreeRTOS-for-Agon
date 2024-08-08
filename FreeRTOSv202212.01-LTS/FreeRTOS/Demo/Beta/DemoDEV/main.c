@@ -100,6 +100,8 @@ static void doUARTXonXoffTest( void );  /* DEV_MODE_UART_SW_FLOWCONTROL */
 static void doUARTRtsCtsTest( void );   /* DEV_MODE_UART_HALF_NULL_MODEM */
 static void doUARTFullNullTest( void ); /* DEV_MODE_UART_FULL_NULL_MODEM */
 static void doUARTloopbackTest( void ); /* DEV_MODE_UART_LOOPBACK */
+static void doSPIBMP280Test( void );
+static void doSPIMFRC522Test( void );
 
 
 /*----- Function Definitions ------------------------------------------------*/
@@ -159,6 +161,8 @@ static void * menu( void )
         { '6', "Test DEV UART RTS/CTS hardware flow control", doUARTRtsCtsTest },
         { '7', "Test DEV UART Full Null hardware flow control", doUARTFullNullTest },
         { '8', "Test DEV UART Loopback", doUARTloopbackTest },
+        { '9', "Test DEV SPI BMP280 Barometer", doSPIBMP280Test },
+        { 'a', "Test DEV SPI MFRC522 RFID", doSPIMFRC522Test },
         { 'q', "End tests", NULL }
     };
     void ( *ret )( void )=( void* )-1;  /* any non-NULL value */
@@ -209,6 +213,7 @@ static void * menu( void )
 */
 static void doGPIOWriteTest( void )
 {
+#if( 1 == configUSE_DRV_GPIO )
     POSIX_ERRNO res;
     KEYMAP *kbmap;
     int const escbyte =((( 113 - 1 )& 0xF8 )>> 3 );
@@ -243,6 +248,7 @@ static void doGPIOWriteTest( void )
 
     ( void )printf( "gpio_close\r\n" );
     gpio_close( GPIO_13 );
+#endif /*( 1 == configUSE_DRV_GPIO )*/
 }
 
 
@@ -255,6 +261,7 @@ static void doGPIOWriteTest( void )
 */
 static void doGPIOReadWriteTest( void )
 {
+#if( 1 == configUSE_DRV_GPIO )
     POSIX_ERRNO res;
     KEYMAP *kbmap;
     int const escbyte =((( 113 - 1 )& 0xF8 )>> 3 );
@@ -297,9 +304,10 @@ static void doGPIOReadWriteTest( void )
     ( void )printf( "gpio_close\r\n" );
     gpio_close( GPIO_13 );
     gpio_close( GPIO_16 );
+#endif /*( 1 == configUSE_DRV_GPIO )*/
 }
 
-
+#if( 1 == configUSE_DRV_GPIO )
 /*
  * myGpioHndlr is an INTERRUPT_HANDLER
  * It will be invoked in context of a DEV API GPIO ISR
@@ -340,6 +348,7 @@ void myGpioHndlr( DEV_NUM_MAJOR const major, DEV_NUM_MINOR const minor )
     }
 #   endif /*( 1 == configUSE_FAST_INTERRUPTS )*/
 }
+#endif /*( 1 == configUSE_DRV_GPIO )*/
 
 /* doGPIOCallbackTest
  *   Try out DEV API GPIO functions with interrupt
@@ -353,6 +362,7 @@ void myGpioHndlr( DEV_NUM_MAJOR const major, DEV_NUM_MINOR const minor )
 */
 static void doGPIOCallbackTest( void )
 {
+#if( 1 == configUSE_DRV_GPIO )
     POSIX_ERRNO res;
     KEYMAP *kbmap;
     int const escbyte =((( 113 - 1 )& 0xF8 )>> 3 );
@@ -400,6 +410,7 @@ static void doGPIOCallbackTest( void )
 
     // finish up
     ( void )printf( "gpiocnt = %d\r\n", gpiocnt );
+#endif /*( 1 == configUSE_DRV_GPIO )*/
 }
 
 
@@ -452,6 +463,7 @@ void myYieldHndlr( DEV_NUM_MAJOR const major, DEV_NUM_MINOR const minor )
 */
 static void doYieldFromISRTest( void )
 {
+#if( 1 == configUSE_DRV_GPIO )
     POSIX_ERRNO res;
     BaseType_t r;
     KEYMAP *kbmap;
@@ -528,9 +540,11 @@ static void doYieldFromISRTest( void )
     
     ( void )printf( "Deleting IsrTestTask\r\n\r\n" );
     vTaskDelete( isrTestTaskHandle );
+#endif /*( 1 == configUSE_DRV_GPIO )*/
 }
 
 
+/*-------- UART Tests -------------------------------------------------------*/
 /* doUARTRxTxTest
  *   Try out DEV API UART functions
  *   Connect UART1 tx pin 17 to UART1 rx pin 18 for loopback
@@ -540,6 +554,7 @@ static void doYieldFromISRTest( void )
 */
 static void doUARTRxTxTest( void )
 {
+#if( 1 == configUSE_DRV_UART )
     UART_PARAMS const uparm =
         { UART_BAUD_9600, UART_DATABITS_8, UART_STOPBITS_1, UART_PARITY_NONE };
     int const escbyte =((( 113 - 1 )& 0xF8 )>> 3 );
@@ -560,9 +575,13 @@ static void doUARTRxTxTest( void )
 
     ( void )printf( "Press 'ESC' key to exit test\r\n" );
 
-    // open GPIO:13 as an output, initial value 0
-    res = gpio_open( GPIO_13, DEV_MODE_GPIO_OUT, 0 );
-    ( void )printf( "gpio_open(13) output returns : %d\r\n", res );
+#   if( 1 == configUSE_DRV_GPIO )
+    {
+        // open GPIO:13 as an output, initial value 0
+        res = gpio_open( GPIO_13, DEV_MODE_GPIO_OUT, 0 );
+        ( void )printf( "gpio_open(13) output returns : %d\r\n", res );
+    }
+#   endif /*( 1 == configUSE_DRV_GPIO )*/
 
     // no flow control (simple rx.tx connection)
     res = uart_open( DEV_MODE_UART_NO_FLOWCONTROL, &uparm );
@@ -570,7 +589,11 @@ static void doUARTRxTxTest( void )
 
     for( i = 1; ; i = 1 - i )
     {
-        ( void )gpio_write( GPIO_13, i );  // toggle pin 13 (LED)
+#       if( 1 == configUSE_DRV_GPIO )
+        {
+            ( void )gpio_write( GPIO_13, i );  // toggle pin 13 (LED)
+        }
+#       endif /*( 1 == configUSE_DRV_GPIO )*/
 
         ( void )printf( "uart_write( \"Hello\") [[" );
         res = uart_write( "Hello", 5 );
@@ -600,8 +623,14 @@ static void doUARTRxTxTest( void )
 
     ( void )printf( "uart_close\r\n" );
     uart_close( );
-    ( void )printf( "gpio_close\r\n" );
-    gpio_close( GPIO_13 );
+#   if( 1 == configUSE_DRV_GPIO )
+    {
+        ( void )printf( "gpio_close\r\n" );
+        gpio_close( GPIO_13 );
+    }
+#   endif /*( 1 == configUSE_DRV_GPIO )*/
+
+#endif /*( 1 == configUSE_DRV_UART )*/
 }
 
 
@@ -614,6 +643,7 @@ static void doUARTRxTxTest( void )
 */
 static void doUARTXonXoffTest( void )
 {
+#if( 1 == configUSE_DRV_UART )
     UART_PARAMS const uparm =
         { UART_BAUD_9600, UART_DATABITS_8, UART_STOPBITS_1, UART_PARITY_NONE };
     int const escbyte =((( 113 - 1 )& 0xF8 )>> 3 );
@@ -633,8 +663,12 @@ static void doUARTXonXoffTest( void )
 
     ( void )printf( "Press 'ESC' key to exit test\r\n" );
 
-    // open GPIO:13 as an output, initial value 0
-    ( void )gpio_open( GPIO_13, DEV_MODE_GPIO_OUT, 0 );
+#   if( 1 == configUSE_DRV_GPIO )
+    {
+        // open GPIO:13 as an output, initial value 0
+        ( void )gpio_open( GPIO_13, DEV_MODE_GPIO_OUT, 0 );
+    }
+#   endif /*( 1 == configUSE_DRV_GPIO )*/
 
     // Xon/Xoff software flow control
     res = uart_open( DEV_MODE_UART_SW_FLOWCONTROL, &uparm );
@@ -643,7 +677,11 @@ static void doUARTXonXoffTest( void )
     // read input until a terminator character is read (^-Z)
     for( i = 1; ; i = 1 - i )
     {
-        ( void )gpio_write( GPIO_13, i );  // toggle pin 13 (LED)
+#       if( 1 == configUSE_DRV_GPIO )
+        {
+            ( void )gpio_write( GPIO_13, i );  // toggle pin 13 (LED)
+        }
+#       endif /*( 1 == configUSE_DRV_GPIO )*/
 
         portENTER_CRITICAL( );
         {
@@ -653,7 +691,6 @@ static void doUARTXonXoffTest( void )
         portEXIT_CRITICAL( );
         ( void )printf( "uart_read( ) [[" );
         res = uart_read( &b, 16 );
-//        _printb( );
         ( void )printf( "]] res = 0x%x\r\n", res );
         ( void )printf( "buf = (" );
         for( j=0; 16 > j; j++ ) printf( "0x%x ",( unsigned char )( b[ j ]));
@@ -668,8 +705,14 @@ static void doUARTXonXoffTest( void )
 
     ( void )printf( "uart_close\r\n" );
     uart_close( );
-    ( void )printf( "gpio_close\r\n" );
-    gpio_close( GPIO_13 );
+#   if( 1 == configUSE_DRV_GPIO )
+    {
+        ( void )printf( "gpio_close\r\n" );
+        gpio_close( GPIO_13 );
+    }
+#   endif /*( 1 == configUSE_DRV_GPIO )*/
+
+#endif /*( 1 == configUSE_DRV_UART )*/
 }
 
 
@@ -687,6 +730,7 @@ static void doUARTXonXoffTest( void )
 */
 static void doUARTRtsCtsTest( void )
 {
+#if( 1 == configUSE_DRV_UART )
     UART_PARAMS const uparm =
         { UART_BAUD_9600, UART_DATABITS_8, UART_STOPBITS_1, UART_PARITY_NONE };
     int const escbyte =((( 113 - 1 )& 0xF8 )>> 3 );
@@ -708,9 +752,13 @@ static void doUARTRtsCtsTest( void )
                     "-> green LED+150ohm resistor -> GND\r\n" );
     ( void )printf( "Press 'ESC' key to exit test\r\n" );
 
-    // open GPIO:13 as an output, initial value 0
-    res = gpio_open( GPIO_13, DEV_MODE_GPIO_OUT, 0 );
-    ( void )printf( "gpio_open(13) output returns : %d\r\n", res );
+#   if( 1 == configUSE_DRV_GPIO )
+    {
+        // open GPIO:13 as an output, initial value 0
+        res = gpio_open( GPIO_13, DEV_MODE_GPIO_OUT, 0 );
+        ( void )printf( "gpio_open(13) output returns : %d\r\n", res );
+    }
+#   endif /*( 1 == configUSE_DRV_GPIO )*/
 
     // hardware flow control (cross-wired NULL Modem RTS-CTS)
     res = uart_open( DEV_MODE_UART_HALF_NULL_MODEM, &uparm );
@@ -718,7 +766,12 @@ static void doUARTRtsCtsTest( void )
 
     for( i = 1; ; i = 1 - i )
     {
-        ( void )gpio_write( GPIO_13, i );  // toggle pin 13 (LED)
+#       if( 1 == configUSE_DRV_GPIO )
+        {
+            ( void )gpio_write( GPIO_13, i );  // toggle pin 13 (LED)
+        }
+#       endif /*( 1 == configUSE_DRV_GPIO )*/
+
 #if 1
         if( i )
         {
@@ -750,8 +803,14 @@ static void doUARTRtsCtsTest( void )
 
     ( void )printf( "uart_close\r\n" );
     uart_close( );
-    ( void )printf( "gpio_close\r\n" );
-    gpio_close( GPIO_13 );
+#   if( 1 == configUSE_DRV_GPIO )
+    {
+        ( void )printf( "gpio_close\r\n" );
+        gpio_close( GPIO_13 );
+    }
+#   endif /*( 1 == configUSE_DRV_GPIO )*/
+
+#endif /*( 1 == configUSE_DRV_UART )*/
 }
 
 
@@ -763,6 +822,7 @@ static void doUARTRtsCtsTest( void )
 */
 static void doUARTFullNullTest( void )
 {
+#if( 1 == configUSE_DRV_UART )
     UART_PARAMS const uparm =
         { UART_BAUD_9600, UART_DATABITS_8, UART_STOPBITS_1, UART_PARITY_NONE };
     int const escbyte =((( 113 - 1 )& 0xF8 )>> 3 );
@@ -786,9 +846,13 @@ static void doUARTFullNullTest( void )
                     "-> green LED+150ohm resistor -> GND\r\n" );
     ( void )printf( "Press 'ESC' key to exit test\r\n" );
 
-    // open GPIO:13 as an output, initial value 0
-    res = gpio_open( GPIO_13, DEV_MODE_GPIO_OUT, 0 );
-    ( void )printf( "gpio_open(13) output returns : %d\r\n", res );
+#   if( 1 == configUSE_DRV_GPIO )
+    {
+        // open GPIO:13 as an output, initial value 0
+        res = gpio_open( GPIO_13, DEV_MODE_GPIO_OUT, 0 );
+        ( void )printf( "gpio_open(13) output returns : %d\r\n", res );
+    }
+#   endif /*( 1 == configUSE_DRV_GPIO )*/
 
     // hardware flow control (cross-wired NULL Modem RTS-CTS)
     res = uart_open( DEV_MODE_UART_FULL_NULL_MODEM, &uparm );
@@ -796,7 +860,11 @@ static void doUARTFullNullTest( void )
 
     for( i = 1; ; i = 1 - i )
     {
-        ( void )gpio_write( GPIO_13, i );  // toggle pin 13 (LED)
+#       if( 1 == configUSE_DRV_GPIO )
+        {
+            ( void )gpio_write( GPIO_13, i );  // toggle pin 13 (LED)
+        }
+#       endif /*( 1 == configUSE_DRV_GPIO )*/
 
         if( i )
         {
@@ -827,8 +895,14 @@ static void doUARTFullNullTest( void )
 
     ( void )printf( "uart_close\r\n" );
     uart_close( );
-    ( void )printf( "gpio_close\r\n" );
-    gpio_close( GPIO_13 );
+#   if( 1 == configUSE_DRV_GPIO )
+    {
+        ( void )printf( "gpio_close\r\n" );
+        gpio_close( GPIO_13 );
+    }
+#   endif /*( 1 == configUSE_DRV_GPIO )*/
+
+#endif /*( 1 == configUSE_DRV_UART )*/
 }
 
 
@@ -840,6 +914,7 @@ static void doUARTFullNullTest( void )
 */
 static void doUARTloopbackTest( void )
 {
+#if( 1 == configUSE_DRV_UART )
     UART_PARAMS const uparm =
         { UART_BAUD_9600, UART_DATABITS_8, UART_STOPBITS_1, UART_PARITY_NONE };
     int const escbyte =((( 113 - 1 )& 0xF8 )>> 3 );
@@ -858,9 +933,13 @@ static void doUARTloopbackTest( void )
     ( void )printf( "Unwire all RS232 pins\r\n" );
     ( void )printf( "Press 'ESC' key to exit test\r\n" );
 
-    // open GPIO:13 as an output, initial value 0
-    res = gpio_open( GPIO_13, DEV_MODE_GPIO_OUT, 0 );
-    ( void )printf( "gpio_open(13) output returns : %d\r\n", res );
+#   if( 1 == configUSE_DRV_GPIO )
+    {
+        // open GPIO:13 as an output, initial value 0
+        res = gpio_open( GPIO_13, DEV_MODE_GPIO_OUT, 0 );
+        ( void )printf( "gpio_open(13) output returns : %d\r\n", res );
+    }
+#   endif /*( 1 == configUSE_DRV_GPIO )*/
 
     // hardware flow control (loopback)
     res = uart_open( DEV_MODE_UART_LOOPBACK, &uparm );
@@ -880,7 +959,12 @@ static void doUARTloopbackTest( void )
     // main test loop
     for( i = 1; ; i = 1 - i )
     {
-        ( void )gpio_write( GPIO_13, i );  // toggle pin 13 (LED)
+#       if( 1 == configUSE_DRV_GPIO )
+        {
+            ( void )gpio_write( GPIO_13, i );  // toggle pin 13 (LED)
+        }
+#       endif /*( 1 == configUSE_DRV_GPIO )*/
+
 
         if( i )
         {
@@ -911,8 +995,433 @@ static void doUARTloopbackTest( void )
 
     ( void )printf( "uart_close\r\n" );
     uart_close( );
+#   if( 1 == configUSE_DRV_GPIO )
+    {
+        ( void )printf( "gpio_close\r\n" );
+        gpio_close( GPIO_13 );
+    }
+#   endif /*( 1 == configUSE_DRV_GPIO )*/
+
+#endif /*( 1 == configUSE_DRV_UART )*/
+}
+
+/*-------- SPI Tests --------------------------------------------------------*/
+static unsigned short dig_T1;
+static signed short dig_T2, dig_T3;
+static unsigned short dig_P1;
+static signed short dig_P2, dig_P3, dig_P4, dig_P5, dig_P6, dig_P7, dig_P8, dig_P9;
+static signed long T_fine = 0;
+static unsigned char spiReadBuf[ 20 ];
+
+/* Read compensation calibration data from device ROM, refer to 
+   BMP280-DS001-26, section 3.11.3 Table 17, and section 3.12 for 
+   typical values */
+static void bmp280GetCalibrationData( void )
+{        
+    unsigned char const readCompDataTCmd[ ]=
+        { 0x88, 0x89, 0x8A, 0x8B, 0x8C, 0x8D, 0xFF };
+    unsigned char const readCompDataPCmd[ ]=
+        { 0x8E, 0x8F, 0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 
+          0x96, 0x97, 0x98, 0x99, 0x9A, 0x9B, 0x9C, 0x9D,
+          0x9E, 0x9F, 0xFF };
+    POSIX_ERRNO res;
+
+    /* read temperature compensation data */
+    res = spi_read( GPIO_14, readCompDataTCmd, spiReadBuf, 7 );
+    dig_T1 =( unsigned short )( spiReadBuf[ 2 ]<< 8 )+  // msb  typical=27504
+            ( unsigned short )( spiReadBuf[ 1 ]<< 0 );  // lsb
+#   if defined( _DEBUG )
+    ( void )printf( "dig_T1=%d ", dig_T1 );
+#   endif
+
+    dig_T2 =( signed short )( spiReadBuf[ 4 ]<< 8 )+  // msb    typical=26435
+            ( signed short )( spiReadBuf[ 3 ]<< 0 );  // lsb
+#   if defined( _DEBUG )
+    ( void )printf( "dig_T2=%d ", dig_T2 );
+#   endif
+
+    dig_T3 =( signed short )( spiReadBuf[ 6 ]<< 8 )+  // msb    typical=-1000
+            ( signed short )( spiReadBuf[ 5 ]<< 0 );  // lsb
+#   if defined( _DEBUG )
+    ( void )printf( "dig_T3=%d\r\n", dig_T3 );
+#   endif
+
+    /* read pressure compensation data */
+    res = spi_read( GPIO_14, readCompDataPCmd, spiReadBuf, 19 );
+    dig_P1 =( unsigned short )( spiReadBuf[ 2 ]<< 8 )+  // msb  typical=36477
+            ( unsigned short )( spiReadBuf[ 1 ]<< 0 );  // lsb
+#   if defined( _DEBUG )
+    ( void )printf( "dig_P1=%d ", dig_P1 );
+#   endif
+
+    dig_P2 =( signed short )( spiReadBuf[ 4 ]<< 8 )+  // msb    typical=-10685
+            ( signed short )( spiReadBuf[ 3 ]<< 0 );  // lsb
+#   if defined( _DEBUG )
+    ( void )printf( "dig_P2=%d ", dig_P2 );
+#   endif
+
+    dig_P3 =( signed short )( spiReadBuf[ 6 ]<< 8 )+  // msb    typical=3024
+            ( signed short )( spiReadBuf[ 5 ]<< 0 );  // lsb
+#   if defined( _DEBUG )
+    ( void )printf( "dig_P3=%d ", dig_P3 );
+#   endif
+
+    dig_P4 =( signed short )( spiReadBuf[ 8 ]<< 8 )+  // msb    typical=2855
+            ( signed short )( spiReadBuf[ 7 ]<< 0 );  // lsb
+#   if defined( _DEBUG )
+    ( void )printf( "dig_P4=%d ", dig_P4 );
+#   endif
+
+    dig_P5 =( signed short )( spiReadBuf[ 10 ]<< 8 )+  // msb   typical=140
+            ( signed short )( spiReadBuf[ 9 ]<< 0 );  // lsb
+#   if defined( _DEBUG )
+    ( void )printf( "dig_P5=%d ", dig_P5 );
+#   endif
+
+    dig_P6 =( signed short )( spiReadBuf[ 12 ]<< 8 )+  // msb   typical=-7
+            ( signed short )( spiReadBuf[ 11 ]<< 0 );  // lsb
+#   if defined( _DEBUG )
+    ( void )printf( "dig_P6=%d ", dig_P6 );
+#   endif
+
+    dig_P7 =( signed short )( spiReadBuf[ 14 ]<< 8 )+  // msb   typical=15500
+            ( signed short )( spiReadBuf[ 13 ]<< 0 );  // lsb
+#   if defined( _DEBUG )
+    ( void )printf( "dig_P7=%d ", dig_P7 );
+#   endif
+
+    dig_P8 =( signed short )( spiReadBuf[ 16 ]<< 8 )+  // msb   typical=-14600
+            ( signed short )( spiReadBuf[ 15 ]<< 0 );  // lsb
+#   if defined( _DEBUG )
+    ( void )printf( "dig_P8=%d ", dig_P8 );
+#   endif
+
+    dig_P9 =( signed short )( spiReadBuf[ 18 ]<< 8 )+  // msb   typical=6000
+            ( signed short )( spiReadBuf[ 17 ]<< 0 );  // lsb
+#   if defined( _DEBUG )
+    ( void )printf( "dig_P9=%d\r\n", dig_P9 );
+#   endif
+}
+
+
+/* Refer to Bosch BMP280-DS001-26. 
+   We use section 8 appendix 1 integer 32-bit code, rather than the 64-bit code
+   in section 3.11.3 */
+static signed long bmp280AdcCalibratedTemp( signed long adc_T )
+{
+    signed long var1, var2, T;
+    
+    var1 =(( adc_T >> 3 )-(( signed long )dig_T1 << 1 ));
+    var1 =( var1 *( signed long )dig_T2 );
+    var1 >>= 11;
+    var2 =(( adc_T >> 4 )-(( signed long )dig_T1 ));
+    var2 *= var2;
+    var2 =(( var2 >> 12 )*( signed long )dig_T3 );
+    var2 >>= 14;
+    T_fine = var1 + var2;
+
+    T =((( T_fine * 5 )+128 )>> 8 );
+    return( T );
+}
+
+
+static unsigned long bmp280AdcCalibratedPressure( signed long adc_P )
+{
+    signed long var1, var2, var3, var4;
+    unsigned long P;
+    
+    var1 =(((( signed long )T_fine )>> 1 )-( signed long )64000 );
+    var2 =(((( var1 >> 2 )*( var1 >> 2 ))>> 11 )*( signed long )dig_P6 );
+    var2 +=(( var1 *( signed long )dig_P5 )<< 1 );
+    var2 >>= 2;
+    var2 +=((( signed long )dig_P4 )<< 16 );
+    var3 =((( var1 >> 2 )*( var1 >> 2 ))>> 13 );
+    var3 =(( var3 * dig_P3 )>> 3 );
+    var4 =((( signed long )dig_P2 * var1 )>> 1 );
+    var1 =(( var3 + var4 )>> 18 );
+    var1 =((( var1 + 32768 )*(( signed long )dig_P1 ))>> 15 );
+    if( 0 == var1 )
+    {
+        P = 0;
+    }
+    else
+    {
+        P =( unsigned long )((( signed long )1048576 )- adc_P );
+        P -=( var2 >> 12 );
+        P *= 3125;
+        if(( unsigned long )0x80000000 > P )
+        {
+            P =(( P << 1 )/( unsigned long )var1 );
+        }
+        else
+        {
+            P =(( P /( unsigned long )var1 )* 2 );
+        }
+        
+        var3 =( signed long )((( P >> 3 )*( P >> 3 ))>> 13 );
+        var1 =(((( signed long )dig_P9 )* var3 )>> 12 );
+        var2 =(((( signed long )dig_P8 )*(( signed long )( P >> 2 )))>> 13 );
+        var4 =(( var1 + var2 + dig_P7 )>> 4 );
+        P =( unsigned long )(( signed long )P + var4 );
+    }
+    
+    return( P );
+}
+
+
+/* doSPIBMP280Test
+ *   Try out DEV SPI talking to a BMP280 Barometer
+ *   Read temperature and pressure data from a BMP280 SPI module; refer to 
+  *     Bosch BMP280-DS001-26.
+ *   Also refer to Zilog PS015317, SPI section. Note the eZ80 SPI is only 
+ *     activated by a write; any read occurs synchronously with the write;
+ *     such that data for commanded address n will arrive at n+1. 
+ *   Since each SPI-target device differs, initialisation requires 
+ *     application-specific programming; we will use Forced Mode such that 
+ *     the application controls measurement timing.
+ *   BMP280 commands, with ref to BMP280-DS001-26 section 5.3.1 Figure 10:
+ *     For reading data, commands consist of an array of BMP280 register 
+ *       addresses with the top bit set to 1=read; 
+ *       data for commanded address n will arrive at n+1; 
+ *       the last address N is a dummy address, to acquire the N-1 read data
+ *     For writing, commands consist of an array of <address,data> pairs,
+ *       with the top address bit set to 0=write.
+*/
+static void doSPIBMP280Test( void )
+{
+#if( 1 == configUSE_DRV_SPI )
+
+    SPI_PARAMS const sparms =
+        { SPI_BAUD_115200, SPI_CPOL_HIGH, SPI_CPHA_TRAILING };
+    int const escbyte =((( 113 - 1 )& 0xF8 )>> 3 );
+    int const escbit =  (( 113 - 1 )& 0x07 );
+    KEYMAP * const kbmap = mos_getkbmap( );  // only need do this once at startup
+    POSIX_ERRNO res;
+    signed long adc_P, adc_T;
+    unsigned long Pressure;
+    signed long Temperature;
+    int i, j;
+
+    ( void )printf( "\r\n\r\nRunning SPI BMP280 test\r\n" );
+
+    ( void )printf( "Wire BMP280 SPI module\r\n"
+                    "\tSCLK<--pin 31, MOSI<--pin 32, MISO-->pin 27 " );
+    ( void )printf( "VDD<--pin 34, GND<--pin 33 "
+                    "\tCSB<-- GPIO pin 14\r\n" );
+
+    ( void )printf( "Wire Agon GPIO pin 13 (task activity) "
+                    "-> red LED+220ohm resistor -> GND\r\n" );
+    ( void )printf( "Wire Agon GPIO pin 26 (idle activity) "
+                    "-> green LED+150ohm resistor -> GND\r\n" );
+
+    ( void )printf( "Press 'ESC' key to exit test\r\n" );
+
+    // open GPIO:13 as an output, initial value 0
+    res = gpio_open( GPIO_13, DEV_MODE_GPIO_OUT, 0 );
+    ( void )printf( "gpio_open(13) output returns : %d\r\n", res );
+
+    // open the BMP280, using GPIO_14 as Emulated /SS
+    res = spi_open( GPIO_14, DEV_MODE_SPI_DEFAULT, &sparms );
+    ( void )printf( "spi_open( ) returns : %d\r\n", res );
+
+    for( j=0; sizeof( spiReadBuf )> j; j++ ) spiReadBuf[ j ]= 0x55;
+    
+#if 0
+    /* BMP280-DS001-26 section 5.1, pulling CSB low fixes the BMP280 in SPI 
+       mode (and disables I2C until power reset) */
+    {
+        /* Configure the BMP280, refer to BMP280-DS001-26, section 4.3.5
+           Table 23, section 3.3.3 table 6, 3.6.3 table 11
+        */
+        unsigned char const writeConfigCmd[ ]=
+        //write 0xF5 t_sb=0.5ms     filter=off    SPI=4-wire
+            { 0x75,( 0x000 << 5 )+( 0x000 << 2 )+( 0x0 << 0 )};
+
+        res = spi_write( GPIO_14, writeConfigCmd, 2 );
+    }
+#endif
+
+    /* BMP280-DS001-26 section 3.6.1, in sleep mode ChipID and calibration
+       data can be read */
+    {
+         //int j;
+        /* Sanity Check, read the device ID register */
+        unsigned char const readIdCmd[ ]={ 0xD0, 0xFF };
+
+        res = spi_read( GPIO_14, readIdCmd, spiReadBuf, 2 );
+        /* We expect spiReadBuf[ 0 ] to be garbage, spiReadBuf[ 1 ]==0x58 */
+        //for( j=0; 2 > j; j++ )( void )printf( "0x%x ", spiReadBuf[ j ]);
+        ( void )printf( "Device Id : 0x%x\r\n", spiReadBuf[ 1 ]);
+    }
+
+    bmp280GetCalibrationData( );
+
+    {
+        /* Configure the BMP280 measurement params, refer to BMP280-DS001-26, 
+           section 3.3 Table 7: like "Weather monitoring" (Forced mode) with 
+           Standard Resolution
+             table 4: osrs_p[2:0]=011 (18bit/0.66Pa/over sampling=1)
+             table 5: osrs_t[2:0]=001 (16bit/0.005degC/over sampling=1)
+             table 6: IIR=off (1 samples=75% step response)
+             table 10: mode[1:0]=01 (Forced mode, one measurement period)
+        */
+        unsigned char const writeConfigCmd[ ]= // Table 20, 21, 22
+                  // osrs_t[7:5] +  osrs_p[4:2] +  mode[1:0]
+            { 0x74,( 0x001 << 5 )+( 0x011 << 2 )+( 0x0 << 0 )};
+
+        res = spi_write( GPIO_14, writeConfigCmd, 2 );
+    }
+
+    // main test loop
+    for( i = 1; ; i = 1 - i )
+    {
+        /* 1. toggle activity LED */
+        ( void )gpio_write( GPIO_13, i );  // toggle pin 13 (LED)
+
+        /* 2. Read the BMP280 (see section 3.6.2, Figure 3 timing diagram) */
+        {
+            /* 2.1 send Forced mode command */
+            unsigned char const writeMeasureCmd[ ]=
+                      // osrs_t[7:5] +  osrs_p[4:2] +  mode[1:0]
+                { 0x74,( 0x001 << 5 )+( 0x011 << 2 )+( 0x01 << 0 )};
+
+            res = spi_write( GPIO_14, writeMeasureCmd, 2 );
+        }
+        
+           /* 2.2 wait for (at least) the measurement period, table 13
+              Standard Resolution takes max 13.3mS */
+        vTaskDelay( configTICK_RATE_HZ );  // double-up as the task rate
+        
+        {
+            /* 2.3 get the BMP280 ADC data readout
+               The eZ80 requires data writes in order to activate the SPI;
+               write control words containing the BMP280 addresses to be read.
+               n addressed data value is returned in the n+1 buffer position */
+            unsigned char const readDataCmd[ ]=
+                { 0xF7, 0xF8, 0xF9, 0xFA, 0xFB, 0xFC, 0xFF };
+            //    xxxx, psmb, plsb, pxsb, tmsb, tlsb, txsb   spiReadBuf
+
+            res = spi_read( GPIO_14, readDataCmd, spiReadBuf, 7 );
+
+            adc_P =(( spiReadBuf[ 3 ]& 0xf0 )>> 4 )+ /* P xlsb[3:0]  up[3:0]   */
+                    ( spiReadBuf[ 2 ]<< 4 )+         /* P  lsb[7:0]  up[11:4]  */
+                    ( spiReadBuf[ 1 ]<< 12 );        /* P  msb[7:0]  up[19:12] */
+
+            adc_T =(( spiReadBuf[ 6 ]& 0xf0 )>> 4 )+ /* T xlsb[3:0]  ut[3:0]   */
+                    ( spiReadBuf[ 5 ]<< 4 )+         /* T  lsb[7:0]  ut[11:4]  */
+                    ( spiReadBuf[ 4 ]<< 12 );        /* T  msb[7:0]  ut[19:12] */
+        }
+
+        /* 3. Compute the measurement values from the read adc data and the
+              device calibration data; refer to BMP280 section 3.11.3. 
+              Get the temperature first as it sets global T_fine ahead of its 
+              use in Pressure. 
+              As Math library functions are used, need to guard against task 
+              re-entrancy. */
+        portENTER_CRITICAL( );
+        {
+            Temperature = bmp280AdcCalibratedTemp( adc_T );
+            Pressure = bmp280AdcCalibratedPressure( adc_P );
+        }
+        portEXIT_CRITICAL( );
+
+        /* 4. Report the Barometric measurements */
+        ( void )printf( "Pressure = %d, Temperature = %d\r\n", 
+                        Pressure/100,
+                        Temperature/100 );
+
+        /* 5. scan keyboard for ESC */
+        if((( char* )kbmap )[ escbyte ]&( 1 << escbit ))
+        {
+            break;
+        }
+    }
+
+    ( void )printf( "spi_close\r\n" );
+    spi_close( GPIO_14 );
     ( void )printf( "gpio_close\r\n" );
     gpio_close( GPIO_13 );
+
+#endif /*( 1 == configUSE_DRV_SPI )*/
+}
+
+
+/* doSPIMFRC522Test
+ *   Try out DEV SPI talking to a RC522 RFID device; read any register to prove
+ *     the SPI interface
+ *   Refer to:
+ *     NXP MFRC522DS Rev 3.9 https://www.nxp.com/docs/en/data-sheet/MFRC522.pdf
+ *     RC522 RFID Development Kit http://www.handsontec.com/dataspecs/RC522.pdf
+ *   Read data from an MRFC522 SPI module.
+ *   Also refer to Zilog PS015317, SPI section. Note the eZ80 SPI is only 
+ *     activated by a write; any read occurs synchronously with the write;
+ *     such that data for commanded address n will arrive at n+1. 
+ *   Since each SPI-target device differs, initialisation requires 
+ *     application-specific programming.
+ *   MFRC522 commands, refer to MFRC522DS section 8.1.2
+ *     For reading data, section 8.1.2.1, commands consist of an array of 
+ *       register addresses, with the top bit set to 1=read;
+ *       format => 0x80 + (addr<<1) + 0; eg. address 0x37 => 0xEE = 1110 1110
+ *       data for commanded address n will arrive at n+1;
+ *       the last address N is a dummy address, to acquire the N-1 read data;
+ *     For writing, commands consist of an array of <address,data> pairs,
+ *       with the top address bit set to 0=write.
+*/
+static void doSPIMFRC522Test( void )
+{
+#if( 1 == configUSE_DRV_SPI )
+
+    SPI_PARAMS const sparms =
+        { SPI_BAUD_115200, SPI_CPOL_HIGH, SPI_CPHA_TRAILING };
+    int const escbyte =((( 113 - 1 )& 0xF8 )>> 3 );
+    int const escbit =  (( 113 - 1 )& 0x07 );
+    KEYMAP * const kbmap = mos_getkbmap( );  // only need do this once at startup
+    POSIX_ERRNO res;
+    int j;
+
+    ( void )printf( "\r\n\r\nRunning SPI RC522 test\r\n" );
+
+    ( void )printf( "Wire RFID RC522 module\r\n"
+                    "\tSCK<--pin 31, MOSI<--pin 32, MISO-->pin 27 " );
+    ( void )printf( "3.3V<--pin 34, GND<--pin 33 "
+                    "\tSDA<-- GPIO pin 14\r\n" );
+
+    ( void )printf( "Wire Agon GPIO pin 13 (task activity) "
+                    "-> red LED+220ohm resistor -> GND\r\n" );
+    ( void )printf( "Wire Agon GPIO pin 26 (idle activity) "
+                    "-> green LED+150ohm resistor -> GND\r\n" );
+
+    ( void )printf( "Press 'ESC' key to exit test\r\n" );
+
+    // open GPIO:13 as an output, initial value 0
+    res = gpio_open( GPIO_13, DEV_MODE_GPIO_OUT, 0 );
+    ( void )printf( "gpio_open(13) output returns : %d\r\n", res );
+
+    // open the RC522, using GPIO_14 as Emulated /SS
+    res = spi_open( GPIO_14, DEV_MODE_SPI_DEFAULT, &sparms );
+    ( void )printf( "spi_open( ) returns : %d\r\n", res );
+
+    for( j=0; sizeof( spiReadBuf )> j; j++ ) spiReadBuf[ j ]= 0x55;
+    
+    {
+        int j;
+        
+        /* Sanity Check, read the device ID register (0x37) */
+        // address 0x37 => 0x80 (read) + 0x37<<1 + 0 = 0xEE = 1110 1110
+        unsigned char const readIdCmd[ ]={ 0xEE, 0xFF };
+
+        res = spi_read( GPIO_14, readIdCmd, spiReadBuf, 2 );
+        /* We expect spiReadBuf[ 0 ] to be garbage, spiReadBuf[ 1 ]==0x92 */
+        for( j=0; 2 > j; j++ )( void )printf( "0x%x ", spiReadBuf[ j ]);
+        ( void )printf( "\r\nDevice Id : 0x%x\r\n", spiReadBuf[ 1 ]);
+    }
+
+    ( void )printf( "spi_close\r\n" );
+    spi_close( GPIO_14 );
+    ( void )printf( "gpio_close\r\n" );
+    gpio_close( GPIO_13 );
+
+#endif /*( 1 == configUSE_DRV_SPI )*/
 }
 
 
@@ -924,12 +1433,17 @@ void Task1( void *pvParameters )
 
     ( void )printf( "\r\nStarting %s\r\n", pcTaskGetName( NULL ));
 
-    // open GPIO:26 as an output, initial value 0
-    res = gpio_open( GPIO_26, DEV_MODE_GPIO_OUT, 0 );
-    if( POSIX_ERRNO_ENONE == res )
+#   if( 1 == configUSE_DRV_GPIO )
     {
-        ( void )printf( "Assigned gpio(26) to the idle task\r\n" );
+        // open GPIO:26 as an output, initial value 0
+        res = gpio_open( GPIO_26, DEV_MODE_GPIO_OUT, 0 );
+        if( POSIX_ERRNO_ENONE == res )
+        {
+            ( void )printf( "Assigned gpio(26) to the idle task\r\n" );
+        }
     }
+#   endif /*( 1 == configUSE_DRV_GPIO )*/
+
 
     for( ;; )
     {
@@ -939,11 +1453,15 @@ void Task1( void *pvParameters )
         }
     }
     
-    gpio_close( GPIO_26 );
+#   if( 1 == configUSE_DRV_GPIO )
+    {
+        gpio_close( GPIO_26 );
+    }
+#   endif /*( 1 == configUSE_DRV_GPIO )*/
 
     ( void )printf( "\r\nTests complete\r\n" );
     ( void )printf( "Waiting 3 seconds before resetting Agon\r\n");
-    vTaskDelay( configTICK_RATE_HZ * 3 );  // wait 3 seconds at 10 ticks/sec
+    vTaskDelay( configTICK_RATE_HZ * 3 );  // wait 3 seconds
 
     asm( "\tRST.LIS 00h      ; invoke MOS reset" );
     
@@ -960,6 +1478,12 @@ void Task1( void *pvParameters )
 #pragma asm "\tSEGMENT TASKS"
 void vApplicationIdleHook( void )
 {
+    unsigned int toggleCnt =
+#   if( 1 == configUSE_DRV_UART )
+        10000;  
+#   else
+        30000;  
+#   endif
     static unsigned char led = 0;
     static unsigned int toggle = 0;
 
@@ -967,20 +1491,28 @@ void vApplicationIdleHook( void )
     
     //Machen mit ein blinken light
     toggle++;
-    if( 30000 < toggle ) 
+    if( 10000 < toggle ) 
     {
         toggle = 0;
 #       if defined( _DEBUG )&& 0
             _putchf( 'I' );
 #       endif
         led = 1 - led;
-        ( void )gpio_write( GPIO_26, led );
+#       if( 1 == configUSE_DRV_GPIO )
+        {
+            ( void )gpio_write( GPIO_26, led );
+        }
+#       endif /*( 1 == configUSE_DRV_UART )*/
     }
-    
-    /* manage UART Xon/Xoff or RTS/CTS flow control */
-    portENTER_CRITICAL( );
+
+#   if( 1 == configUSE_DRV_UART )
     {
-        uart_ioctl( DEV_IOCTL_UART_EXEC_RX_FLOW_CONTROL, NULL );
+        /* manage UART Xon/Xoff or RTS/CTS flow control */
+        portENTER_CRITICAL( );
+        {
+            uart_ioctl( DEV_IOCTL_UART_EXEC_RX_FLOW_CONTROL, NULL );
+        }
+        portEXIT_CRITICAL( );
     }
-    portEXIT_CRITICAL( );
+#   endif /*( 1 == configUSE_DRV_UART )*/
 }

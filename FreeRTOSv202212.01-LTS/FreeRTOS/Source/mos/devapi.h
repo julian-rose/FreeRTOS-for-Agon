@@ -197,8 +197,8 @@ typedef enum _dev_mode
       Pin numbers follow Agon Light2; and Agon Origins. 
       (Different pin numbers are used on Console8.)
       Unenumerated pins 1..5 are power
-                   pins 6..12 are ESP32 GPIO (not yet accessible through VDP protocol
-                   pins 27..32 are non-gpio functions
+                   pins 6..12 are ESP32 GPIO (not yet accessible through VDP protocol)
+                   pins 27..32 are non-gpio functions (I2C, SPI, Clock)
                    pins 33..34 are power
 */
 typedef enum _gpio_pin_num
@@ -306,6 +306,42 @@ typedef enum _uart_event
 } UART_EVENT;
 
 
+typedef enum _spi_baud_rate   // SPICLK = 3Mhz ( sysclk=18,432,000 /( 2 * brg=3 ))
+{                             //                 -- refer to Zilog PS015317 pp:134
+    SPI_BAUD_115200  =  0,    // BRG=80      0x0050
+    SPI_BAUD_153600  =  1,    // BRG=60      0x003C
+    SPI_BAUD_184320 =   2,    // BRG=50      0x0032
+    SPI_BAUD_230400  =  3,    // BRG=40      0x0028
+    SPI_BAUD_307200  =  4,    // BRG=30      0x001E
+    SPI_BAUD_460800  =  5,    // BRG=20      0x0014
+    SPI_BAUD_921600  =  6,    // BRG=10      0x000A
+    SPI_BAUD_1152000 =  7,    // BRG=8       0x0008
+    SPI_BAUD_1536000 =  8,    // BRG=6       0x0006
+    SPI_BAUD_1843200 =  9,    // BRG=5       0x0005
+    SPI_BAUD_2304000 = 10,    // BRG=4       0x0004
+    SPI_BAUD_3072000 = 11,    // BRG=3       0x0003  // 3=SPI Master lowest value
+
+    NUM_SPI_BAUD = 12
+
+} SPI_BAUD_RATE;
+
+
+typedef enum _spi_clockpolarity
+{
+    SPI_CPOL_LOW = 0,       // SPI clock idles low
+    SPI_CPOL_HIGH = 1       // SPI clock idles high
+    
+} SPI_CLOCK_POLARITY;
+
+
+typedef enum _spi_clockphase
+{
+    SPI_CPHA_LEADING = 0,   // SPI sample on clock leading edge (transmit on trailing)
+    SPI_CPHA_TRAILING = 1   // SPI sample on clock trailing edge (transmit on leading)
+
+} SPI_CLOCK_PHASE;
+
+
 typedef enum _i2c_frequency
 {
     I2C_FREQ_DEFAULT     = 0x1,  // I2C frequency 57600 bps
@@ -357,6 +393,15 @@ typedef struct _uart_mode_status // Modem (DCE) state descriptor
     unsigned char txd: 1;        // DCE<-Agon Transmit Data stream (Agon to remote)
     
 } UART_MODEM_STATUS;
+
+
+typedef struct _spi_params         // SPI descriptor
+{
+    SPI_BAUD_RATE      baudRate;   // Clock bit rate
+    SPI_CLOCK_POLARITY cPolarity;  // Clock Polarity
+    SPI_CLOCK_PHASE    cPhase;     // Clock Phase
+
+} SPI_PARAMS;
 
 
 /*----- Function Declarations -----------------------------------------------*/
@@ -445,7 +490,9 @@ POSIX_ERRNO i2c_write(
        Open SPI for i/o
        Defined in devapi.c */
 POSIX_ERRNO spi_open( 
-                DEV_MODE const mode
+                GPIO_PIN_NUM const slaveSelect, 
+                DEV_MODE const mode,
+                SPI_PARAMS const * params
             );
 
 
@@ -453,7 +500,7 @@ POSIX_ERRNO spi_open(
        Close previously opened SPI
        Defined in devapi.c */
 POSIX_ERRNO spi_close( 
-                void 
+                GPIO_PIN_NUM const slaveSelect
             );
 
 
@@ -461,8 +508,10 @@ POSIX_ERRNO spi_close(
        Read data from previously opened SPI
        Defined in devapi.c */
 POSIX_ERRNO spi_read(
-                void * const buffer,
-                size_t const num_bytes_to_read
+                GPIO_PIN_NUM const slaveSelect,
+                unsigned char * const tx_buffer,
+                unsigned char * rx_buffer,
+                size_t const num_bytes_to_transceive
             );
 
 
@@ -470,6 +519,7 @@ POSIX_ERRNO spi_read(
        Write data to a previously opened SPI
        Defined in devapi.c */
 POSIX_ERRNO spi_write(
+                GPIO_PIN_NUM const slaveSelect, 
                 void * const buffer,
                 size_t const num_bytes_to_write
             );

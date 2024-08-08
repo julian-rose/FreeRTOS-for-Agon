@@ -79,7 +79,7 @@
                                0 = smaller and faster code, but unsafeguarded
                                    you might opt for this in a release build
 */
-#define configUSE_DEV_SAFEGUARDS         0
+#define configUSE_DEV_SAFEGUARDS         1
 
 
 /* Interrupts

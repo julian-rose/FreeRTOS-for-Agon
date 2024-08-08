@@ -11,7 +11,6 @@ ptn_Child3=Document-2
 ptn_Child4=Document-3
 ptn_Child5=Document-4
 ptn_Child6=Document-5
-ptn_Child7=Document-6
 
 [WorkState_v1_2.Frames.ChildFrames.Document-0]
 ptn_Child1=ViewFrame-0
@@ -33,60 +32,49 @@ DocTemplateIndex=0
 DocumentString=IDE.Document
 IsActiveChildFrame=True
 IsFrameVisible=True
-WindowPlacement=MCAAAAAAAAAAAAAABAAAAAAAHMAAAAAAFCCAAAAAPPPPPPPPPPPPPPPPOAAAAAAAKBAAAAAACADAAAAALMBAAAAA
+WindowPlacement=MCAAAAAAAAAAAAAABAAAAAAAHMAAAAAAHECAAAAAPPPPPPPPPPPPPPPPCDAAAAAADCAAAAAAGCDAAAAAENBAAAAA
 
 [WorkState_v1_2.Frames.ChildFrames.Document-2]
 ptn_Child1=ViewFrame-0
 
 [WorkState_v1_2.Frames.ChildFrames.Document-2.ViewFrame-0]
-DocPathName=..\..\..\Source\mos\devapi.c
-DocTemplateIndex=0
-DocumentString=IDE.Document
-IsActiveChildFrame=False
-IsFrameVisible=True
-WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAHMAAAAAAHECAAAAAPPPPPPPPPPPPPPPPKFAAAAAAIGAAAAAAOEDAAAAAJBCAAAAA
-
-[WorkState_v1_2.Frames.ChildFrames.Document-3]
-ptn_Child1=ViewFrame-0
-
-[WorkState_v1_2.Frames.ChildFrames.Document-3.ViewFrame-0]
 DocPathName=..\..\..\Source\mos\devapi.h
 DocTemplateIndex=0
 DocumentString=IDE.Document
 IsActiveChildFrame=False
 IsFrameVisible=True
-WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAOIBAAAAAHECAAAAAPPPPPPPPPPPPPPPPHCAAAAAADGAAAAAALBDAAAAAEBCAAAAA
+WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAHMAAAAAAHECAAAAAPPPPPPPPPPPPPPPPCLAAAAAAPDAAAAAAGKDAAAAAAPBAAAAA
 
-[WorkState_v1_2.Frames.ChildFrames.Document-4]
+[WorkState_v1_2.Frames.ChildFrames.Document-3]
 ptn_Child1=ViewFrame-0
 
-[WorkState_v1_2.Frames.ChildFrames.Document-4.ViewFrame-0]
+[WorkState_v1_2.Frames.ChildFrames.Document-3.ViewFrame-0]
 DocPathName=..\..\..\Source\mos\devapil.h
 DocTemplateIndex=0
 DocumentString=IDE.Document
 IsActiveChildFrame=False
 IsFrameVisible=True
-WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAFFCAAAAAHECAAAAAPPPPPPPPPPPPPPPPABAAAAAAAJAAAAAAMADAAAAAHBCAAAAA
+WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAOIBAAAAAHECAAAAAPPPPPPPPPPPPPPPPABAAAAAAAJAAAAAAMADAAAAAHBCAAAAA
 
-[WorkState_v1_2.Frames.ChildFrames.Document-5]
+[WorkState_v1_2.Frames.ChildFrames.Document-4]
 ptn_Child1=ViewFrame-0
 
-[WorkState_v1_2.Frames.ChildFrames.Document-5.ViewFrame-0]
+[WorkState_v1_2.Frames.ChildFrames.Document-4.ViewFrame-0]
 DocPathName=.\devConfig.h
 DocTemplateIndex=0
 DocumentString=IDE.Document
 IsActiveChildFrame=False
 IsFrameVisible=True
-WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAAAAAAAAAFCCAAAAAIPPPPPPPBOPPPPPPFDAAAAAAMCAAAAAAIADAAAAAFLBAAAAA
+WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAFFCAAAAAHECAAAAAIPPPPPPPBOPPPPPPPGAAAAAAJIAAAAAACEDAAAAACBCAAAAA
 
-[WorkState_v1_2.Frames.ChildFrames.Document-6]
+[WorkState_v1_2.Frames.ChildFrames.Document-5]
 ptn_Child1=ViewFrame-0
 
-[WorkState_v1_2.Frames.ChildFrames.Document-6.ViewFrame-0]
-DocPathName=..\..\..\Source\mos\devuart.c
+[WorkState_v1_2.Frames.ChildFrames.Document-5.ViewFrame-0]
+DocPathName=..\..\..\Source\mos\devspi.c
 DocTemplateIndex=0
 DocumentString=IDE.Document
 IsActiveChildFrame=False
 IsFrameVisible=True
-WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAHMAAAAAAFCCAAAAAPPPPPPPPPPPPPPPPFIAAAAAAJCAAAAAAKIDAAAAAGACAAAAA
+WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAAAAAAAAAFCCAAAAAPPPPPPPPPPPPPPPPFDAAAAAABDAAAAAAJCDAAAAAEOBAAAAA
 

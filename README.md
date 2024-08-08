@@ -169,12 +169,25 @@ better demonstrate the speed of FreeRTOS / MOS on Agon.
 <h4>Beta Demos</h4>
 A Beta demo is found in ./FreeRTOSv202212.01-LTS/FreeRTOS/Demo/Beta/DemoMOS/.
 DemoMOS uses the MOS API to access MOS services, including files, directory,
-and MOS devices including the keyboard, Uart, and I2C interfaces. 
+and MOS devices including the keyboard, UART, and I2C interfaces. 
 <p>
 
 A second Beta demo is found in ./FreeRTOSv202212.01-LTS/FreeRTOS/Demo/Beta/DemoDEV/.
-This demonstrates the new DEV API capabilities. Currently that is the full GPIO 
-API, with a subset of the UART API still in development.
+This demonstrates the new DEV API capabilities. Currently that is the full GPIO, 
+UART and SPI APIs. The DEV I2C API is the last for beta development. 
+
+<h5>SPI</h5>
+Note I read back all zeros from a Bosch BMP280 barometric sensor via SPI, but
+do successfully read an NXP MFRC522 RFID controller IC. I've checked my dodgy 
+soldering with a meter. I don't own a scope to study the waveforms. But even if 
+I could check the waveforms, there is little I can program to affect the eZ80 
+SPI controller output. There may be an incompatability between the eZ80 and 
+BMP280 devices, and potentially other kinds of device. It may be my individual 
+BMP280 is defective; or, it fell out the back of a factory before being tested
+or programmed.  I've ordered another BMP280 from a different supplier, to 
+randomise my chances - I can check the manufacturer code printed on the case - 
+and will re-test that once it arrives. However, the DEV API SPI software looks 
+okay for beta release and moving into its maintenance phase. 
 
 <h3>License</h3>
 FreeRTOS / MOS for Agon is released under the MIT license. This is done mainly

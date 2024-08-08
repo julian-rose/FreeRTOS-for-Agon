@@ -106,17 +106,21 @@ PORT_BITMAP const portmap[ NUM_DEV_MINOR ]=
     {  PORT_D, 4 },  // GPIO_13
     {  PORT_D, 5 },  // GPIO_14
     {  PORT_D, 6 },  // GPIO_15
-    {  PORT_D, 7 },  // GPIO_16 
+    {  PORT_D, 7 },  // GPIO_16
     {  PORT_C, 0 },  // GPIO_17
     {  PORT_C, 1 },  // GPIO_18
     {  PORT_C, 2 },  // GPIO_19
-    {  PORT_C, 3 },  // GPIO_20 
+    {  PORT_C, 3 },  // GPIO_20
     {  PORT_C, 4 },  // GPIO_21
     {  PORT_C, 5 },  // GPIO_22
     {  PORT_C, 6 },  // GPIO_23
-    {  PORT_C, 7 },  // GPIO_24 
+    {  PORT_C, 7 },  // GPIO_24
     {  PORT_B, 2 },  // GPIO_25 cannot be assigned
-    {  PORT_B, 5 },  // GPIO_26 
+    {  PORT_B, 5 },  // GPIO_26
+    
+    /* DEV API also controls PORT_B, 4 for SPI, but this is not taken to 
+       pinout. It is used as MicroSD_CS, left asserted by MOS. DEV API shall
+       de-assert then re-assert PB4 on each SPI operation. */
 };
 
 
@@ -208,32 +212,41 @@ static POSIX_ERRNO pins_alloc(
         break;
 
         case DEV_NUM_SPI:
-        case DEV_NUM_I2C:  // same code as i2c pin numbers lie within limits of spi
         {
-            for( i = SPI_SS; SPI_MOSI >= i; i++ )
+            if(( PIN_STATE_FREE == pinstate[ SPI_SS - PIN_NUM_START ])&&
+               ( PIN_STATE_FREE == pinstate[ SPI_MISO - PIN_NUM_START ])&&
+               ( PIN_STATE_FREE == pinstate[ SPI_CLK - PIN_NUM_START ])&&
+               ( PIN_STATE_FREE == pinstate[ SPI_MOSI - PIN_NUM_START ]))
             {
-                unsigned int const mnri =( i - PIN_NUM_START );
-
-                if(( assigned_pins[ DEV_NUM_GPIO ][ mnri ])&&
-                   ( PIN_STATE_FREE != pinstate[ mnri ]))
-                {
-                    ret = POSIX_ERRNO_EBUSY;
-                    break;
-                }
+                pinstate[ SPI_SS - PIN_NUM_START ]= PIN_STATE_INUSE;
+                pinmode[ SPI_SS - PIN_NUM_START ]= mode;
+                pinstate[ SPI_MISO - PIN_NUM_START ]= PIN_STATE_INUSE;
+                pinmode[ SPI_MISO - PIN_NUM_START ]= mode;
+                pinstate[ SPI_CLK - PIN_NUM_START ]= PIN_STATE_INUSE;
+                pinmode[ SPI_CLK - PIN_NUM_START ]= mode;
+                pinstate[ SPI_MOSI - PIN_NUM_START ]= PIN_STATE_INUSE;
+                pinmode[ SPI_MOSI - PIN_NUM_START ]= mode;
             }
-            
-            if( POSIX_ERRNO_EBUSY != ret )
+            else
             {
-                for( i = SPI_SS; SPI_MOSI >= i; i++ )
-                {
-                    unsigned int const mnri =( i - PIN_NUM_START );
+                ret = POSIX_ERRNO_EBUSY;
+            }
+        }
+        break;
 
-                    if( assigned_pins[ DEV_NUM_GPIO ][ mnri ])
-                    {
-                        pinstate[ mnri ]= PIN_STATE_INUSE;
-                        pinmode[ mnri ]= mode;
-                    }
-                }
+        case DEV_NUM_I2C:
+        {
+            if(( PIN_STATE_FREE == pinstate[ SPI_SS - I2C_SDA ])&&
+               ( PIN_STATE_FREE == pinstate[ SPI_MOSI - I2C_SCL ]))
+            {
+                pinstate[ SPI_SS - I2C_SDA ]= PIN_STATE_INUSE;
+                pinmode[ SPI_SS - I2C_SDA ]= mode;
+                pinstate[ SPI_MISO - I2C_SCL ]= PIN_STATE_INUSE;
+                pinmode[ SPI_MISO - I2C_SCL ]= mode;
+            }
+            else
+            {
+                ret = POSIX_ERRNO_EBUSY;
             }
         }
         break;
@@ -335,32 +348,41 @@ static POSIX_ERRNO pins_free(
         break;
 
         case DEV_NUM_SPI:
-        case DEV_NUM_I2C:  // same code as i2c pin numbers lie within limits of spi
         {
-            for( i = SPI_SS; SPI_MOSI >= i; i++ )
+            if(( PIN_STATE_INUSE == pinstate[ SPI_SS - PIN_NUM_START ])&&
+               ( PIN_STATE_INUSE == pinstate[ SPI_MISO - PIN_NUM_START ])&&
+               ( PIN_STATE_INUSE == pinstate[ SPI_CLK - PIN_NUM_START ])&&
+               ( PIN_STATE_INUSE == pinstate[ SPI_MOSI - PIN_NUM_START ]))
             {
-                unsigned int const mnri =( i - PIN_NUM_START );
-
-                if(( assigned_pins[ major ][ mnri ])&&
-                   ( PIN_STATE_FREE == pinstate[ mnri ]))
-                {
-                    ret = POSIX_ERRNO_ENOTCONN;
-                    break;
-                }
+                pinstate[ SPI_SS - PIN_NUM_START ]= PIN_STATE_FREE;
+                pinmode[ SPI_SS - PIN_NUM_START ]= DEV_MODE_UNBUFFERED;
+                pinstate[ SPI_MISO - PIN_NUM_START ]= PIN_STATE_FREE;
+                pinmode[ SPI_MISO - PIN_NUM_START ]= DEV_MODE_UNBUFFERED;
+                pinstate[ SPI_CLK - PIN_NUM_START ]= PIN_STATE_FREE;
+                pinmode[ SPI_CLK - PIN_NUM_START ]= DEV_MODE_UNBUFFERED;
+                pinstate[ SPI_MOSI - PIN_NUM_START ]= PIN_STATE_FREE;
+                pinmode[ SPI_MOSI - PIN_NUM_START ]= DEV_MODE_UNBUFFERED;
             }
-            
-            if( POSIX_ERRNO_ENOTCONN != ret )
+            else
             {
-                for( i = SPI_SS; SPI_MOSI >= i; i++ )
-                {
-                    unsigned int const mnri =( i - PIN_NUM_START );
+                ret = POSIX_ERRNO_ENOTCONN;
+            }
+        }
+        break;
 
-                    if( assigned_pins[ major ][ mnri ])
-                    {
-                        pinstate[ mnri ]= PIN_STATE_FREE;
-                        pinmode[ mnri ]= DEV_MODE_UNBUFFERED;
-                    }
-                }
+        case DEV_NUM_I2C:
+        {
+            if(( PIN_STATE_INUSE == pinstate[ SPI_SS - I2C_SDA ])&&
+               ( PIN_STATE_INUSE == pinstate[ SPI_MOSI - I2C_SCL ]))
+            {
+                pinstate[ SPI_SS - I2C_SDA ]= PIN_STATE_FREE;
+                pinmode[ SPI_SS - I2C_SDA ]= DEV_MODE_UNBUFFERED;
+                pinstate[ SPI_MISO - I2C_SCL ]= PIN_STATE_FREE;
+                pinmode[ SPI_MISO - I2C_SCL ]= DEV_MODE_UNBUFFERED;
+            }
+            else
+            {
+                ret = POSIX_ERRNO_ENOTCONN;
             }
         }
         break;
@@ -474,7 +496,11 @@ static POSIX_ERRNO dev_open(
                 genarg = va_arg( args, void * );
                 va_end( args );
 
-                ret = gpio_dev_open( minor, mode, genarg );
+#               if( 1 == configUSE_DRV_GPIO )||( 1 == configUSE_DRV_SPI )
+                {
+                    ret = gpio_dev_open( minor, mode, genarg );
+                }
+#               endif /*( 1 == configUSE_DRV_GPIO )*/
             }
             break;
 
@@ -484,15 +510,25 @@ static POSIX_ERRNO dev_open(
                 params = va_arg( args, void * );
                 va_end( args );
 
-                ret = uart_dev_open( mode, params );
+#               if( 1 == configUSE_DRV_UART )
+                {
+                    ret = uart_dev_open( mode, params );
+                }
+#               endif /*( 1 == configUSE_DRV_UART )*/
             }
             break;
 
             case DEV_NUM_SPI:
             {
+                void * params;  // 24-bit int-sized argument (including pointers)
+                params = va_arg( args, void * );
                 va_end( args );
 
-                ret = spi_dev_open( mode );
+#               if( 1 == configUSE_DRV_SPI )
+                {
+                    ret = spi_dev_open( minor, mode, params );
+                }
+#               endif /*( 1 == configUSE_DRV_SPI )*/
             }
             break;
 
@@ -500,7 +536,11 @@ static POSIX_ERRNO dev_open(
             {
                 va_end( args );
 
-                ret = i2c_dev_open( mode );
+#               if( 1 == configUSE_DRV_I2C )
+                {
+                    ret = i2c_dev_open( mode );
+                }
+#               endif /*( 1 == configUSE_DRV_I2C )*/
             }
             break;
 
@@ -558,7 +598,11 @@ static void dev_close(
             }
             else
             {
-                gpio_dev_close( minor );
+#               if( 1 == configUSE_DRV_GPIO )||( 1 == configUSE_DRV_SPI )
+                {
+                    gpio_dev_close( minor );
+                }
+#               endif /*( 1 == configUSE_DRV_GPIO )*/
             }
         }
         break;
@@ -571,7 +615,11 @@ static void dev_close(
             }
             else
             {
-                uart_dev_close( );
+#               if( 1 == configUSE_DRV_UART )
+                {
+                    uart_dev_close( );
+                }
+#               endif /*( 1 == configUSE_DRV_UART )*/
             }
         }
         break;
@@ -584,7 +632,11 @@ static void dev_close(
             }
             else
             {
-                spi_dev_close( );
+#               if( 1 == configUSE_DRV_SPI )
+                {
+                    spi_dev_close( minor );
+                }
+#               endif /*( 1 == configUSE_DRV_SPI )*/
             }
         }
         break;
@@ -597,7 +649,11 @@ static void dev_close(
             }
             else
             {
-                i2c_dev_close( );
+#               if( 1 == configUSE_DRV_I2C )
+                {
+                    i2c_dev_close( );
+                }
+#               endif /*( 1 == configUSE_DRV_I2C )*/
             }
         }
         break;
@@ -657,7 +713,11 @@ static POSIX_ERRNO dev_read(
             }
             else
             {
-                ret = gpio_dev_read( minor, buffer );
+#               if( 1 == configUSE_DRV_GPIO )||( 1 == configUSE_DRV_SPI )
+                {
+                    ret = gpio_dev_read( minor, buffer );
+                }
+#               endif /*( 1 == configUSE_DRV_GPIO )*/
             }
         }
         break;
@@ -670,31 +730,23 @@ static POSIX_ERRNO dev_read(
             }
             else
             {
-                ret = uart_dev_read(
-                          buffer, 
-                          num_bytes_to_read,
-                          num_bytes_read,
-                          result
-                );
+#               if( 1 == configUSE_DRV_UART )
+                {
+                    ret = uart_dev_read(
+                              buffer, 
+                              num_bytes_to_read,
+                              num_bytes_read,
+                              result
+                    );
+                }
+#               endif /*( 1 == configUSE_DRV_UART )*/
             }
         }
         break;
 
         case DEV_NUM_SPI:
         {
-            if( DEV_MODE_UNBUFFERED == pinmode[( SPI_SS - PIN_NUM_START )])
-            {
-                ret = POSIX_ERRNO_ENSRCH;
-            }
-            else
-            {
-                ret = spi_dev_read(
-                          buffer, 
-                          num_bytes_to_read,
-                          num_bytes_read,
-                          result
-                );
-            }
+            /* checked locally in spi_read */
         }
         break;
 
@@ -706,12 +758,16 @@ static POSIX_ERRNO dev_read(
             }
             else
             {
-                ret = i2c_dev_read(
-                          buffer, 
-                          num_bytes_to_read,
-                          num_bytes_read,
-                          result
-                );
+#               if( 1 == configUSE_DRV_I2C )
+                {
+                    ret = i2c_dev_read(
+                              buffer, 
+                              num_bytes_to_read,
+                              num_bytes_read,
+                              result
+                    );
+                }
+#               endif /*( 1 == configUSE_DRV_I2C )*/
             }
         }
         break;
@@ -761,7 +817,11 @@ static POSIX_ERRNO dev_write(
             }
             else
             {
-                ret = gpio_dev_write( minor, *(( unsigned char * )buffer ));
+#               if( 1 == configUSE_DRV_GPIO )||( 1 == configUSE_DRV_SPI )
+                {
+                    ret = gpio_dev_write( minor, *(( unsigned char * )buffer ));
+                }
+#               endif /*( 1 == configUSE_DRV_GPIO )*/
             }
         }
         break;
@@ -774,12 +834,16 @@ static POSIX_ERRNO dev_write(
             }
             else
             {
-                ret = uart_dev_write(
-                          buffer, 
-                          num_bytes_to_write,
-                          num_bytes_written,
-                          result
-                );
+#               if( 1 == configUSE_DRV_UART )
+                {
+                    ret = uart_dev_write(
+                              buffer, 
+                              num_bytes_to_write,
+                              num_bytes_written,
+                              result
+                    );
+                }
+#               endif /*( 1 == configUSE_DRV_UART )*/
             }
         }
         break;
@@ -792,12 +856,11 @@ static POSIX_ERRNO dev_write(
             }
             else
             {
-                ret = spi_dev_write(
-                          buffer, 
-                          num_bytes_to_write,
-                          num_bytes_written,
-                          result
-                );
+#               if( 1 == configUSE_DRV_SPI )
+                {
+                    ret = spi_dev_write( minor, buffer, num_bytes_to_write );
+                }
+#               endif /*( 1 == configUSE_DRV_SPI )*/
             }
         }
         break;
@@ -810,12 +873,16 @@ static POSIX_ERRNO dev_write(
             }
             else
             {
-                ret = i2c_dev_write(
-                          buffer, 
-                          num_bytes_to_write,
-                          num_bytes_written,
-                          result
-                );
+#               if( 1 == configUSE_DRV_I2C )
+                {
+                    ret = i2c_dev_write(
+                              buffer, 
+                              num_bytes_to_write,
+                              num_bytes_written,
+                              result
+                    );
+                }
+#               endif /*( 1 == configUSE_DRV_I2C )*/
             }
         }
         break;
@@ -865,7 +932,7 @@ static POSIX_ERRNO dev_poll(
             {
                 if( num_tx_bytes_buffered ) *num_tx_bytes_buffered = 0;
                 if( num_rx_bytes_buffered ) *num_rx_bytes_buffered = 0;
-                if( status ) *status = 0;
+                if( status ) *( unsigned char * )status = 0;
             }
         }
         break;
@@ -877,17 +944,27 @@ static POSIX_ERRNO dev_poll(
                 ret = POSIX_ERRNO_ENSRCH;
             }
             else
-            if( 1 != minor ))
+            if( 1 != minor )
             {
                 ret = POSIX_ERRNO_ENODEV;
             }
             else
             {
-                ret = uart_dev_poll(
-                          num_tx_bytes_buffered,   // write buffer status
-                          num_tx_bytes_buffered,  // read buffer status
-                          status               // general status word
-                );
+#               if( 1 == configUSE_DRV_UART )
+                {
+                    ret = uart_dev_poll(
+                              num_tx_bytes_buffered,   // write buffer status
+                              num_tx_bytes_buffered,  // read buffer status
+                              status               // general status word
+                    );
+                }
+#               else
+                {
+                    if( num_tx_bytes_buffered ) *num_tx_bytes_buffered = 0;
+                    if( num_rx_bytes_buffered ) *num_rx_bytes_buffered = 0;
+                    if( status ) *( unsigned char * )status = 0;
+                }
+#               endif /*( 1 == configUSE_DRV_UART )*/
             }
         }
         break;
@@ -902,7 +979,7 @@ static POSIX_ERRNO dev_poll(
             {
                 if( num_tx_bytes_buffered ) *num_tx_bytes_buffered = 0;
                 if( num_rx_bytes_buffered ) *num_rx_bytes_buffered = 0;
-                if( status ) *status = 0;
+                if( status ) *( unsigned char * )status = 0;
             }
         }
         break;
@@ -917,7 +994,7 @@ static POSIX_ERRNO dev_poll(
             {
                 if( num_tx_bytes_buffered ) *num_tx_bytes_buffered = 0;
                 if( num_rx_bytes_buffered ) *num_rx_bytes_buffered = 0;
-                if( status ) *status = 0;
+                if( status ) *( unsigned char * )status = 0;
             }
         }
         break;
@@ -980,16 +1057,20 @@ static POSIX_ERRNO dev_ioctl(
                 ret = POSIX_ERRNO_ENSRCH;
             }
             else
-            if( 1 != minor ))
+            if( 1 != minor )
             {
                 ret = POSIX_ERRNO_ENODEV;
             }
             else
             {
-                ret = uart_dev_ioctl(
-                          cmd,
-                          param
-                );
+#               if( 1 == configUSE_DRV_UART )
+                {
+                    ret = uart_dev_ioctl(
+                              cmd,
+                              param
+                    );
+                }
+#               endif /*( 1 == configUSE_DRV_UART )*/
             }
         }
         break;
@@ -1036,7 +1117,7 @@ static POSIX_ERRNO dev_ioctl(
 
 
 /*----- DEV API User Function definitions -----------------------------------*/
-#if( 1 == configUSE_DRV_GPIO )
+#if( 1 == configUSE_DRV_GPIO )||( 1 == configUSE_DRV_SPI )
     /* DEV_API: gpio_open
        Open GPIO for i/o
        Get any mode-specific parameters
@@ -1254,42 +1335,118 @@ POSIX_ERRNO i2c_write(
 /* DEV_API: spi_open
    Open SPI for i/o */
 POSIX_ERRNO spi_open( 
-                DEV_MODE const mode 
+                GPIO_PIN_NUM const slaveSelect, 
+                DEV_MODE const mode,
+                SPI_PARAMS const * params
             )
 {
-    return( POSIX_ERRNO_ENONE );
+    POSIX_ERRNO ret;
+
+    switch( DEV_MODE_SPI_MASK & mode )
+    {
+        case DEV_MODE_SPI_DEFAULT :
+        {
+#           if( 1 == configUSE_DEV_SAFEGUARDS )
+            {
+                ret = dev_open( DEV_NUM_SPI, slaveSelect, mode, params );
+            }
+#           else
+            {
+                ret = spi_dev_open( slaveSelect, mode, params );
+            }
+#           endif
+        }
+        break;
+
+        default :
+        {
+            ret = POSIX_ERRNO_EINVAL;
+        }
+        break;
+    }
+
+    return( ret );
 }
 
 
 /* DEV_API: spi_close
    Close previously opened SPI */
 POSIX_ERRNO spi_close( 
-                void 
+                GPIO_PIN_NUM const slaveSelect
             )
 {
+#   if( 1 == configUSE_DEV_SAFEGUARDS )
+    {
+        dev_close( DEV_NUM_SPI, slaveSelect );
+    }
+#   else
+    {
+        spi_dev_close( slaveSelect );
+    }
+#   endif
+
     return( POSIX_ERRNO_ENONE );
 }
 
 
 /* DEV_API: spi_read
-   Read data from previously opened SPI */
+   Read data from a previously opened SPI.
+   This is an uncommon read API and so for configUSE_DEV_SAFEGUARDS we bypass 
+     calling dev_read, and instead do those checks locally. */
 POSIX_ERRNO spi_read(
-                void * const buffer,
-                size_t const num_bytes_to_read
+                GPIO_PIN_NUM const slaveSelect,
+                unsigned char * tx_buffer,
+                unsigned char * rx_buffer,
+                size_t const num_bytes_to_transceive
             )
 {
-    return( POSIX_ERRNO_ENONE );
+    POSIX_ERRNO ret = POSIX_ERRNO_ENONE;
+
+#   if( 1 == configUSE_DEV_SAFEGUARDS )
+    {
+        if( DEV_MODE_UNBUFFERED == pinmode[( SPI_SS - PIN_NUM_START )])
+        {
+            ret = POSIX_ERRNO_ENSRCH;
+        }
+    }
+#   endif
+    
+    if( POSIX_ERRNO_ENONE == ret )
+    {
+        ret = spi_dev_read( 
+                  slaveSelect, 
+                  tx_buffer, 
+                  rx_buffer, 
+                  num_bytes_to_transceive );
+    }
+    
+    return( ret );
 }
 
 
 /* DEV_API: spi_write
    Write data to a previously opened SPI */
 POSIX_ERRNO spi_write(
+                GPIO_PIN_NUM const slaveSelect,
                 void * const buffer,
                 size_t const num_bytes_to_write
             )
 {
-    return( POSIX_ERRNO_ENONE );
+    POSIX_ERRNO ret;
+
+#   if( 1 == configUSE_DEV_SAFEGUARDS )
+    {
+        ret = dev_write( 
+                  DEV_NUM_SPI, slaveSelect, 
+                  buffer, num_bytes_to_write, NULL, NULL );
+    }
+#   else
+    {
+        ret = spi_dev_write( slaveSelect, buffer, num_bytes_to_write );
+    }
+#   endif
+    
+    return( ret );
 }
 #endif /* 1 == configUSE_DRV_SPI */
 

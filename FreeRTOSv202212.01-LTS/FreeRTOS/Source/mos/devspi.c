@@ -39,7 +39,7 @@
  *
  * The definitions in this file support the DEV API (SPI low-level)
  * for Agon Light (and comptaibles)
- * Created 20.Jun.2024 by Julian Rose for Agon Light port
+ * Created 01.August.2024 by Julian Rose for Agon Light port
  *
  * These functions should not normally be application-user altered.
 */
@@ -51,6 +51,7 @@
 #include <eZ80F92.h>
 
 #include "FreeRTOS.h"
+#include "task.h"
 #include "devConfig.h"
 #include "devapi.h"
 #include "devapil.h"
@@ -58,52 +59,240 @@
 
 #if( 1 == configUSE_DRV_SPI )
 
+
+/*---- Constants ------------------------------------------------------------*/
+static unsigned short int const brg[ NUM_SPI_BAUD ]=
+{           // Constants for BRG divisor computed at compile time
+    0x0050, // SPI_BAUD_115200   // BRG=0x0050
+    0x003C, // SPI_BAUD_153600   // BRG=0x003C
+    0x0032, // SPI_BAUD_184320   // BRG=0x0032
+    0x0028, // SPI_BAUD_230400   // BRG=0x0028
+    0x001E, // SPI_BAUD_307200   // BRG=0x001E
+    0x0014, // SPI_BAUD_460800   // BRG=0x0014
+    0x000A, // SPI_BAUD_921600   // BRG=0x000A
+    0x0008, // SPI_BAUD_1152000  // BRG=0x0008
+    0x0006, // SPI_BAUD_1536000  // BRG=0x0006
+    0x0005, // SPI_BAUD_1843200  // BRG=0x0005
+    0x0004, // SPI_BAUD_2304000  // BRG=0x0004
+    0x0003  // SPI_BAUD_3072000  // BRG=0x0003  // lowest value for SPI Master
+};
+
+
+static SPI_PARAMS const mosParams =
+    { SPI_BAUD_3072000, SPI_CPOL_LOW, SPI_CPHA_LEADING };
+static SPI_PARAMS const defaultParams =
+                      { SPI_BAUD_115200, SPI_CPOL_LOW, SPI_CPHA_LEADING };
+
+
+/*---- Enumeration Types ----------------------------------------------------*/
+typedef enum _spi_status_reg
+{                                     // refer to Zilog PS015317 table 75
+    SPI_STATUS_REG_BIT_SPIF    = 7,   // 1 = SPI transfer Finish
+    SPI_STATUS_REG_BIT_WCOL    = 6,   // 1 = write collision detected
+    SPI_STATUS_REG_BIT_MODF    = 4,   // 1 = mode fault detected
+
+    SPI_STATUS_REG_SPIF        =( 1 << SPI_STATUS_REG_BIT_SPIF ),
+    SPI_STATUS_REG_WCOL        =( 1 << SPI_STATUS_REG_BIT_WCOL ),
+    SPI_STATUS_REG_MODF        =( 1 << SPI_STATUS_REG_BIT_MODF ),
+
+} SPI_STATUS_REG;
+
+
+typedef enum _spi_ctl_reg
+{                                     // refer to Zilog PS015317 table 74
+    SPI_CTL_REG_BIT_ENABLE    = 5,    // 1=SPI device enable
+    SPI_CTL_REG_BIT_MASTER_EN = 4,    // 1=Master Mode enable
+    SPI_CTL_REG_BIT_CPOL      = 3,    // Clock Polarity
+    SPI_CTL_REG_BIT_CPHA      = 2,    // Clock Phase
+
+    SPI_CTL_REG_ENABLE        =( 1 << SPI_CTL_REG_BIT_ENABLE ),
+    SPI_CTL_REG_MASTER_EN     =( 1 << SPI_CTL_REG_BIT_MASTER_EN ),
+    SPI_CTL_REG_CPOL          =( 1 << SPI_CTL_REG_BIT_CPOL ),
+    SPI_CTL_REG_CPHA          =( 1 << SPI_CTL_REG_BIT_CPHA )
+
+} SPI_CTL_REG;
+
+
 /*---- Global Variables -----------------------------------------------------*/
-/* Changing any global variable needs to be done within
-    portENTER_CRITICAL( );
-    {
-    }
-    portEXIT_CRITICAL( );
-*/
+static SPI_PARAMS workingParams = /* defaultParams */
+                      { SPI_BAUD_115200, SPI_CPOL_LOW, SPI_CPHA_LEADING };
+static SPI_PARAMS *inuseParams = &workingParams;
 
 
-/*----- Private functions ---------------------------------------------------*/
-/*------ SPI I/O value functions -------------------------------------------*/
+/*------ Local functions ----------------------------------------------------*/
+static void program_spi_params( SPI_PARAMS const * params )
+{
+    // SPI should be disabled before changing CPOL or CPHA
+    SPI_CTL &=( unsigned char )( 0xff - SPI_CTL_REG_ENABLE );
+    SPI_BRG_H = 0;
+    SPI_BRG_L = brg[ params->baudRate ];
+    SPI_CTL |=( unsigned char )
+                  (( params->cPolarity << SPI_CTL_REG_BIT_CPOL )|
+                   ( params->cPhase << SPI_CTL_REG_BIT_CPHA ));
+    SPI_CTL |=( unsigned char )
+                  ( SPI_CTL_REG_ENABLE | SPI_CTL_REG_MASTER_EN );
+}
 
 
-/*------ SPI low-level functions -------------------------------------------*/
+/*------ SPI low-level functions --------------------------------------------*/
 /* These routines normally called from devapi.c                              */
 
-/* i2c_dev_open
-   Device-specific i2c open function for minor device configuration */
 /* spi_dev_open
    Device-specific spi open function for minor device configuration */
 POSIX_ERRNO spi_dev_open(
-                       DEV_MODE const mode
-                   )
+                GPIO_PIN_NUM const slaveSelect,
+                DEV_MODE const mode,
+                SPI_PARAMS const * params
+            )
 {
-    return( POSIX_ERRNO_ENONE );
+    POSIX_ERRNO ret;
+    unsigned char setmask;
+    unsigned char clrmask;
+
+#   if defined( _DEBUG )&&0
+    {
+        ( void )printf( "%s : %d : slaveSelect = %d : ", 
+                        "devspi.c", __LINE__, slaveSelect );
+        ( void )printf( "mode = 0x%x : mask = 0x%x\r\n", 
+                        mode, DEV_MODE_SPI_MASK & mode );
+    }
+#   endif
+
+    /* 1. Allocate and De-assert Emulated /SlaveSelect (GPIO) pin */
+    ret = gpio_open( slaveSelect, DEV_MODE_GPIO_OUT, 1 );
+    if( POSIX_ERRNO_ENONE == ret )
+    {
+#       if( 0 )
+        {
+            // the following is done by MOS and left as is
+
+            /* 2. set the eZ80 port pin modes; refer to Zilog PS15317 table 6 */
+            /* 2.1 PB2 /SS pin 25 is set to output a constant '1' value, asserting 
+               SPI Master */
+            setmask = 0x00;
+            clrmask = 0xff;
+            setmask |= SET_MASK( portmap[ SPI_SS - PIN_NUM_START ].bit );
+            clrmask &= CLR_MASK( portmap[ SPI_SS - PIN_NUM_START ].bit );
+            SET_PORT_MASK( PB_DR, setmask );
+            CLEAR_PORT_MASK( PB_DDR, clrmask );
+            CLEAR_PORT_MASK( PB_ALT1, clrmask );
+            CLEAR_PORT_MASK( PB_ALT2, clrmask );
+            /* 2.2 PB6 MISO pin 27, PB7 MOSI pin 32 and PB3 SCK pin 31 are set to 
+               alternate function (SPI) */
+            setmask = 0x00;
+            clrmask = 0xff;
+            setmask |= SET_MASK( portmap[ SPI_MISO - PIN_NUM_START ].bit );
+            clrmask &= CLR_MASK( portmap[ SPI_MISO - PIN_NUM_START ].bit );
+            setmask |= SET_MASK( portmap[ SPI_CLK - PIN_NUM_START ].bit );
+            clrmask &= CLR_MASK( portmap[ SPI_CLK - PIN_NUM_START ].bit );
+            setmask |= SET_MASK( portmap[ SPI_MOSI - PIN_NUM_START ].bit );
+            clrmask &= CLR_MASK( portmap[ SPI_MOSI - PIN_NUM_START ].bit );
+            CLEAR_PORT_MASK( PB_DR, clrmask );    // not in MOS, CLEAR or SET is ok
+            SET_PORT_MASK( PB_DDR, setmask );     // MOS init_params_f92.asm::__init
+            CLEAR_PORT_MASK( PB_ALT1, clrmask );  // MOS spi.asm::_init_spi
+            SET_PORT_MASK( PB_ALT2, setmask );    // MOS spi.asm::_init_spi
+        }
+#       endif
+ 
+        /* 3. store working params */
+        if( NULL == params )
+        {            
+            /*  leave the params as per MOS in spi.asm::_init_spi:
+                    CPHA = 0x0
+                    CPOL = 0x0
+                    SPICLK = 3Mhz ( sysclk=18,432,000 /( 2 * brg=3 )) */
+            inuseParams = &mosParams;
+        }
+        else
+        {
+            workingParams = *params;
+            inuseParams = &workingParams;
+
+#           if defined( _DEBUG )
+                ( void )printf( "Baudrate = %d : Polarity = %d : Phase = %d\r\n",
+                            workingParams.baudRate,
+                            workingParams.cPolarity,
+                            workingParams.cPhase );
+#           endif
+        }
+    }
+
+    return( ret );
 }
 
 
 /* spi_dev_close
    Device-specific SPI close function for device shutdown */
 void spi_dev_close(
-                void
-            )
+         GPIO_PIN_NUM const slaveSelect
+         )
 {
+    unsigned int const emuSSel =( slaveSelect - PIN_NUM_START );
+
+    /* 1. De-Allocate Emulated SlaveSelect (GPIO) pin */
+    gpio_close( slaveSelect );
+
+    inuseParams = &mosParams;
+    workingParams = defaultParams;
 }
 
 
 /* spi_dev_read
-   Device-specific spi read function */
+   Device-specific spi read function.
+   The eZ80 SPI is activated only by writing; reading is synchronous.
+   The application task shall send a register address in tx byte n, 
+      so that the corresponding data is read in the next rx byte n+1 */
 POSIX_ERRNO spi_dev_read(
-                       void * const buffer,
-                       size_t const num_bytes_to_read,
-                       size_t * num_bytes_read,
-                       POSIX_ERRNO *result
-                   )
+                GPIO_PIN_NUM const slaveSelect,
+                unsigned char * const tx_buffer,
+                unsigned char * rx_buffer,
+                size_t const num_bytes_to_transceive
+            )
 {
+    int i;
+
+    /* Guard against concurrent entry into MOS, because a SPI SD-card operation
+       must not conflict with an Expansion Interface SPI operation */
+    portEnterMOS( );
+    {
+//_putchf('r');
+        if( &mosParams != inuseParams )
+        {
+//_putchf('1');
+            program_spi_params( &workingParams );
+        }
+
+        /* Guard against interrupts to enable the SPI transaction to complete. 
+           Technically it can pause between bytes, but we cannot know how this 
+           affects an external SPI device in general. */
+        portENTER_CRITICAL( );
+        {
+            /* Start of Frame Assert Emulated /SlaveSelect pin */
+            gpio_write( slaveSelect, 0 );  // CSB=0
+            {
+                for( i = 0; num_bytes_to_transceive > i; i++ )
+                {
+//_putchf('2');
+                    SPI_TSR = tx_buffer[ i ];
+                    while( 0 ==( SPI_SR & SPI_STATUS_REG_SPIF ))
+                        ;
+//_putchf('3');
+                    rx_buffer[ i ]= SPI_RBR;
+                }
+            }
+            gpio_write( slaveSelect, 1 );  //CSB=1
+            /* End of Frame De-assert Emulated /SlaveSelect pin */
+        }
+        portEXIT_CRITICAL( );
+
+        if( &mosParams != inuseParams )
+        {
+//_putchf('4');
+            program_spi_params( &mosParams );  // restore SD-card params
+        }
+    }
+    portExitMOS( );
+
     return( POSIX_ERRNO_ENONE );
 }
 
@@ -111,14 +300,76 @@ POSIX_ERRNO spi_dev_read(
 /* spi_dev_write
    Device-specific SPI write function */
 POSIX_ERRNO spi_dev_write(
-                       void * const buffer,
-                       size_t const num_bytes_to_write,
-                       size_t * num_bytes_written,
-                       POSIX_ERRNO *result
-                   )
+                GPIO_PIN_NUM const slaveSelect,
+                unsigned char * const tx_buffer,
+                size_t const num_bytes_to_write
+            )
 {
+    int i;
+
+    /* Guard against concurrent entry into MOS, because a SPI SD-card operation
+       must not conflict with an Expansion Interface SPI operation */
+    portEnterMOS( );
+    {
+//_putchf('w');
+        if( &mosParams != inuseParams )
+        {
+            //int j;
+//_putchf('1');
+            program_spi_params( &workingParams );
+            // delay 50mS after setting SPI_CTL_REG_ENABLE, like MOS _init_spi
+            //   for( j=0; 10000 > j; j++ ) ;
+            // doesn't have any effect. Why did MOS do it? Maybe an SD-card 
+            // thing; no comment in MOS to share the reason. 
+            
+            /* vTaskDelay( 1 );
+               called within portEnterMOS (a semaphore) the task never returns;
+               called outside of portEnterMOS is not a problem.
+               I stepped through with the debugger, and the cause lies within 
+               the FreeRTOS task code. There is some kind of (race) condition
+               such that if a task holds a semaphore and goes onto the (time) 
+               delay list (at the call to prvAddCurrentTaskToDelayedList within
+               vTaskDelay), then it will not be woken. Breakpoints or single 
+               stepping can change this behaviour, such that the task continues
+               running if it never gets added. 
+               This looks like a bug in the FreeRTOS task wake-up code, inter-
+               play between semaphores and delays, but may already be documented 
+               as a known behaviour or restriction.
+            */
+//_putchf('5');
+        }
+
+        /* Guard against interrupts to enable the SPI transaction to complete. 
+           Technically it can pause between bytes, but we cannot know how this 
+           affects an external SPI device in general. */
+        portENTER_CRITICAL( );
+        {
+            /* Start of Frame Assert Emulated /SlaveSelect pin */
+            gpio_write( slaveSelect, 0 );  // CSB=0
+            {
+                for( i = 0; num_bytes_to_write > i; i++ )
+                {
+//_putchf('2');
+                    SPI_TSR = tx_buffer[ i ];
+                    while( 0 ==( SPI_SR & SPI_STATUS_REG_SPIF ))
+                        ;
+//_putchf('3');
+                }
+            }
+            gpio_write( slaveSelect, 1 );  // CSB=1
+            /* End of Frame De-assert Emulated /SlaveSelect pin */
+        }
+        portEXIT_CRITICAL( );
+
+        if( &mosParams != inuseParams )
+        {
+//_putchf('4');
+            program_spi_params( &mosParams );  // restore SD-card params
+        }
+    }
+    portExitMOS( );
+    
     return( POSIX_ERRNO_ENONE );
 }
-
 
 #endif  /* 1 == configUSE_DRV_SPI */

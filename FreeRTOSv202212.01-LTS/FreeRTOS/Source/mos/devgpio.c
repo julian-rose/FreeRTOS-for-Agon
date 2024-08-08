@@ -58,7 +58,7 @@
 #include "mosapi.h"    // for mos_setintvector
 
 
-#if( 1 == configUSE_DRV_GPIO )
+#if( 1 == configUSE_DRV_GPIO )||( 1 == configUSE_DRV_SPI )
 
 /*---- Local Function Declarations ------------------------------------------*/
 static void gpio13isr( void );
@@ -1210,7 +1210,7 @@ POSIX_ERRNO gpio_dev_open(
             init_value = va_arg( args, int );
             va_end( args );
 
-            gpio_set_output(             // initial value = 0 TBD user settable
+            gpio_set_output(         // initial value user settable
                 portmap[ mnr ].port,
                 portmap[ mnr ].bit,
                 init_value );

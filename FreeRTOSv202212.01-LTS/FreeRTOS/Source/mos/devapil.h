@@ -388,31 +388,32 @@ extern POSIX_ERRNO i2c_dev_write(
 /* spi_dev_open
    Device-specific spi open function for minor device configuration */
 extern POSIX_ERRNO spi_dev_open(
-                       DEV_MODE const mode
+                       GPIO_PIN_NUM const slaveSelect,   // IN
+                       DEV_MODE const mode,              // IN
+                       SPI_PARAMS const * params        // IN
                    );
 
 /* spi_dev_close
    Device-specific SPI close function for device shutdown */
 extern void spi_dev_close(
-                void
+                GPIO_PIN_NUM const slaveSelect
             );
 
 /* spi_dev_read
    Device-specific spi read function */
 extern POSIX_ERRNO spi_dev_read(
-                       void * const buffer,              // IN
-                       size_t const num_bytes_to_read,   // IN
-                       size_t * num_bytes_read,          // OUT
-                       POSIX_ERRNO *result               // OUT
+                       GPIO_PIN_NUM const slaveSelect,       // IN
+                       unsigned char * const tx_buffer,      // IN
+                       unsigned char * rx_buffer,            // OUT
+                       size_t const num_bytes_to_transceive  // IN
                    );
 
 /* spi_dev_write
    Device-specific SPI write function */
 extern POSIX_ERRNO spi_dev_write(
-                       void * const buffer,              // IN
-                       size_t const num_bytes_to_write,  // IN
-                       size_t * num_bytes_written,       // OUT
-                       POSIX_ERRNO *result               // OUT
+                       GPIO_PIN_NUM const slaveSelect,  // IN
+                       unsigned char * const tx_buffer, // IN
+                       size_t const num_bytes_to_write  // IN
                    );
 
 
