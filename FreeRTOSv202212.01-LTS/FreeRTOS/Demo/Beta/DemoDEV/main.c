@@ -1006,6 +1006,7 @@ static void doUARTloopbackTest( void )
 }
 
 /*-------- SPI Tests --------------------------------------------------------*/
+#if( 1 == configUSE_DRV_SPI )
 static unsigned short dig_T1;
 static signed short dig_T2, dig_T3;
 static unsigned short dig_P1;
@@ -1119,7 +1120,6 @@ static signed long bmp280AdcCalibratedTemp( signed long adc_T )
     var2 =(( var2 >> 12 )*( signed long )dig_T3 );
     var2 >>= 14;
     T_fine = var1 + var2;
-
     T =((( T_fine * 5 )+128 )>> 8 );
     return( T );
 }
@@ -1167,6 +1167,7 @@ static unsigned long bmp280AdcCalibratedPressure( signed long adc_P )
     
     return( P );
 }
+#endif /*( 1 == configUSE_DRV_SPI )*/
 
 
 /* doSPIBMP280Test
@@ -1199,7 +1200,8 @@ static void doSPIBMP280Test( void )
     POSIX_ERRNO res;
     signed long adc_P, adc_T;
     unsigned long Pressure;
-    signed long Temperature;
+    signed long Temperature, TemperatureDec, TemperatureFrac;
+
     int i, j;
 
     ( void )printf( "\r\n\r\nRunning SPI BMP280 test\r\n" );
@@ -1320,15 +1322,19 @@ static void doSPIBMP280Test( void )
               re-entrancy. */
         portENTER_CRITICAL( );
         {
+            // all Zilog math functions need to be guarded against re-entrancy
             Temperature = bmp280AdcCalibratedTemp( adc_T );
+            TemperatureDec = Temperature / 100;
+            TemperatureFrac = Temperature -( TemperatureDec * 100 );
+
             Pressure = bmp280AdcCalibratedPressure( adc_P );
+            Pressure /= 100;
         }
         portEXIT_CRITICAL( );
 
         /* 4. Report the Barometric measurements */
-        ( void )printf( "Pressure = %d, Temperature = %d\r\n", 
-                        Pressure/100,
-                        Temperature/100 );
+        ( void )printf( "Pressure = %ld Pa, Temperature = %ld.%ld degC\r\n", 
+                        Pressure, TemperatureDec, TemperatureFrac );
 
         /* 5. scan keyboard for ESC */
         if((( char* )kbmap )[ escbyte ]&( 1 << escbit ))

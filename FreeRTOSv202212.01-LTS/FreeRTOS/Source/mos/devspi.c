@@ -59,6 +59,21 @@
 
 #if( 1 == configUSE_DRV_SPI )
 
+/*---- Notes ----------------------------------------------------------------*/
+/* NOTE 1: No DEV UART like transactions to maximise concurrency potential.
+ *
+ * The eZ80 SPI device has only a single-place Transmit Holding Register (THR);
+ *  there is no FIFO.
+ * Unlike the UART, only the eZ80 can bus-master the SPI device for any and all
+ *  transmit and receive operations. 
+ * If we were to use interrupts, we would spend more time context switching 
+ *  than performing useful work.
+ * For these reasons, there is no point supporting interrupts, rather we byte
+ *  bash.
+ * The application can devide how many bytes to transmit / receive per DEV SPI
+ *  call.
+*/
+
 
 /*---- Constants ------------------------------------------------------------*/
 static unsigned short int const brg[ NUM_SPI_BAUD ]=
@@ -76,12 +91,6 @@ static unsigned short int const brg[ NUM_SPI_BAUD ]=
     0x0004, // SPI_BAUD_2304000  // BRG=0x0004
     0x0003  // SPI_BAUD_3072000  // BRG=0x0003  // lowest value for SPI Master
 };
-
-
-static SPI_PARAMS const mosParams =
-    { SPI_BAUD_3072000, SPI_CPOL_LOW, SPI_CPHA_LEADING };
-static SPI_PARAMS const defaultParams =
-                      { SPI_BAUD_115200, SPI_CPOL_LOW, SPI_CPHA_LEADING };
 
 
 /*---- Enumeration Types ----------------------------------------------------*/
@@ -114,9 +123,27 @@ typedef enum _spi_ctl_reg
 
 
 /*---- Global Variables -----------------------------------------------------*/
-static SPI_PARAMS workingParams = /* defaultParams */
-                      { SPI_BAUD_115200, SPI_CPOL_LOW, SPI_CPHA_LEADING };
-static SPI_PARAMS *inuseParams = &workingParams;
+#define defaultParam    { SPI_BAUD_115200,  SPI_CPOL_LOW, SPI_CPHA_LEADING }
+static SPI_PARAMS const defaultParams = defaultParam;
+static SPI_PARAMS const mosParams =
+    { SPI_BAUD_3072000, SPI_CPOL_LOW, SPI_CPHA_LEADING };
+
+/* Changing any global variable needs to be done within
+    portENTER_CRITICAL( );
+    {
+    }
+    portEXIT_CRITICAL( );
+*/
+static SPI_PARAMS workingParams[ NUM_DEV_MINOR ]=
+{ 
+    defaultParam, defaultParam, defaultParam, defaultParam,
+    defaultParam, defaultParam, defaultParam, defaultParam,
+    defaultParam, defaultParam, defaultParam, defaultParam,
+    defaultParam, defaultParam, defaultParam, defaultParam,
+    defaultParam, defaultParam, defaultParam, defaultParam
+};
+
+static SPI_PARAMS *inuseParams[ NUM_DEV_MINOR ]={ NULL };
 
 
 /*------ Local functions ----------------------------------------------------*/
@@ -145,6 +172,7 @@ POSIX_ERRNO spi_dev_open(
                 SPI_PARAMS const * params
             )
 {
+    unsigned int const emuSSel =( slaveSelect - PIN_NUM_START );
     POSIX_ERRNO ret;
     unsigned char setmask;
     unsigned char clrmask;
@@ -201,19 +229,25 @@ POSIX_ERRNO spi_dev_open(
                     CPHA = 0x0
                     CPOL = 0x0
                     SPICLK = 3Mhz ( sysclk=18,432,000 /( 2 * brg=3 )) */
-            inuseParams = &mosParams;
+            inuseParams[ emuSSel ]= &mosParams;
         }
         else
         {
-            workingParams = *params;
-            inuseParams = &workingParams;
+            portENTER_CRITICAL( );
+            {
+                /* safeguard updates to all globals */
+                workingParams[ emuSSel ]= *params;
+                inuseParams[ emuSSel ]= &workingParams[ emuSSel ];
 
-#           if defined( _DEBUG )
-                ( void )printf( "Baudrate = %d : Polarity = %d : Phase = %d\r\n",
-                            workingParams.baudRate,
-                            workingParams.cPolarity,
-                            workingParams.cPhase );
-#           endif
+#               if defined( _DEBUG )
+                    ( void )printf( "Baudrate = %d : Polarity = %d : "
+                                    "Phase = %d\r\n",
+                                    workingParams[ emuSSel ].baudRate,
+                                    workingParams[ emuSSel ].cPolarity,
+                                    workingParams[ emuSSel ].cPhase );
+#               endif
+            }
+            portEXIT_CRITICAL( );
         }
     }
 
@@ -232,8 +266,13 @@ void spi_dev_close(
     /* 1. De-Allocate Emulated SlaveSelect (GPIO) pin */
     gpio_close( slaveSelect );
 
-    inuseParams = &mosParams;
-    workingParams = defaultParams;
+    portENTER_CRITICAL( );
+    {
+        /* safeguard updates to all globals */
+        inuseParams[ emuSSel ]= &mosParams;
+        workingParams[ emuSSel ]= defaultParams;
+    }
+    portEXIT_CRITICAL( );
 }
 
 
@@ -249,6 +288,7 @@ POSIX_ERRNO spi_dev_read(
                 size_t const num_bytes_to_transceive
             )
 {
+    unsigned int const emuSSel =( slaveSelect - PIN_NUM_START );
     int i;
 
     /* Guard against concurrent entry into MOS, because a SPI SD-card operation
@@ -256,10 +296,10 @@ POSIX_ERRNO spi_dev_read(
     portEnterMOS( );
     {
 //_putchf('r');
-        if( &mosParams != inuseParams )
+        if( &mosParams != inuseParams[ emuSSel ])
         {
 //_putchf('1');
-            program_spi_params( &workingParams );
+            program_spi_params( &workingParams[ emuSSel ]);
         }
 
         /* Guard against interrupts to enable the SPI transaction to complete. 
@@ -285,7 +325,7 @@ POSIX_ERRNO spi_dev_read(
         }
         portEXIT_CRITICAL( );
 
-        if( &mosParams != inuseParams )
+        if( &mosParams != inuseParams[ emuSSel ])
         {
 //_putchf('4');
             program_spi_params( &mosParams );  // restore SD-card params
@@ -305,6 +345,7 @@ POSIX_ERRNO spi_dev_write(
                 size_t const num_bytes_to_write
             )
 {
+    unsigned int const emuSSel =( slaveSelect - PIN_NUM_START );
     int i;
 
     /* Guard against concurrent entry into MOS, because a SPI SD-card operation
@@ -312,11 +353,11 @@ POSIX_ERRNO spi_dev_write(
     portEnterMOS( );
     {
 //_putchf('w');
-        if( &mosParams != inuseParams )
+        if( &mosParams != inuseParams[ emuSSel ])
         {
             //int j;
 //_putchf('1');
-            program_spi_params( &workingParams );
+            program_spi_params( &workingParams[ emuSSel ]);
             // delay 50mS after setting SPI_CTL_REG_ENABLE, like MOS _init_spi
             //   for( j=0; 10000 > j; j++ ) ;
             // doesn't have any effect. Why did MOS do it? Maybe an SD-card 
@@ -361,7 +402,7 @@ POSIX_ERRNO spi_dev_write(
         }
         portEXIT_CRITICAL( );
 
-        if( &mosParams != inuseParams )
+        if( &mosParams != inuseParams[ emuSSel ])
         {
 //_putchf('4');
             program_spi_params( &mosParams );  // restore SD-card params

@@ -67,7 +67,7 @@
  *                           1 = DEV API safeguarded interface
 */
 #define configUSE_DRV_UART               1
-#define configUSE_DRV_I2C                1
+#define configUSE_DRV_I2C                0
 #define configUSE_DRV_SPI                1
 #define configUSE_DRV_GPIO               1
 
@@ -79,7 +79,7 @@
                                0 = smaller and faster code, but unsafeguarded
                                    you might opt for this in a release build
 */
-#define configUSE_DEV_SAFEGUARDS         1
+#define configUSE_DEV_SAFEGUARDS         0
 
 
 /* Interrupts

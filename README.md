@@ -174,17 +174,13 @@ and MOS devices including the keyboard, UART, and I2C interfaces.
 <p>
 
 A second Beta demo is found in ./FreeRTOSv202212.01-LTS/FreeRTOS/Demo/Beta/DemoDEV/.
-This demonstrates the new DEV API capabilities. Currently that is the full GPIO, 
-UART and SPI APIs. The DEV I2C API is the last for beta development. 
+This demonstrates the DEV API capabilities. Currently that is the full GPIO, 
+UART and SPI APIs. DEV I2C API remains to be developed for the beta capability.
 
-<h5>SPI</h5>
-Note DEV SPI successfully reads an NXP MFRC522 RFID controller IC. But reads 
-back all zeros from a Bosch BMP280 barometric sensor; I get the same outcome 
-using my Arduino, so my individual BMP280 is defective. I've ordered another 
-BMP280 from a different supplier, to randomise my chances - I can check the 
-manufacturer code printed on the case - and will re-test with that one. 
-However, the DEV API SPI software looks okay for beta release and moving into
-the maintenance phase. 
+<h5>Bosch BMP280 barometer bad batch?</h5>
+Note testing DEV SPI revealed a Bosch BMP280 barometer mfg#CFC-KU mounted on 
+PCB#GY-BM ME/PM 280 read back all zeros; this could be the BMP280 batch. 
+Another with mfg#DHE-KL mounted on PCB#E/P 280 tested fine.
 
 <h3>License</h3>
 FreeRTOS / MOS for Agon is released under the MIT license. This is done mainly
