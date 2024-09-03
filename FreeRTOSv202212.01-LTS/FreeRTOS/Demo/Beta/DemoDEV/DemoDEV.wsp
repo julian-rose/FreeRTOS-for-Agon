@@ -9,6 +9,10 @@ ptn_Child1=Document-0
 ptn_Child2=Document-1
 ptn_Child3=Document-2
 ptn_Child4=Document-3
+ptn_Child5=Document-4
+ptn_Child6=Document-5
+ptn_Child7=Document-6
+ptn_Child8=Document-7
 
 [WorkState_v1_2.Frames.ChildFrames.Document-0]
 ptn_Child1=ViewFrame-0
@@ -19,7 +23,7 @@ DocTemplateIndex=0
 DocumentString=IDE.Document
 IsActiveChildFrame=False
 IsFrameVisible=True
-WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAAAAAAAAAHECAAAAAPPPPPPPPPPPPPPPPIGAAAAAAIGAAAAAAMFDAAAAAJBCAAAAA
+WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAAAAAAAAAHECAAAAAPPPPPPPPPPPPPPPPDHAAAAAAKFAAAAAAHGDAAAAALACAAAAA
 
 [WorkState_v1_2.Frames.ChildFrames.Document-1]
 ptn_Child1=ViewFrame-0
@@ -28,9 +32,9 @@ ptn_Child1=ViewFrame-0
 DocPathName=.\main.c
 DocTemplateIndex=0
 DocumentString=IDE.Document
-IsActiveChildFrame=True
+IsActiveChildFrame=False
 IsFrameVisible=True
-WindowPlacement=MCAAAAAAAAAAAAAABAAAAAAAHMAAAAAAHECAAAAAPPPPPPPPPPPPPPPPCDAAAAAADCAAAAAAGCDAAAAAENBAAAAA
+WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAHMAAAAAAHECAAAAAPPPPPPPPPPPPPPPPCBAAAAAABCAAAAAAGADAAAAACNBAAAAA
 
 [WorkState_v1_2.Frames.ChildFrames.Document-2]
 ptn_Child1=ViewFrame-0
@@ -41,7 +45,7 @@ DocTemplateIndex=0
 DocumentString=IDE.Document
 IsActiveChildFrame=False
 IsFrameVisible=True
-WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAOIBAAAAAHECAAAAAPPPPPPPPPPPPPPPPCLAAAAAAPDAAAAAAGKDAAAAAAPBAAAAA
+WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAOIBAAAAAHECAAAAAPPPPPPPPPPPPPPPPDAAAAAAADGAAAAAAHPCAAAAAEBCAAAAA
 
 [WorkState_v1_2.Frames.ChildFrames.Document-3]
 ptn_Child1=ViewFrame-0
@@ -52,5 +56,49 @@ DocTemplateIndex=0
 DocumentString=IDE.Document
 IsActiveChildFrame=False
 IsFrameVisible=True
-WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAHMAAAAAAHECAAAAAIPPPPPPPBOPPPPPPPGAAAAAAJIAAAAAACEDAAAAACBCAAAAA
+WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAFFCAAAAAHECAAAAAIPPPPPPPBOPPPPPPPGAAAAAAJIAAAAAACEDAAAAACBCAAAAA
+
+[WorkState_v1_2.Frames.ChildFrames.Document-4]
+ptn_Child1=ViewFrame-0
+
+[WorkState_v1_2.Frames.ChildFrames.Document-4.ViewFrame-0]
+DocPathName=..\..\..\Source\mos\devi2c.c
+DocTemplateIndex=0
+DocumentString=IDE.Document
+IsActiveChildFrame=True
+IsFrameVisible=True
+WindowPlacement=MCAAAAAAAAAAAAAABAAAAAAAFFCAAAAAFCCAAAAAPPPPPPPPPPPPPPPPLDAAAAAABDAAAAAAKFDAAAAAEOBAAAAA
+
+[WorkState_v1_2.Frames.ChildFrames.Document-5]
+ptn_Child1=ViewFrame-0
+
+[WorkState_v1_2.Frames.ChildFrames.Document-5.ViewFrame-0]
+DocPathName=..\..\..\Source\mos\devapil.h
+DocTemplateIndex=0
+DocumentString=IDE.Document
+IsActiveChildFrame=False
+IsFrameVisible=True
+WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAAAAAAAAAFCCAAAAAPPPPPPPPPPPPPPPPGBAAAAAADEAAAAAAFDDAAAAAGPBAAAAA
+
+[WorkState_v1_2.Frames.ChildFrames.Document-6]
+ptn_Child1=ViewFrame-0
+
+[WorkState_v1_2.Frames.ChildFrames.Document-6.ViewFrame-0]
+DocPathName=..\..\..\..\..\..\..\..\ZDSII_~1.5\include\zilog\eZ80F92.h
+DocTemplateIndex=0
+DocumentString=IDE.Document
+IsActiveChildFrame=False
+IsFrameVisible=True
+WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAHMAAAAAAFCCAAAAAPPPPPPPPPPPPPPPPIAAAAAAAJCAAAAAAHCDAAAAAMNBAAAAA
+
+[WorkState_v1_2.Frames.ChildFrames.Document-7]
+ptn_Child1=ViewFrame-0
+
+[WorkState_v1_2.Frames.ChildFrames.Document-7.ViewFrame-0]
+DocPathName=..\..\..\Source\mos\devapi.c
+DocTemplateIndex=0
+DocumentString=IDE.Document
+IsActiveChildFrame=False
+IsFrameVisible=True
+WindowPlacement=MCAAAAAAAAAAAAAACAAAAAAAOIBAAAAAFCCAAAAAPPPPPPPPPPPPPPPPPJAAAAAAKGAAAAAAOLDAAAAANBCAAAAA
 

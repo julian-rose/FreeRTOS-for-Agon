@@ -28,6 +28,7 @@
 <file filter-key="">.\Debug.linkcmd</file>
 <file filter-key="">.\Release.linkcmd</file>
 <file filter-key="">..\..\..\Source\portable\ThirdParty\Community-Supported-Ports\ZDSII\eZ80AgonLight\tasks.c</file>
+<file filter-key="">.\devConfig.h</file>
 </files>
 
 <!-- configuration information -->

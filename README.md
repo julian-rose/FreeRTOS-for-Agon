@@ -4,8 +4,8 @@
 <h2>Description</h2>
 FreeRTOS port for the Zilog eZ80-based Agon Light (and compatibles) running 
 MOS. The concept is very much FreeRTOS over MOS, reflected in the project name. 
-MOS provides system services; and FreeRTOS enables concurrency, real-time, and 
-other extended services. 
+MOS provides system services and APIs; and FreeRTOS enables concurrency, 
+real-time, and other extended APIs. 
 <p>
 
 This Agon Light port integrates FreeRTOS version 20221201-LTS (10.5.1) with 
@@ -33,9 +33,9 @@ application together with the FreeRTOS software into a MOS executable.
 
 <h4>Why do we care about concurrency and time?</h4>
 In a nutshell, because they are in the real world; and a micro-controller 
-interacts with the real world, through sensors and actuators. So we need to 
-embrace time and event ordering (concurrency) into our software for it to 
-function well. 
+interacts with the real world, through sensors and actuators, networked
+devices and co-processors. So we need to embrace time and event ordering 
+(concurrency) into our software for it to function well. 
 
 <h3>What is Agon?</h3>
 Agon Light™ is a fully open-source 8-bit microcomputer and microcontroller in 
@@ -129,8 +129,9 @@ In addition to the MOS API, Beta capabilties include a new DEV API. This
 extends the Beta capability with access to the Agon Extensions Interface 
 directly. It provides a safeguarded API for SPI, UART, I2C and GPIO; and 
 through them to connected devices. The DEV API enhances the Uart and I2C 
-capability of MOS, and provides APIs for GPIO and SPI that are absent in the 
-MOS API. 
+capability of MOS, using concurrency to provide asynchronous full duplicity 
+and multi-mastering (slave) roles respectively, and provides APIs for GPIO 
+and SPI that are absent in the MOS API. 
 <p>
 
 Users configure the DEV API through an application-specific devConfig.h file, 

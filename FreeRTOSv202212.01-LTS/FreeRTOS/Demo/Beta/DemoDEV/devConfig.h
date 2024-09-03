@@ -66,10 +66,10 @@
  *   configUSE_DRV_GPIO      0 = disable support (MOS does not support GPIO)
  *                           1 = DEV API safeguarded interface
 */
-#define configUSE_DRV_UART               1
-#define configUSE_DRV_I2C                0
-#define configUSE_DRV_SPI                1
-#define configUSE_DRV_GPIO               1
+#define configUSE_DRV_UART               0
+#define configUSE_DRV_I2C                1
+#define configUSE_DRV_SPI                0
+#define configUSE_DRV_GPIO               0
 
 
 /* Safeguarding
@@ -79,7 +79,7 @@
                                0 = smaller and faster code, but unsafeguarded
                                    you might opt for this in a release build
 */
-#define configUSE_DEV_SAFEGUARDS         0
+#define configUSE_DEV_SAFEGUARDS         1
 
 
 /* Interrupts
@@ -112,5 +112,30 @@
 #define configDRV_UART_BUFFER_SZ         128
 #define configDRV_UART_UNBUFFERED_DELAY  ( configTICK_RATE_HZ * 1 )
 
+
+/* I2C
+     configDRV_I2C_BUFFER_NUM         I2C DEV maintains configDRV_I2C_BUFFER_NUM
+                                      Slave Receive role buffers. As a guide,
+                                      this may correspond to the number of attached 
+                                      devices, or to the noisiest device data rate.
+                                      Values in range 1..128
+     configDRV_I2C_BUFFER_SZ          Each Slave Receive buffer is of size
+                                      configDRV_I2C_BUFFER_SZ bytes. As a guide
+                                      this may correspond to the longest message
+                                      that can be received from any device.
+                                      Values in range 1..255
+     configDRV_I2C_TRANSITION_RETRY   In case of Bus R/W State Transition errors,
+                                      typically caused by a bus conflict, DEV I2C 
+                                      can auto retry a number of times before 
+                                      returning an error code.
+                                      Values in range 0..8
+     configDRV_I2C_MAX_DELAY          i2c_readm and i2c_writem timeout in ticks
+                                      before returning incomplete.transaction.
+                                      Values in range 0..portMAX_DELAY
+*/
+#define configDRV_I2C_BUFFER_NUM          2
+#define configDRV_I2C_BUFFER_SZ          32
+#define configDRV_I2C_TRANSITION_RETRY    1
+#define configDRV_I2C_MAX_DELAY          ( configTICK_RATE_HZ * 1 )
 
 #endif /* DEVCONFIG_H */

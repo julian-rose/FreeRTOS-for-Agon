@@ -63,7 +63,7 @@
 extern unsigned int _heaptop;  // defined in the linker directive file
 extern unsigned int _heapbot;  //   "
 
-extern BaseType_t __higherPriorityTaskWoken;  // set in ISR to context-switch
+extern BaseType_t __higherPriorityTaskWokenGPIO;  // set in ISR to context-switch
 
 
 /*----- Local Types ---------------------------------------------------------*/
@@ -442,13 +442,15 @@ static void IsrTestTask( void * params )
  */
 void myYieldHndlr( DEV_NUM_MAJOR const major, DEV_NUM_MINOR const minor )
 {
+#if( 1 == configUSE_DRV_GPIO )
     yieldcnt++;
     putchar( '*' );
 
     /* run in context of high-priority interrupt handler gpioisr */
-    vTaskNotifyGiveFromISR( isrTestTaskHandle, &__higherPriorityTaskWoken );
+    vTaskNotifyGiveFromISR( isrTestTaskHandle, &__higherPriorityTaskWokenGPIO );
     
-    /* __higherPriorityTaskWoken will be tested in ISR */
+    /* __higherPriorityTaskWokenGPIO will be tested in ISR */
+#endif /*( 1 == configUSE_DRV_GPIO )*/
 }
 
 /* doYieldFromISRTest

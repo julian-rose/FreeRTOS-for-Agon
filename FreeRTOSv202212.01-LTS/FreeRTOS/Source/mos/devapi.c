@@ -158,11 +158,6 @@ DEV_MODE pinmode[ NUM_DEV_MINOR ]=
 #endif  /* ( 1 == configUSE_DEV_DEVICE_DRIVERS ) */
 
 
-/* Global variable tested to decide if a context switch is necessary on exit 
-   from an ISR */
-BaseType_t __higherPriorityTaskWoken = pdFALSE;
-
-
 /*----- Private functions ---------------------------------------------------*/
 #if( 1 == configUSE_DEV_DEVICE_DRIVERS )
 
@@ -534,11 +529,13 @@ static POSIX_ERRNO dev_open(
 
             case DEV_NUM_I2C:
             {
+                void * i2cHandler;  // 24-bit int-sized argument (including pointers)
+                i2cHandler = va_arg( args, void * );
                 va_end( args );
 
 #               if( 1 == configUSE_DRV_I2C )
                 {
-                    ret = i2c_dev_open( mode );
+                    ret = i2c_dev_open( mode, i2cHandler );
                 }
 #               endif /*( 1 == configUSE_DRV_I2C )*/
             }
@@ -643,7 +640,7 @@ static void dev_close(
 
         case DEV_NUM_I2C:
         {
-            if( DEV_MODE_UNBUFFERED == pinmode[( I2C_SDA - PIN_NUM_START )])
+            if(( I2C_MINOR_MASTER != minor )&&( I2C_MINOR_SLAVE != minor ))
             {
                 ret = POSIX_ERRNO_ENSRCH;
             }
@@ -724,51 +721,52 @@ static POSIX_ERRNO dev_read(
 
         case DEV_NUM_UART:
         {
-            if( DEV_MODE_UNBUFFERED == pinmode[( UART_1_TXD - PIN_NUM_START )])
+#           if( 1 == configUSE_DRV_UART )
             {
-                ret = POSIX_ERRNO_ENSRCH;
+                ret = uart_dev_read(
+                          buffer, 
+                          num_bytes_to_read,
+                          num_bytes_read,
+                          result
+                );
             }
-            else
-            {
-#               if( 1 == configUSE_DRV_UART )
-                {
-                    ret = uart_dev_read(
-                              buffer, 
-                              num_bytes_to_read,
-                              num_bytes_read,
-                              result
-                    );
-                }
-#               endif /*( 1 == configUSE_DRV_UART )*/
-            }
+#           endif /*( 1 == configUSE_DRV_UART )*/
         }
         break;
 
         case DEV_NUM_SPI:
         {
-            /* checked locally in spi_read */
+            /* performed within spi_read */
         }
         break;
 
         case DEV_NUM_I2C:
         {
-            if( DEV_MODE_UNBUFFERED == pinmode[( I2C_SDA - PIN_NUM_START )])
+#           if( 1 == configUSE_DRV_I2C )
             {
-                ret = POSIX_ERRNO_ENSRCH;
-            }
-            else
-            {
-#               if( 1 == configUSE_DRV_I2C )
+                if( I2C_MINOR_MASTER == minor )
                 {
-                    ret = i2c_dev_read(
+                    ret = i2c_dev_readm(
                               buffer, 
                               num_bytes_to_read,
                               num_bytes_read,
-                              result
-                    );
+                              result );
                 }
-#               endif /*( 1 == configUSE_DRV_I2C )*/
+                else
+                if( I2C_MINOR_SLAVE == minor )
+                {
+                    ret = i2c_dev_reads(
+                              buffer, 
+                              num_bytes_to_read,
+                              num_bytes_read,
+                              result );
+                }
+                else
+                {
+                    ret = POSIX_ERRNO_ENODEV;
+                }
             }
+#           endif /*( 1 == configUSE_DRV_I2C )*/
         }
         break;
 
@@ -817,7 +815,7 @@ static POSIX_ERRNO dev_write(
             }
             else
             {
-#               if( 1 == configUSE_DRV_GPIO )||( 1 == configUSE_DRV_SPI )
+#               if(( 1 == configUSE_DRV_GPIO )||( 1 == configUSE_DRV_SPI ))
                 {
                     ret = gpio_dev_write( minor, *(( unsigned char * )buffer ));
                 }
@@ -828,29 +826,22 @@ static POSIX_ERRNO dev_write(
 
         case DEV_NUM_UART:
         {
-            if( DEV_MODE_UNBUFFERED == pinmode[( UART_1_TXD - PIN_NUM_START )])
+#           if( 1 == configUSE_DRV_UART )
             {
-                ret = POSIX_ERRNO_ENSRCH;
+                ret = uart_dev_write(
+                          buffer, 
+                          num_bytes_to_write,
+                          num_bytes_written,
+                          result
+                );
             }
-            else
-            {
-#               if( 1 == configUSE_DRV_UART )
-                {
-                    ret = uart_dev_write(
-                              buffer, 
-                              num_bytes_to_write,
-                              num_bytes_written,
-                              result
-                    );
-                }
-#               endif /*( 1 == configUSE_DRV_UART )*/
-            }
+#           endif /*( 1 == configUSE_DRV_UART )*/
         }
         break;
 
         case DEV_NUM_SPI:
         {
-            if( DEV_MODE_UNBUFFERED == pinmode[( SPI_SS - PIN_NUM_START )])
+            if( DEV_MODE_UNBUFFERED & pinmode[( SPI_SS - PIN_NUM_START )])
             {
                 ret = POSIX_ERRNO_ENSRCH;
             }
@@ -867,23 +858,31 @@ static POSIX_ERRNO dev_write(
 
         case DEV_NUM_I2C:
         {
-            if( DEV_MODE_UNBUFFERED == pinmode[( I2C_SDA - PIN_NUM_START )])
+#           if( 1 == configUSE_DRV_I2C )
             {
-                ret = POSIX_ERRNO_ENSRCH;
-            }
-            else
-            {
-#               if( 1 == configUSE_DRV_I2C )
+                if( I2C_MINOR_MASTER == minor )
                 {
-                    ret = i2c_dev_write(
+                    ret = i2c_dev_writem(
                               buffer, 
                               num_bytes_to_write,
                               num_bytes_written,
-                              result
-                    );
+                              result );
                 }
-#               endif /*( 1 == configUSE_DRV_I2C )*/
+                else
+                if( I2C_MINOR_SLAVE == minor )
+                {
+                    ret = i2c_dev_writes(
+                              buffer, 
+                              num_bytes_to_write,
+                              num_bytes_written,
+                              result );
+                }
+                else
+                {
+                    ret = POSIX_ERRNO_ENODEV;
+                }
             }
+#           endif /*( 1 == configUSE_DRV_I2C )*/
         }
         break;
 
@@ -924,11 +923,6 @@ static POSIX_ERRNO dev_poll(
                 ret = POSIX_ERRNO_EADDRINUSE;
             }
             else
-            if( DEV_MODE_UNBUFFERED == pinmode[( minor - PIN_NUM_START )])
-            {
-                ret = POSIX_ERRNO_ENSRCH;
-            }
-            else
             {
                 if( num_tx_bytes_buffered ) *num_tx_bytes_buffered = 0;
                 if( num_rx_bytes_buffered ) *num_rx_bytes_buffered = 0;
@@ -939,11 +933,6 @@ static POSIX_ERRNO dev_poll(
 
         case DEV_NUM_UART:
         {
-            if( DEV_MODE_UNBUFFERED == pinmode[( UART_1_TXD - PIN_NUM_START )])
-            {
-                ret = POSIX_ERRNO_ENSRCH;
-            }
-            else
             if( 1 != minor )
             {
                 ret = POSIX_ERRNO_ENODEV;
@@ -971,31 +960,17 @@ static POSIX_ERRNO dev_poll(
 
         case DEV_NUM_SPI:
         {
-            if( DEV_MODE_UNBUFFERED == pinmode[( SPI_SS - PIN_NUM_START )])
-            {
-                ret = POSIX_ERRNO_ENSRCH;
-            }
-            else
-            {
-                if( num_tx_bytes_buffered ) *num_tx_bytes_buffered = 0;
-                if( num_rx_bytes_buffered ) *num_rx_bytes_buffered = 0;
-                if( status ) *( unsigned char * )status = 0;
-            }
+             if( num_tx_bytes_buffered ) *num_tx_bytes_buffered = 0;
+             if( num_rx_bytes_buffered ) *num_rx_bytes_buffered = 0;
+             if( status ) *( unsigned char * )status = 0;
         }
         break;
 
         case DEV_NUM_I2C:
         {
-            if( DEV_MODE_UNBUFFERED == pinmode[( I2C_SDA - PIN_NUM_START )])
-            {
-                ret = POSIX_ERRNO_ENSRCH;
-            }
-            else
-            {
-                if( num_tx_bytes_buffered ) *num_tx_bytes_buffered = 0;
-                if( num_rx_bytes_buffered ) *num_rx_bytes_buffered = 0;
-                if( status ) *( unsigned char * )status = 0;
-            }
+             if( num_tx_bytes_buffered ) *num_tx_bytes_buffered = 0;
+             if( num_rx_bytes_buffered ) *num_rx_bytes_buffered = 0;
+             if( status ) *( unsigned char * )status = 0;
         }
         break;
 
@@ -1039,11 +1014,6 @@ static POSIX_ERRNO dev_ioctl(
                 ret = POSIX_ERRNO_EADDRINUSE;
             }
             else
-            if( DEV_MODE_UNBUFFERED == pinmode[( minor - PIN_NUM_START )])
-            {
-                ret = POSIX_ERRNO_ENSRCH;
-            }
-            else
             {
                 ret = POSIX_ERRNO_EIO;
             }
@@ -1052,11 +1022,6 @@ static POSIX_ERRNO dev_ioctl(
 
         case DEV_NUM_UART:
         {
-            if( DEV_MODE_UNBUFFERED == pinmode[( UART_1_TXD - PIN_NUM_START )])
-            {
-                ret = POSIX_ERRNO_ENSRCH;
-            }
-            else
             if( 1 != minor )
             {
                 ret = POSIX_ERRNO_ENODEV;
@@ -1077,26 +1042,26 @@ static POSIX_ERRNO dev_ioctl(
 
         case DEV_NUM_SPI:
         {
-            if( DEV_MODE_UNBUFFERED == pinmode[( SPI_SS - PIN_NUM_START )])
-            {
-                ret = POSIX_ERRNO_ENSRCH;
-            }
-            else
-            {
-                ret = POSIX_ERRNO_EIO;
-            }
+            ret = POSIX_ERRNO_EIO;
         }
         break;
 
         case DEV_NUM_I2C:
         {
-            if( DEV_MODE_UNBUFFERED == pinmode[( I2C_SDA - PIN_NUM_START )])
+            if(( I2C_MINOR_SLAVE != minor )&&( I2C_MINOR_MASTER != minor ))
             {
-                ret = POSIX_ERRNO_ENSRCH;
+                ret = POSIX_ERRNO_ENODEV;
             }
             else
             {
-                ret = POSIX_ERRNO_EIO;
+#               if( 1 == configUSE_DRV_I2C )
+                {
+                    ret = i2c_dev_ioctl(
+                              cmd,
+                              param
+                    );
+                }
+#               endif /*( 1 == configUSE_DRV_I2C )*/
             }
         }
         break;
@@ -1133,7 +1098,7 @@ POSIX_ERRNO gpio_open(
 
     
 #   if defined( _DEBUG )&& 0
-        ( void )printf( "%s : %d : mode = 0x%x\r\n", __FILE__, __LINE__, mode );
+        ( void )printf( "%s : %d : mode = 0x%x\r\n", "devapi.c", __LINE__, mode );
 #   endif
     
     va_start( args, mode );
@@ -1154,7 +1119,7 @@ POSIX_ERRNO gpio_open(
 #           if defined( _DEBUG )&& 0
             {
                 ( void )printf( "%s : %d : interrupt_handler = %p\r\n", 
-                                __FILE__, __LINE__, interrupt_handler );    
+                                "devapi.c", __LINE__, interrupt_handler );    
             }
 #           endif
 #           if( 1 == configUSE_DEV_SAFEGUARDS )
@@ -1291,10 +1256,72 @@ POSIX_ERRNO gpio_write(
 /* DEV_API: i2c_open
    Open I2C for i/o */
 POSIX_ERRNO i2c_open( 
-                DEV_MODE const frequency 
+                DEV_MODE const mode,
+                ...
             )
 {
-    return( POSIX_ERRNO_ENONE );
+    POSIX_ERRNO res;
+    va_list args;
+
+    
+#   if defined( _DEBUG )&& 0
+        ( void )printf( "%s : %d : mode = 0x%x\r\n", "devapi.c", __LINE__, mode );
+#   endif
+    
+    va_start( args, mode );
+
+    switch( mode )
+    {
+        case DEV_MODE_I2C_MASTER_SLAVE:
+        {
+            void * i2cHandler;
+
+            i2cHandler = va_arg( args, void* );  // may be NULL
+            va_end( args );
+
+#           if defined( _DEBUG )&& 0
+            {
+                ( void )printf( "%s : %d : handler = %p\r\n", 
+                                "devapi.c", __LINE__, i2cHandler );    
+            }
+#           endif
+#           if( 1 == configUSE_DEV_SAFEGUARDS )
+            {
+                res = dev_open( DEV_NUM_I2C, I2C_MINOR_SLAVE, mode, i2cHandler );
+            }
+#           else
+            {
+                res = i2c_dev_open( mode, i2cHandler );
+            }
+#           endif
+        }
+        break;
+
+        case DEV_MODE_I2C_MASTER :
+        {
+            va_end( args );
+
+#           if( 1 == configUSE_DEV_SAFEGUARDS )
+            {
+                res = dev_open( DEV_NUM_I2C, I2C_MINOR_MASTER, mode, NULL );
+            }
+#           else
+            {
+                res = i2c_dev_open( mode, NULL );
+            }
+#           endif
+        }
+        break;
+
+        default:
+        {
+            va_end( args );
+            res = POSIX_ERRNO_ENODEV;
+        }
+        break;
+    }
+
+    return( res );
 }
 
 
@@ -1304,30 +1331,164 @@ POSIX_ERRNO i2c_close(
                 void 
             )
 {
+#   if( 1 == configUSE_DEV_SAFEGUARDS )
+    {
+        dev_close( DEV_NUM_I2C, I2C_MINOR_MASTER );
+    }
+#   else
+    {
+        i2c_dev_close( );
+    }
+#   endif
+
     return( POSIX_ERRNO_ENONE );
 }
 
 
-/* DEV_API: i2c_read
-   Read data from previously opened I2C */
-POSIX_ERRNO i2c_read(
-                void * const buffer,
-                size_t const num_bytes_to_read
+    /* DEV_API: i2c_readm (Master Receive)
+       Inititate a Read from a target slave, through previously opened I2C.
+       The target slave address is embedded in the I2C_MSG parameter */
+POSIX_ERRNO i2c_readm(
+                I2C_MSG const * message,
+                size_t const msgLen,
+                size_t * num_bytes_buffered,
+                POSIX_ERRNO * result
             )
 {
-    return( POSIX_ERRNO_ENONE );
+    POSIX_ERRNO ret;
+
+#   if( 1 == configUSE_DEV_SAFEGUARDS )
+    {        
+        ret = dev_read( 
+                  DEV_NUM_I2C, I2C_MINOR_MASTER, 
+                  message, msgLen,
+                  num_bytes_buffered, result );
+    }
+#   else
+    {
+        ret = i2c_dev_readm( message, msgLen, num_bytes_buffered, result );
+    }
+#   endif
+    
+    return( ret );
 }
 
 
-/* DEV_API: i2c_write
-   Write data to a previously opened I2C */
-POSIX_ERRNO i2c_write(
-                void * const buffer,
-                size_t const num_bytes_to_write
+    /* DEV_API: i2c_writem (Master Transmit)
+       Initiate a Write to a target slave through previously opened I2C
+       The target slave address is embedded in the I2C_MSG parameter */
+POSIX_ERRNO i2c_writem(
+                I2C_MSG const * const message,
+                size_t const msgLen,
+                size_t * num_bytes_sent,
+                POSIX_ERRNO * result
             )
 {
-    return( POSIX_ERRNO_ENONE );
+    POSIX_ERRNO ret;
+
+#   if( 1 == configUSE_DEV_SAFEGUARDS )
+    {        
+        ret = dev_write( 
+                  DEV_NUM_I2C, I2C_MINOR_MASTER, 
+                  message, msgLen,
+                  num_bytes_sent, result );
+    }
+#   else
+    {
+        ret = i2c_dev_writem( message, msgLen, num_bytes_sent, result );
+    }
+#   endif
+    
+    return( ret );
 }
+
+
+    /* DEV_API: i2c_reads (Slave Receive)
+       Application calls i2c_reads to collect data received from a remote 
+       master Slave Receive messages. */
+POSIX_ERRNO i2c_reads(
+                unsigned char const * buffer,
+                size_t const num_bytes_to_read,
+                size_t * num_bytes_buffered,
+                POSIX_ERRNO * result
+            )
+{
+    POSIX_ERRNO ret;
+
+#   if( 1 == configUSE_DEV_SAFEGUARDS )
+    {
+        
+        ret = dev_read( 
+                  DEV_NUM_I2C, I2C_MINOR_SLAVE, 
+                  buffer, num_bytes_to_read,
+                  num_bytes_buffered, result );
+    }
+#   else
+    {
+        ret = i2c_dev_reads( buffer, msgLen, num_bytes_buffered, result );
+    }
+#   endif
+    
+    return( ret );
+}
+
+
+    /* DEV_API: i2c_writes (Slave Transmit)
+       ISR Handler Task (i2cHandler) calls i2c_writes to respond to a Slave
+       Transmit request from a remote bus-master.
+       This function would not normally be invoked from other tasks. */
+POSIX_ERRNO i2c_writes(
+                unsigned char const * const buffer,
+                size_t const num_bytes_to_write,
+                size_t * num_bytes_sent,
+                POSIX_ERRNO * result
+            )
+{
+    POSIX_ERRNO ret;
+
+#   if( 1 == configUSE_DEV_SAFEGUARDS )
+    {
+        ret = dev_write( 
+                  DEV_NUM_I2C, I2C_MINOR_SLAVE, 
+                  buffer, num_bytes_to_write,
+                  num_bytes_sent, result );
+    }
+#   else
+    {
+        ret = i2c_dev_writes( message, msgLen, num_bytes_sent, result );
+    }
+#   endif
+    
+    return( ret );
+}
+
+
+/* DEV_API: i2c_ioctl
+       Perform an IO Control function on previously opened I2C */
+POSIX_ERRNO i2c_ioctl(
+                DEV_IOCTL const cmd,
+                void * param
+            )
+{
+    POSIX_ERRNO ret;
+
+#   if( 1 == configUSE_DEV_SAFEGUARDS )
+    {
+        ret = dev_ioctl( 
+                  DEV_NUM_I2C, I2C_MINOR_MASTER, cmd, param
+              );
+    }
+#   else
+    {
+        ret = i2c_dev_ioctl(
+                  cmd, param
+              );
+    }
+#   endif
+    
+    return( ret );
+}
+
 #endif /* 1 == configUSE_DRV_I2C */
 
 
@@ -1563,7 +1724,7 @@ POSIX_ERRNO uart_read_buffered(
     {
         ret = dev_read( 
                   DEV_NUM_UART, 1, 
-                  buffer, num_bytes_to_read, num_bytes_buffered, result );
+                   buffer, num_bytes_to_read, num_bytes_buffered, result );
     }
 #   else
     {

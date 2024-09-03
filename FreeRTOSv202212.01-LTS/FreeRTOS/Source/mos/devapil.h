@@ -215,11 +215,37 @@ typedef enum _port
 } PORT;
 
 
+/* Zilog Clock Peripheral Power-Down Register (CLK_PPD1=00DBh)
+ *  Refer to Zilog PS015317 Low Power Modes, table 4
+ *  To reduce power, the Clock Peripheral Power-Down Registers allow the system
+ *  clock to be disabled for unused peripherals.
+ * Also refer to Zilog UP0049 "Errata for eZ80F92" Issue #4 for I2C workaround
+ */
+typedef enum _peripheral_clk_reg
+{
+    PERIPHERAL_CLK_REG_GPIO_D_OFF =( 1 << 7 ),
+    PERIPHERAL_CLK_REG_GPIO_D_ON  =( 0 << 7 ),
+    PERIPHERAL_CLK_REG_GPIO_C_OFF =( 1 << 6 ),
+    PERIPHERAL_CLK_REG_GPIO_C_ON  =( 0 << 6 ),
+    PERIPHERAL_CLK_REG_GPIO_B_OFF =( 1 << 5 ),
+    PERIPHERAL_CLK_REG_GPIO_B_ON  =( 0 << 5 ),
+    PERIPHERAL_CLK_REG_SPI_OFF    =( 1 << 3 ),
+    PERIPHERAL_CLK_REG_SPI_ON     =( 0 << 3 ),
+    PERIPHERAL_CLK_REG_I2C_OFF    =( 1 << 2 ),
+    PERIPHERAL_CLK_REG_I2C_ON     =( 0 << 2 ),
+    PERIPHERAL_CLK_REG_UART1_OFF  =( 1 << 1 ),
+    PERIPHERAL_CLK_REG_UART1_ON   =( 0 << 1 ),
+    PERIPHERAL_CLK_REG_UART0_OFF  =( 1 << 0 ),
+    PERIPHERAL_CLK_REG_UART0_ON   =( 0 << 0 )
+    
+} PERIPHERAL_CLK_REG;
+
+
 /* Zilog UART error codes
- * Error codes consist of both the errors reported by the UART device
- * (through status registers), and from values after UART_ERRNO_USRBASE the 
- * errors that occur in the UART driver software.
- * The domain of UART error codes overlays that of MOS error codes
+ *  Error codes consist of both the errors reported by the UART device
+ *  (through status registers), and from values after UART_ERRNO_USRBASE the 
+ *  errors that occur in the UART driver software.
+ *  The domain of UART error codes overlays that of MOS error codes
  */
 typedef enum _uart_errno
 {
@@ -270,6 +296,32 @@ typedef enum _uart_sw_flowcontrol
     UART_SW_FLOWCTRL_XON  = 17,   // ASCII 17 = DC1 (device control 1) = go
     UART_SW_FLOWCTRL_XOFF = 19    // ASCII 19 = DC3 (device control 3) = pause
 } UART_SW_FLOWCTRL;
+
+
+/* Zilog I2C error codes
+ *  Error codes consist of both the errors reported by the I2C device
+ *  (through status registers), and from values after I2C_ERRNO_USRBASE the 
+ *  errors that occur in the I2C driver software.
+ *  The domain of I2C error codes overlays that of MOS error codes
+ */
+typedef enum _i2c_errno
+{
+    I2C_ERRNO_OK         = 0x00,
+    I2C_ERRNO_NORESPONSE = 0x01,
+    I2C_ERRNO_DATA_NACK  = 0x02,
+    I2C_ERRNO_ARB_LOST   = 0x04,
+    I2C_ERRNO_BUS_ERROR  = 0x08,
+
+    I2C_ERRNO_USRBASE    = 0x10, // The error code base value for user applications
+
+} I2C_ERRNO;
+
+
+typedef enum _i2c_minor_device
+{
+    I2C_MINOR_MASTER = 0,
+    I2C_MINOR_SLAVE = 1
+} I2C_MINOR;
 
 
 /*----- Type Definitions ----------------------------------------------------*/
@@ -356,7 +408,8 @@ extern POSIX_ERRNO gpio_dev_write(
 /* i2c_dev_open
    Device-specific i2c open function for minor device configuration */
 extern POSIX_ERRNO i2c_dev_open(
-                       DEV_MODE const mode
+                       DEV_MODE const mode,               // IN
+                       ...
                    );
 
 /* i2c_dev_close
@@ -365,23 +418,69 @@ extern void i2c_dev_close(
                 void
             );
 
-/* i2c_dev_read
-   Device-specific i2c read function */
-extern POSIX_ERRNO i2c_dev_read(
-                       void * const buffer,              // IN
-                       size_t const num_bytes_to_read,   // IN
-                       size_t * num_bytes_read,          // OUT
-                       POSIX_ERRNO *result               // OUT
-                   );
+/* DEV_API: i2c_dev_readm (Master Receive)
+   Inititate a Read from a target slave, through previously opened I2C
+     The receive paramaters are used to create a transaction.
+     The calling task will be suspended while the read is in progress.
+   If the application makes an i2c_readm call while another is in progress,
+     then the result POSIX_ERRNO_EBUSY will be immediately returned. 
+   We split the semantics of I2C_STATE_READ (which controls ISR buffering) into 
+      I2C_STATE_READLOCK (which guarantees at most one reader task or thread). 
+   Refer to Zilog PS015317 I2C Operating Modes, Master Receiver */
+POSIX_ERRNO i2c_dev_readm(
+                I2C_MSG const * message,         // IN
+                size_t const num_bytes_to_read,  // IN
+                size_t * num_bytes_read,         // OUT
+                POSIX_ERRNO *res                 // OUT
+            );
 
-/* i2c_dev_write
-   Device-specific I2C write function */
-extern POSIX_ERRNO i2c_dev_write(
-                       void * const buffer,              // IN
-                       size_t const num_bytes_to_write,  // IN
-                       size_t * num_bytes_written,       // OUT
-                       POSIX_ERRNO *result               // OUT
-                   );
+/* DEV_API: i2c_dev_writem (Master Transmit)
+   Initiate a Write to a target slave through previously opened I2C */
+POSIX_ERRNO i2c_dev_writem(
+                I2C_MSG const * const message,   // IN
+                size_t const num_bytes_to_write, // IN
+                size_t * num_bytes_sent,         // OUT
+                POSIX_ERRNO *res                 // OUT
+            );
+
+/* DEV_API: i2c_dev_reads (Slave Receive)
+   In SLAVE RECEIVE mode, a number of data bytes are received from a master 
+    transmitter.
+   The I2C enters SLAVE RECEIVE mode when it receives its own slave address and
+    a Write bit (lsb = 0) after a START condition.
+   Application calls i2c_reads to collect data from remote master Slave Receive 
+    messages.
+   DEV I2C shall return received data */
+POSIX_ERRNO i2c_dev_reads(
+                unsigned char * const buffer,         // IN
+                size_t const num_bytes_to_read, // IN
+                size_t * num_bytes_read,        // OUT
+                POSIX_ERRNO *res                // OUT
+            );
+
+/* DEV_API: i2c_dev_writes (Slave Transmit)
+   In SLAVE TRANSMIT mode, a number of bytes are transmitted to a master
+    Receiver.
+   The eZ80 I2C enters SLAVE TRANSMIT mode when it receives its own slave 
+    address and a Read bit after a START condition.
+   Application calls i2c_writes to send data responding to a request from a 
+    remote master. 
+   This function would normally be invoked from a callback, running as a
+    highest-priority ISR Handling Task */
+POSIX_ERRNO i2c_dev_writes(
+                unsigned char const * const buffer,    // IN
+                size_t const num_bytes_to_write, // IN
+                size_t * num_bytes_sent,         // OUT
+                POSIX_ERRNO *res                 // OUT
+            );
+
+/* i2c_dev_ioctl
+   Device-specific I2C IO Control function
+*/
+POSIX_ERRNO i2c_dev_ioctl(
+                DEV_IOCTL const cmd,
+                void * const param
+            );
 
 
 /*------ SPI low-level functions --------------------------------------------*/

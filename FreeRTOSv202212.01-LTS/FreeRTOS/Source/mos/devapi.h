@@ -183,12 +183,13 @@ typedef enum _dev_mode
     DEV_MODE_UART_MASK            =( 0x2f << 5 ),
 
     /* I2C modes */
-    DEV_MODE_I2C_DEFAULT          =( 0x1 << 11 ),
-    DEV_MODE_I2C_MASK             =( 0x1 << 11 ),
+    DEV_MODE_I2C_MASTER           =( 0x1 << 11 ), // Single-mastering
+    DEV_MODE_I2C_MASTER_SLAVE     =( 0x2 << 11 ), // Multi-mastering
+    DEV_MODE_I2C_MASK             =( 0x3 << 11 ),
 
     /* SPI modes */
-    DEV_MODE_SPI_DEFAULT          =( 0x1 << 12 ),
-    DEV_MODE_SPI_MASK             =( 0x1 << 12 ),
+    DEV_MODE_SPI_DEFAULT          =( 0x1 << 13 ),
+    DEV_MODE_SPI_MASK             =( 0x1 << 13 ),
 
 } DEV_MODE;
 
@@ -229,12 +230,17 @@ typedef enum _dev_ioctl
 {
     DEV_IOCTL_NULL = 0,
     
-    DEV_IOCTL_UART_EXEC_RX_FLOW_CONTROL = 1,
-    DEV_IOCTL_UART_WRITE_MODEM          = 2,
-    DEV_IOCTL_UART_SET_DTR              = 3,
-    DEV_IOCTL_UART_GET_DSR              = 4,
-    DEV_IOCTL_UART_GET_DCD              = 5,
-    DEV_IOCTL_UART_GET_RI               = 6
+    DEV_IOCTL_UART_EXEC_RX_FLOW_CONTROL        = 1,
+    DEV_IOCTL_UART_WRITE_MODEM                 = 2,
+    DEV_IOCTL_UART_SET_DTR                     = 3,
+    DEV_IOCTL_UART_GET_DSR                     = 4,
+    DEV_IOCTL_UART_GET_DCD                     = 5,
+    DEV_IOCTL_UART_GET_RI                      = 6,
+    
+    DEV_IOCTL_I2C_SET_FREQUENCY                = 10,
+    DEV_IOCTL_I2C_SET_SLAVE_ADDRESS            = 11,
+    DEV_IOCTL_I2C_ENABLE_GENERAL_CALL_ADDRESS  = 12,
+    DEV_IOCTL_I2C_DISABLE_GENERAL_CALL_ADDRESS = 13
 
 } DEV_IOCTL;
 
@@ -310,7 +316,7 @@ typedef enum _spi_baud_rate   // SPICLK = 3Mhz ( sysclk=18,432,000 /( 2 * brg=3 
 {                             //                 -- refer to Zilog PS015317 pp:134
     SPI_BAUD_115200  =  0,    // BRG=80      0x0050
     SPI_BAUD_153600  =  1,    // BRG=60      0x003C
-    SPI_BAUD_184320 =   2,    // BRG=50      0x0032
+    SPI_BAUD_184320  =  2,    // BRG=50      0x0032
     SPI_BAUD_230400  =  3,    // BRG=40      0x0028
     SPI_BAUD_307200  =  4,    // BRG=30      0x001E
     SPI_BAUD_460800  =  5,    // BRG=20      0x0014
@@ -321,14 +327,14 @@ typedef enum _spi_baud_rate   // SPICLK = 3Mhz ( sysclk=18,432,000 /( 2 * brg=3 
     SPI_BAUD_2304000 = 10,    // BRG=4       0x0004
     SPI_BAUD_3072000 = 11,    // BRG=3       0x0003  // 3=SPI Master lowest value
 
-    NUM_SPI_BAUD = 12
+    NUM_SPI_BAUD     = 12
 
 } SPI_BAUD_RATE;
 
 
 typedef enum _spi_clockpolarity
 {
-    SPI_CPOL_LOW = 0,       // SPI clock idles low
+    SPI_CPOL_LOW  = 0,      // SPI clock idles low
     SPI_CPOL_HIGH = 1       // SPI clock idles high
     
 } SPI_CLOCK_POLARITY;
@@ -342,14 +348,33 @@ typedef enum _spi_clockphase
 } SPI_CLOCK_PHASE;
 
 
-typedef enum _i2c_frequency
+typedef enum _i2c_scl_frequency
 {
-    I2C_FREQ_DEFAULT     = 0x1,  // I2C frequency 57600 bps
-    I2C_FREQ_57600       = 0x1,  // I2C frequency 57600 bps
-    I2C_FREQ_115200      = 0x2,  // I2C frequency 115200 bps
-    I2C_FREQ_230400      = 0x3  // I2C frequency 230400 bps
+    I2C_SCL_FREQ_DEFAULT = 0x0,  // default to 57600, or as set in ioctl
+    I2C_SCL_FREQ_57600   = 0x0,  // 57600 bps
+    I2C_SCL_FREQ_115200  = 0x1,  // 115200 bps
+    I2C_SCL_FREQ_230400  = 0x2,  // 230400 bps
 
-} I2C_FREQUENCY;
+    NUM_I2C_SCL_FREQ     = 3
+    
+} I2C_SCL_FREQ;
+
+
+typedef enum _i2c_event
+{
+    I2C_EVENT_NONE = 0,
+    I2C_EVENT_RX_READY,
+    I2C_EVENT_RX_FULL,       // slave receive configDRV_I2C_BUFFER_NUM too small
+    I2C_EVENT_RX_OVERFLOW,   // slave receive configDRV_I2C_BUFFER_SZ too small
+    I2C_EVENT_RX_ERROR,
+    I2C_EVENT_RX_INTERRUPTED,    
+    I2C_EVENT_TX_DONE,
+    I2C_EVENT_TX_ERROR,
+    I2C_EVENT_TX_INTERRUPTED,    
+    I2C_EVENT_TX_STRANS_OK,  // successful responded to a Slave Transmit
+    I2C_EVENT_TX_STRANS_INTERRUPTED, // interrupted responded to a Slave Transmit
+    
+} I2C_EVENT;
 
 
 typedef enum _dev_num_major
@@ -369,6 +394,7 @@ typedef GPIO_PIN_NUM DEV_NUM_MINOR;
 /*----- Type Definitions ----------------------------------------------------*/
 typedef void ( *INTERRUPT_HANDLER )( DEV_NUM_MAJOR const, DEV_NUM_MINOR const );
 typedef void ( *FAST_INTERRUPT_HANDLER )( void );
+typedef void ( *I2C_HANDLER )( void );
 
 
 typedef struct _uart_params      // UART descriptor
@@ -402,6 +428,42 @@ typedef struct _spi_params         // SPI descriptor
     SPI_CLOCK_PHASE    cPhase;     // Clock Phase
 
 } SPI_PARAMS;
+
+
+/* The I2C Address is either a 7-bit item or a 10-bit item.
+   Set sz to 0 for a 7-bit address, or to 1 for a 10-bit address.
+   The bitmask for the 7-bit item is [0]=0xXnnn nnnn 
+    such that the bottom 7 bits are the required address in range 8..119
+    Addresses in the range 0..7 and 120.127 are reserved.
+   The bitmasks for the 10-bit item are [0]=0xX111 10nn [1]=0xnnnn nnnn 
+    such that the bottom 2 bits of [0] are the MSBs and the 8-bits of [1] are
+    the LSBs of the 10-bit address. 
+   Refer to NXP UM10204 section 3.1.12 Table 4.
+   For example, to initialise a 7-bit address 0x34 in your application:
+    I2C_ADDR mySlave ={ 0, 0x34 };
+   And to initialise a 10-bit address 0x34 in your application:
+    I2C_ADDR mySlave ={ 1, 0x78, 0x34 };   */
+typedef struct _i2c_addr
+{
+    unsigned char sz:1;           // 0 = 7-bit, 1 = 10-bit
+    union
+    {
+        unsigned char  _7bit[ 1 ]; // bits 6:0 = 7-bit addr
+        unsigned char _10bit[ 2 ]; // bits 1:0+7:0 = 10-bit addr
+    } form;
+
+} I2C_ADDR;
+
+  /* I2C_MSG is used with Master Transmit i2c_writem and Master Receive 
+     i2c_readm. The common DEV API read/write functions take buffer and size 
+     parameters. So we need to pack the destination slave address into a 
+     buffer struct. */
+typedef struct _i2c_msg
+{
+    I2C_ADDR addr;
+    unsigned char buf[ configDRV_I2C_BUFFER_SZ ];
+
+} I2C_MSG;
 
 
 /*----- Function Declarations -----------------------------------------------*/
@@ -449,14 +511,11 @@ POSIX_ERRNO gpio_write(
 
 
     /* DEV_API: i2c_open
-       Open I2C for i/o
-       Frequency is one of 
-         DEV_MODE_I2C_FREQ_57600, 
-         DEV_MODE_I2C_FREQ_115200,
-         DEV_MODE_I2C_FREQ_230400.
+       Open an I2C channel for i/o
        Defined in devapi.c */
 POSIX_ERRNO i2c_open( 
-                DEV_MODE const frequency 
+                DEV_MODE const mode,
+                ...
             );
 
 
@@ -464,25 +523,69 @@ POSIX_ERRNO i2c_open(
        Close previously opened I2C
        Defined in devapi.c */
 POSIX_ERRNO i2c_close( 
-                void 
+                void
             );
 
 
-    /* DEV_API: i2c_read
-       Read data from previously opened I2C
+    /* DEV_API: i2c_readm (Master Receive)
+       Inititate a Read from a target slave, through previously opened I2C.
+       The target slave address is embedded in the I2C_MSG parameter
        Defined in devapi.c */
-POSIX_ERRNO i2c_read(
-                void * const buffer,
-                size_t const num_bytes_to_read
+POSIX_ERRNO i2c_readm(
+                I2C_MSG const * message,
+                size_t const msgLen,
+                size_t * num_bytes_buffered,
+                POSIX_ERRNO * result
             );
 
 
-    /* DEV_API: i2c_write
-       Write data to a previously opened I2C
+    /* DEV_API: i2c_writem (Master Transmit)
+       Initiate a Write to a target slave through previously opened I2C
+       The target slave address is embedded in the I2C_MSG parameter
        Defined in devapi.c */
-POSIX_ERRNO i2c_write(
-                void * const buffer,
-                size_t const num_bytes_to_write
+POSIX_ERRNO i2c_writem(
+                I2C_MSG const * const message,
+                size_t const msgLen,
+                size_t * num_bytes_sent,
+                POSIX_ERRNO * result
+            );
+
+
+    /* DEV_API: i2c_reads (Slave Receive)
+       Application calls i2c_reads to collect data received from remote 
+       master messages via the Slave Receive role.
+       Result codes:
+         POSIX_ERRNO_ENONE      data returned in buffer, and buffer emptied 
+         POSIX_ERRNO_ENOTEMPTY  data returned from buffer, buffer not empty
+         POSIX_ERRNO_ENODATA    no data available
+       Defined in devapi.c */
+POSIX_ERRNO i2c_reads(
+                unsigned char const * const buffer,
+                size_t const num_bytes_to_read,
+                size_t * num_bytes_buffered,
+                POSIX_ERRNO * result
+            );
+
+
+    /* DEV_API: i2c_writes (Slave Transmit)
+       ISR Handler Task (i2cHandler) calls i2c_writes to respond to a Slave
+       Transmit request from a remote bus-master.
+       This function would not normally be invoked from other tasks.
+       Defined in devapi.c */
+POSIX_ERRNO i2c_writes(
+                unsigned char const * const buffer,
+                size_t const num_bytes_to_write,
+                size_t * num_bytes_sent,
+                POSIX_ERRNO * result
+            );
+
+
+/* DEV_API: i2c_ioctl
+       Perform an IO Control function on previously opened I2C
+       Defined in devapi.c */
+POSIX_ERRNO i2c_ioctl(
+                DEV_IOCTL const cmd,
+                void * param
             );
 
 

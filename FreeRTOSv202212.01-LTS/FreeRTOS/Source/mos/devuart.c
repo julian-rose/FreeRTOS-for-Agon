@@ -365,11 +365,11 @@
  *      Standard ISR reti epilogue * /
  * static void uartisr_0( void )
  * {
- *     BaseType_t __higherPriorityTaskWoken;
+ *     BaseType_t __higherPriorityTaskWokenUART;
  *     
  * #   if( 1 == configUSE_PREEMPTION )
  *     {
- *         __higherPriorityTaskWoken = pdFALSE;
+ *         __higherPriorityTaskWokenUART = pdFALSE;
  * 
  *         /* run in context of high-priority interrupt handler UartIsrHandlerTask.
  *              Other hardware interrupts may be raised concurrently.
@@ -378,9 +378,9 @@
  *               - or change ( 1 == configUSE_PREEMPTION ) to 0 in order to call 
  *                 uartisr_1 directly from uartisr_0 * /
  *         _putchf( 'V' );
- *         vTaskNotifyGiveFromISR( UartIsrHandlerTaskHandle, &__higherPriorityTaskWoken );
+ *         vTaskNotifyGiveFromISR( UartIsrHandlerTaskHandle, &__higherPriorityTaskWokenUART );
  * 
- *         if( pdTRUE == __higherPriorityTaskWoken ) _putchf( 'Y' );
+ *         if( pdTRUE == __higherPriorityTaskWokenUART ) _putchf( 'Y' );
  *     
  *     }
  * #   else
@@ -392,11 +392,11 @@
  *     }
  * #   endif
  * 
- *     /* If __higherPriorityTaskWoken is now set to pdTRUE then a context 
+ *     /* If __higherPriorityTaskWokenUART is now set to pdTRUE then a context 
  *        switch should be performed to ensure the interrupt returns directly 
  *        to the highest priority task. 
  *        This must be the last function before reti. Refer to port.c::timer_isr * /
- *     vPortYieldFromISR( __higherPriorityTaskWoken );
+ *     vPortYieldFromISR( __higherPriorityTaskWokenUART );
  * 
  *     asm( "\t pop ix      ; epilogue, restore IX pushed in prolog");
  *     asm( "               ; like github.com/breakintoprogram/agon-mos/blob/main/src_startup/vectors16.asm" );
@@ -687,8 +687,8 @@ static UART_STATE uartState = UART_STATE_INITIAL;
 static UART_MODEM_STATUS modemStatus ={ 0 };
 static _Bool connection_establishment = false;
 
-static UART_BUFFER txPrivBuf ={{ 0 }, 0, 0 };    // a linear buffer, tx to remote
-static UART_BUFFER rxPrivBuf ={{ 0 }, 0, 0 };    // a circular buffer, rx from remote
+static UART_BUFFER txPrivBuf ={ 0, 0,{ 0 }};     // a linear buffer, tx to remote
+static UART_BUFFER rxPrivBuf ={ 0, 0,{ 0 }};     // a circular buffer, rx from remote
 static _Bool txPending = false;                  // Xon buffer tx side
 static _Bool rxPaused = false;                   // Xon buffer rx side
 
@@ -700,7 +700,7 @@ static void( *prevUartISR )( void )= NULL;       // MOS ISR for re-attach on uar
 static unsigned short uartRxEvent = 0;           // buffer for rx function results
 static unsigned short uartTxEvent = 0;           // buffer for tx function results
 
-extern BaseType_t __higherPriorityTaskWoken;     // set in ISR to context-switch
+static BaseType_t __higherPriorityTaskWokenUART; // set in ISR to context-switch
 
 
 /*---- Private Function Declarations ----------------------------------------*/
@@ -1201,7 +1201,7 @@ static void uartEnableRxInterrupts( void )
 
 
 /* uartDisableRxInterrupts
-     disable interrupts after a tx transaction completes */
+     disable interrupts after an rx transaction completes */
 static void uartDisableRxInterrupts( void )
 {
     DEV_MODE const wiring = pinmode[ MINOR_NUM ];
@@ -1244,8 +1244,7 @@ static void loadTxBuffer( unsigned char *buffer, size_t const sz )
 
 
 /* transmitChar
-     a fast version if only transmitting one char at a time
-     FIFO is not used */
+     if only transmitting one char at a time FIFO is not used */
 static POSIX_ERRNO transmitChar( unsigned char const ch )
 {
     UART1_THR = ch;
@@ -1912,7 +1911,7 @@ static void uartisr_1( void )
                     uartState &=( UART_STATE )( ~UART_STATE_WRITE );
                     MODEM_TXD_OFF( );
                     xSemaphoreGiveFromISR( 
-                        uartTxSemaphore, &__higherPriorityTaskWoken );
+                        uartTxSemaphore, &__higherPriorityTaskWokenUART );
                 }
             }
             else
@@ -1999,7 +1998,7 @@ static void uartisr_1( void )
                         uartState &=( UART_STATE )( ~UART_STATE_READ );
                         MODEM_RXD_OFF( );
                         xSemaphoreGiveFromISR( 
-                            uartRxSemaphore, &__higherPriorityTaskWoken );
+                            uartRxSemaphore, &__higherPriorityTaskWokenUART );
                     }
                 }
 
@@ -2024,7 +2023,7 @@ static void uartisr_1( void )
                         uartState &=( UART_STATE )( ~UART_STATE_WRITE );
                         MODEM_TXD_OFF( );
                         xSemaphoreGiveFromISR( 
-                            uartTxSemaphore, &__higherPriorityTaskWoken );
+                            uartTxSemaphore, &__higherPriorityTaskWokenUART );
                     }
                 }
             }
@@ -2046,16 +2045,16 @@ static void uartisr_0( void )
         _putchf( 'U' );
 #   endif
 
-    __higherPriorityTaskWoken = pdFALSE;
+    __higherPriorityTaskWokenUART = pdFALSE;
 
     /* run in context of this ISR.
          Other hardware interrupts are blocked out for the duration. */
     uartisr_1( );
 
-    /* If __higherPriorityTaskWoken is now set to pdTRUE then a 
+    /* If __higherPriorityTaskWokenUART is now set to pdTRUE then a 
        context switch should be performed to ensure the 
        interrupt returns directly to the highest priority task */
-    if( pdTRUE == __higherPriorityTaskWoken )
+    if( pdTRUE == __higherPriorityTaskWokenUART )
     {
 #       if defined( _DEBUG )&& 0
             _putchf( 'V' );
@@ -2281,76 +2280,79 @@ void uart_dev_close(
     unsigned char clrmask;
     int i;
 
-    // 0. Make sure we release Xoff
-    if( true == rxPaused )
+    if( UART_STATE_READY & uartState )
     {
-        ( void )transmitChar(( unsigned char )UART_SW_FLOWCTRL_XON );
-        rxPaused = false;  // remote end resumed (assumption)
+        // 0. Make sure we release Xoff
+        if( true == rxPaused )
+        {
+            ( void )transmitChar(( unsigned char )UART_SW_FLOWCTRL_XON );
+            rxPaused = false;  // remote end resumed (assumption)
+        }
+
+        // 1. Disable UART
+        UART1_IER = /*ier_mask =*/ 0x00;  // Disable UART1 interrupts
+        UART1_LCTL = 0x00; // Reset line control register
+
+        // 1.5 de-assert /DTR to signal we are 'down'
+        DTRnotReady( );    // signal end of transmission
+        DCDloopNotReady( ); // signal connection dropped
+        UART1_MCTL = 0x00; // Reset modem control register (technically redundant)
+
+        /* 2 Flush UART1 FIFOs and disable FIFOs
+           Errata UP004909 Issue 7: looks like we should only clear the FIFOs by
+           setting the UART_FCTL_CLRTxF or UART_FCTL_CLRRxF bits while 
+           UART_FCTL_FIFOEN is cleared */
+        uartResetFIFO( UART_FCTL_CLRRxF | UART_FCTL_CLRTxF, UART_FIFO_DISABLE );
+
+        // 2.1 Detach from UART
+        portENTER_CRITICAL( );
+        {
+            uartState = UART_STATE_INITIAL;
+        }
+        portEXIT_CRITICAL( );
+
+        // 2.2 restore previous interrupt vector table entry and unknow it
+        if( prevUartISR )
+        {
+            mos_setintvector( UART1_IVECT, prevUartISR );
+        }
+        prevUartISR = NULL;
+
+        // 3. set each assigned UART pin back to Mode 2 - standard digital input
+        if( DEV_MODE_UART_FULL_MODEM & wiring )  // FULL or FULL_NULL
+        {
+            endpin = UART_1_RI;
+        }
+        else
+        if( DEV_MODE_UART_HALF_MODEM & wiring )  // HALF or HALF_NULL
+        {
+            endpin = UART_1_CTS;
+        }
+        else
+        {
+            endpin = UART_1_RXD;
+        }
+
+        for( i = UART_1_TXD, setmask = 0x00, clrmask = 0xff; endpin >= i; i++ )
+        {
+            unsigned int const mnri =( i - PIN_NUM_START );
+
+            setmask |= SET_MASK( portmap[ mnri ].bit );
+            clrmask &= CLR_MASK( portmap[ mnri ].bit );
+        }
+
+        CLEAR_PORT_MASK( PC_DR, clrmask );
+        SET_PORT_MASK( PC_DDR, setmask );
+        CLEAR_PORT_MASK( PC_ALT1, clrmask );
+        CLEAR_PORT_MASK( PC_ALT2, clrmask );
+
+#       if( 0 == configUSE_DEV_SAFEGUARDS )
+        {
+            /* 4. unknow the user mode */
+            pinmode[ MINOR_NUM ]= 0;
+        }
+#       endif
     }
-
-    // 1. Disable UART
-    UART1_IER = /*ier_mask =*/ 0x00;  // Disable UART1 interrupts
-    UART1_LCTL = 0x00; // Reset line control register
-
-    // 1.5 de-assert /DTR to signal we are 'down'
-    DTRnotReady( );    // signal end of transmission
-    DCDloopNotReady( ); // signal connection dropped
-    UART1_MCTL = 0x00; // Reset modem control register (technically redundant)
-
-    /* 2 Flush UART1 FIFOs and disable FIFOs
-       Errata UP004909 Issue 7: looks like we should only clear the FIFOs by
-       setting the UART_FCTL_CLRTxF or UART_FCTL_CLRRxF bits while 
-       UART_FCTL_FIFOEN is cleared */
-    uartResetFIFO( UART_FCTL_CLRRxF | UART_FCTL_CLRTxF, UART_FIFO_DISABLE );
-
-    // 2.1 Detach from UART
-    portENTER_CRITICAL( );
-    {
-        uartState = UART_STATE_INITIAL;
-    }
-    portEXIT_CRITICAL( );
-
-    // 2.2 restore previous interrupt vector table entry and unknow it
-    if( prevUartISR )
-    {
-        mos_setintvector( UART1_IVECT, prevUartISR );
-    }
-    prevUartISR = NULL;
-
-    // 3. set each assigned UART pin back to Mode 2 - standard digital input
-    if( DEV_MODE_UART_FULL_MODEM & wiring )  // FULL or FULL_NULL
-    {
-        endpin = UART_1_RI;
-    }
-    else
-    if( DEV_MODE_UART_HALF_MODEM & wiring )  // HALF or HALF_NULL
-    {
-        endpin = UART_1_CTS;
-    }
-    else
-    {
-        endpin = UART_1_RXD;
-    }
-
-    for( i = UART_1_TXD, setmask = 0x00, clrmask = 0xff; endpin >= i; i++ )
-    {
-        unsigned int const mnri =( i - PIN_NUM_START );
-
-        setmask |= SET_MASK( portmap[ mnri ].bit );
-        clrmask &= CLR_MASK( portmap[ mnri ].bit );
-    }
-
-    CLEAR_PORT_MASK( PC_DR, clrmask );
-    SET_PORT_MASK( PC_DDR, setmask );
-    CLEAR_PORT_MASK( PC_ALT1, clrmask );
-    CLEAR_PORT_MASK( PC_ALT2, clrmask );
-
-#   if( 0 == configUSE_DEV_SAFEGUARDS )
-    {
-        /* 4. unknow the user mode */
-        pinmode[ MINOR_NUM ]= 0;
-    }
-#   endif
 }
 
 
@@ -2389,7 +2391,8 @@ POSIX_ERRNO uart_dev_read(
     if( configDRV_UART_BUFFER_SZ >= num_bytes_to_read )
     {
         portENTER_CRITICAL( );
-        if( 0 ==( UART_STATE_READLOCK & uartState ))
+        if(( UART_STATE_READY & uartState )&&
+           ( 0 ==( UART_STATE_READLOCK & uartState )))  // if not already reading
         {
             uartState |=( UART_STATE_READ | UART_STATE_READLOCK );
             MODEM_RXD_ON( );
@@ -2519,7 +2522,8 @@ POSIX_ERRNO uart_dev_write(
     if( configDRV_UART_BUFFER_SZ >= num_bytes_to_write )
     {
         portENTER_CRITICAL( );
-        if( 0 ==( UART_STATE_WRITELOCK & uartState ))  // if not already writing
+        if(( UART_STATE_READY & uartState )&&
+           ( 0 ==( UART_STATE_READLOCK & uartState )))  // if not already writing
         {
             uartState |= UART_STATE_WRITELOCK;
             portEXIT_CRITICAL( );
