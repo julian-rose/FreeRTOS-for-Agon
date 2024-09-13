@@ -282,20 +282,6 @@
 
 <!-- breakpoint information -->
 <breakpoints>
-<breakpoint temporary="false" enabled="false" >
-<line-number>1379</line-number>
-<pathname>C:\Users\jrose\tech_stuff\retro\Zilog\eZ80\AgonLight\programming\FreeRTOS-for-Agon\FreeRTOSv202212.01-LTS\FreeRTOS\Source\portable\ThirdParty\Community-Supported-Ports\ZDSII\eZ80AgonLight\tasks.c</pathname>
-<address>302830</address>
-<command></command>
-<preserve-type>0</preserve-type>
-</breakpoint>
-<breakpoint temporary="false" enabled="false" >
-<line-number>1390</line-number>
-<pathname>C:\Users\jrose\tech_stuff\retro\Zilog\eZ80\AgonLight\programming\FreeRTOS-for-Agon\FreeRTOSv202212.01-LTS\FreeRTOS\Source\portable\ThirdParty\Community-Supported-Ports\ZDSII\eZ80AgonLight\tasks.c</pathname>
-<address>0</address>
-<command></command>
-<preserve-type>0</preserve-type>
-</breakpoint>
 </breakpoints>
 
 </project>

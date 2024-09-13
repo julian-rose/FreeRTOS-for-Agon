@@ -66,10 +66,10 @@
  *   configUSE_DRV_GPIO      0 = disable support (MOS does not support GPIO)
  *                           1 = DEV API safeguarded interface
 */
-#define configUSE_DRV_UART               0
+#define configUSE_DRV_UART               1
 #define configUSE_DRV_I2C                1
-#define configUSE_DRV_SPI                0
-#define configUSE_DRV_GPIO               0
+#define configUSE_DRV_SPI                1
+#define configUSE_DRV_GPIO               1
 
 
 /* Safeguarding
@@ -136,6 +136,7 @@
 #define configDRV_I2C_BUFFER_NUM          2
 #define configDRV_I2C_BUFFER_SZ          32
 #define configDRV_I2C_TRANSITION_RETRY    1
-#define configDRV_I2C_MAX_DELAY          ( configTICK_RATE_HZ * 1 )
+#define configDRV_I2C_MAX_DELAY           ( configTICK_RATE_HZ * 1 )
+
 
 #endif /* DEVCONFIG_H */

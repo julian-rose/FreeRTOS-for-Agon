@@ -183,8 +183,8 @@ typedef enum _dev_mode
     DEV_MODE_UART_MASK            =( 0x2f << 5 ),
 
     /* I2C modes */
-    DEV_MODE_I2C_MASTER           =( 0x1 << 11 ), // Single-mastering
-    DEV_MODE_I2C_MASTER_SLAVE     =( 0x2 << 11 ), // Multi-mastering
+    DEV_MODE_I2C_SINGLE_MASTER    =( 0x1 << 11 ),
+    DEV_MODE_I2C_MULTI_MASTER     =( 0x2 << 11 ),
     DEV_MODE_I2C_MASK             =( 0x3 << 11 ),
 
     /* SPI modes */
@@ -301,13 +301,13 @@ typedef enum _uart_paritybit
 
 typedef enum _uart_event
 {
-    UART_EVENT_NONE = 0,
-    UART_EVENT_RX_READY,
-    UART_EVENT_RX_FULL,
-    UART_EVENT_RX_ERROR,
-    UART_EVENT_TX_DONE,
-    UART_EVENT_TX_ERROR,
-    UART_EVENT_TX_UNEXPECTED,
+    UART_EVENT_NONE           = 0x0,
+    UART_EVENT_RX_READY       = 0x1,
+    UART_EVENT_RX_FULL        = 0x2,
+    UART_EVENT_RX_ERROR       = 0x3,
+    UART_EVENT_TX_DONE        = 0x4,
+    UART_EVENT_TX_ERROR       = 0x5,
+    UART_EVENT_TX_UNEXPECTED  = 0x6
     
 } UART_EVENT;
 
@@ -362,18 +362,18 @@ typedef enum _i2c_scl_frequency
 
 typedef enum _i2c_event
 {
-    I2C_EVENT_NONE = 0,
-    I2C_EVENT_RX_READY,
-    I2C_EVENT_RX_FULL,       // slave receive configDRV_I2C_BUFFER_NUM too small
-    I2C_EVENT_RX_OVERFLOW,   // slave receive configDRV_I2C_BUFFER_SZ too small
-    I2C_EVENT_RX_ERROR,
-    I2C_EVENT_RX_INTERRUPTED,    
-    I2C_EVENT_TX_DONE,
-    I2C_EVENT_TX_ERROR,
-    I2C_EVENT_TX_INTERRUPTED,    
-    I2C_EVENT_TX_STRANS_OK,  // successful responded to a Slave Transmit
-    I2C_EVENT_TX_STRANS_INTERRUPTED, // interrupted responded to a Slave Transmit
-    
+    I2C_EVENT_NONE              = 0x0,
+    I2C_EVENT_RX_READY          = 0x1,
+    I2C_EVENT_RX_FULL           = 0x2, // slave receive configDRV_I2C_BUFFER_NUM too small
+    I2C_EVENT_RX_OVERFLOW       = 0x3, // slave receive configDRV_I2C_BUFFER_SZ too small
+    I2C_EVENT_RX_ERROR          = 0x4,
+    I2C_EVENT_RX_INTRPT         = 0x5,
+    I2C_EVENT_TX_DONE           = 0x6,
+    I2C_EVENT_TX_ERROR          = 0x7,
+    I2C_EVENT_TX_INTRPT         = 0x8,
+    I2C_EVENT_TX_STRANS_DONE    = 0x9, // successful response to a Slave Transmit
+    I2C_EVENT_TX_STRANS_INTRPT  = 0xA  // interrupted response to a Slave Transmit
+
 } I2C_EVENT;
 
 
@@ -431,37 +431,35 @@ typedef struct _spi_params         // SPI descriptor
 
 
 /* The I2C Address is either a 7-bit item or a 10-bit item.
-   Set sz to 0 for a 7-bit address, or to 1 for a 10-bit address.
-   The bitmask for the 7-bit item is [0]=0xXnnn nnnn 
+   Bitmask for the 7-bit address is byte[0]=0xXnnn nnnn 
     such that the bottom 7 bits are the required address in range 8..119
     Addresses in the range 0..7 and 120.127 are reserved.
-   The bitmasks for the 10-bit item are [0]=0xX111 10nn [1]=0xnnnn nnnn 
-    such that the bottom 2 bits of [0] are the MSBs and the 8-bits of [1] are
-    the LSBs of the 10-bit address. 
+   Bitmasks for the 10-bit address are byte[0]=0xX111 10nn byte[1]=0xnnnn nnnn 
+    such that the bottom 2 bits of byte[0] are the MSBs and the 8-bits of 
+    byte[1] are the LSBs of the 10-bit address. 
    Refer to NXP UM10204 section 3.1.12 Table 4.
    For example, to initialise a 7-bit address 0x34 in your application:
-    I2C_ADDR mySlave ={ 0, 0x34 };
+    I2C_ADDR mySlave ={ 0x34 };
    And to initialise a 10-bit address 0x34 in your application:
-    I2C_ADDR mySlave ={ 1, 0x78, 0x34 };   */
+    I2C_ADDR mySlave ={ I2C_10BIT_ADDR_MASK, 0x34 };   */
+#define I2C_10BIT_ADDR_MASK  ( 0x78 )
+
 typedef struct _i2c_addr
 {
-    unsigned char sz:1;           // 0 = 7-bit, 1 = 10-bit
-    union
-    {
-        unsigned char  _7bit[ 1 ]; // bits 6:0 = 7-bit addr
-        unsigned char _10bit[ 2 ]; // bits 1:0+7:0 = 10-bit addr
-    } form;
-
+    unsigned char byte[ 2 ];
+    
 } I2C_ADDR;
+
 
   /* I2C_MSG is used with Master Transmit i2c_writem and Master Receive 
      i2c_readm. The common DEV API read/write functions take buffer and size 
-     parameters. So we need to pack the destination slave address into a 
-     buffer struct. */
+     parameters. So we pack the destination slave address (and optional
+     register address) into a message structure. */
 typedef struct _i2c_msg
 {
-    I2C_ADDR addr;
-    unsigned char buf[ configDRV_I2C_BUFFER_SZ ];
+    I2C_ADDR slaveAddr;
+    unsigned char registerAddr;    // any non-0 value valid
+    unsigned char *buf;
 
 } I2C_MSG;
 

@@ -102,6 +102,7 @@ static void doUARTFullNullTest( void ); /* DEV_MODE_UART_FULL_NULL_MODEM */
 static void doUARTloopbackTest( void ); /* DEV_MODE_UART_LOOPBACK */
 static void doSPIBMP280Test( void );
 static void doSPIMFRC522Test( void );
+static void doI2CBMP280Test( void );
 
 
 /*----- Function Definitions ------------------------------------------------*/
@@ -163,8 +164,11 @@ static void * menu( void )
         { '8', "Test DEV UART Loopback", doUARTloopbackTest },
         { '9', "Test DEV SPI BMP280 Barometer", doSPIBMP280Test },
         { 'a', "Test DEV SPI MFRC522 RFID", doSPIMFRC522Test },
+        { 'b', "Test DEV I2C BMP280 Barometer", doI2CBMP280Test },
         { 'q', "End tests", NULL }
     };
+    int const escbyte =((( 113 - 1 )& 0xF8 )>> 3 );
+    int const escbit =  (( 113 - 1 )& 0x07 );
     void ( *ret )( void )=( void* )-1;  /* any non-NULL value */
     char ch;
     int i;
@@ -177,7 +181,10 @@ static void * menu( void )
     }
 
     ( void )printf( "\r\n>" );
-    ch = getchar( );  // getchar blocks within MOS (no Idle task time)
+    for( ch = 0; ' '> ch; )
+    {
+        ch = getchar( );  // getchar blocks within MOS (no Idle task time)
+    }
 
     ( void )printf( "%c\r\n\r\n", ch );
     for( i = 0;( sizeof( tests )/sizeof( tests[ 0 ]))> i; i++ )
@@ -1008,18 +1015,20 @@ static void doUARTloopbackTest( void )
 }
 
 /*-------- SPI Tests --------------------------------------------------------*/
-#if( 1 == configUSE_DRV_SPI )
+#if(( 1 == configUSE_DRV_SPI )||( 1 == configUSE_DRV_I2C ))
 static unsigned short dig_T1;
 static signed short dig_T2, dig_T3;
 static unsigned short dig_P1;
 static signed short dig_P2, dig_P3, dig_P4, dig_P5, dig_P6, dig_P7, dig_P8, dig_P9;
 static signed long T_fine = 0;
-static unsigned char spiReadBuf[ 20 ];
+static unsigned char bmp280ReadBuf[ 20 ];
+#endif /*(( 1 == configUSE_DRV_SPI )||( 1 == configUSE_DRV_I2C ))*/
 
+#if( 1 == configUSE_DRV_SPI )
 /* Read compensation calibration data from device ROM, refer to 
    BMP280-DS001-26, section 3.11.3 Table 17, and section 3.12 for 
    typical values */
-static void bmp280GetCalibrationData( void )
+static void bmp280spiGetCalibrationData( void )
 {        
     unsigned char const readCompDataTCmd[ ]=
         { 0x88, 0x89, 0x8A, 0x8B, 0x8C, 0x8D, 0xFF };
@@ -1030,83 +1039,187 @@ static void bmp280GetCalibrationData( void )
     POSIX_ERRNO res;
 
     /* read temperature compensation data */
-    res = spi_read( GPIO_14, readCompDataTCmd, spiReadBuf, 7 );
-    dig_T1 =( unsigned short )( spiReadBuf[ 2 ]<< 8 )+  // msb  typical=27504
-            ( unsigned short )( spiReadBuf[ 1 ]<< 0 );  // lsb
+    res = spi_read( GPIO_14, readCompDataTCmd, bmp280ReadBuf, 7 );
+    dig_T1 =( unsigned short )( bmp280ReadBuf[ 2 ]<< 8 )+  // msb  typical=27504
+            ( unsigned short )( bmp280ReadBuf[ 1 ]<< 0 );  // lsb
 #   if defined( _DEBUG )
     ( void )printf( "dig_T1=%d ", dig_T1 );
 #   endif
 
-    dig_T2 =( signed short )( spiReadBuf[ 4 ]<< 8 )+  // msb    typical=26435
-            ( signed short )( spiReadBuf[ 3 ]<< 0 );  // lsb
+    dig_T2 =( signed short )( bmp280ReadBuf[ 4 ]<< 8 )+  // msb    typical=26435
+            ( signed short )( bmp280ReadBuf[ 3 ]<< 0 );  // lsb
 #   if defined( _DEBUG )
     ( void )printf( "dig_T2=%d ", dig_T2 );
 #   endif
 
-    dig_T3 =( signed short )( spiReadBuf[ 6 ]<< 8 )+  // msb    typical=-1000
-            ( signed short )( spiReadBuf[ 5 ]<< 0 );  // lsb
+    dig_T3 =( signed short )( bmp280ReadBuf[ 6 ]<< 8 )+  // msb    typical=-1000
+            ( signed short )( bmp280ReadBuf[ 5 ]<< 0 );  // lsb
 #   if defined( _DEBUG )
     ( void )printf( "dig_T3=%d\r\n", dig_T3 );
 #   endif
 
     /* read pressure compensation data */
-    res = spi_read( GPIO_14, readCompDataPCmd, spiReadBuf, 19 );
-    dig_P1 =( unsigned short )( spiReadBuf[ 2 ]<< 8 )+  // msb  typical=36477
-            ( unsigned short )( spiReadBuf[ 1 ]<< 0 );  // lsb
+    res = spi_read( GPIO_14, readCompDataPCmd, bmp280ReadBuf, 19 );
+    dig_P1 =( unsigned short )( bmp280ReadBuf[ 2 ]<< 8 )+  // msb  typical=36477
+            ( unsigned short )( bmp280ReadBuf[ 1 ]<< 0 );  // lsb
 #   if defined( _DEBUG )
     ( void )printf( "dig_P1=%d ", dig_P1 );
 #   endif
 
-    dig_P2 =( signed short )( spiReadBuf[ 4 ]<< 8 )+  // msb    typical=-10685
-            ( signed short )( spiReadBuf[ 3 ]<< 0 );  // lsb
+    dig_P2 =( signed short )( bmp280ReadBuf[ 4 ]<< 8 )+  // msb    typical=-10685
+            ( signed short )( bmp280ReadBuf[ 3 ]<< 0 );  // lsb
 #   if defined( _DEBUG )
     ( void )printf( "dig_P2=%d ", dig_P2 );
 #   endif
 
-    dig_P3 =( signed short )( spiReadBuf[ 6 ]<< 8 )+  // msb    typical=3024
-            ( signed short )( spiReadBuf[ 5 ]<< 0 );  // lsb
+    dig_P3 =( signed short )( bmp280ReadBuf[ 6 ]<< 8 )+  // msb    typical=3024
+            ( signed short )( bmp280ReadBuf[ 5 ]<< 0 );  // lsb
 #   if defined( _DEBUG )
     ( void )printf( "dig_P3=%d ", dig_P3 );
 #   endif
 
-    dig_P4 =( signed short )( spiReadBuf[ 8 ]<< 8 )+  // msb    typical=2855
-            ( signed short )( spiReadBuf[ 7 ]<< 0 );  // lsb
+    dig_P4 =( signed short )( bmp280ReadBuf[ 8 ]<< 8 )+  // msb    typical=2855
+            ( signed short )( bmp280ReadBuf[ 7 ]<< 0 );  // lsb
 #   if defined( _DEBUG )
     ( void )printf( "dig_P4=%d ", dig_P4 );
 #   endif
 
-    dig_P5 =( signed short )( spiReadBuf[ 10 ]<< 8 )+  // msb   typical=140
-            ( signed short )( spiReadBuf[ 9 ]<< 0 );  // lsb
+    dig_P5 =( signed short )( bmp280ReadBuf[ 10 ]<< 8 )+  // msb   typical=140
+            ( signed short )( bmp280ReadBuf[ 9 ]<< 0 );  // lsb
 #   if defined( _DEBUG )
     ( void )printf( "dig_P5=%d ", dig_P5 );
 #   endif
 
-    dig_P6 =( signed short )( spiReadBuf[ 12 ]<< 8 )+  // msb   typical=-7
-            ( signed short )( spiReadBuf[ 11 ]<< 0 );  // lsb
+    dig_P6 =( signed short )( bmp280ReadBuf[ 12 ]<< 8 )+  // msb   typical=-7
+            ( signed short )( bmp280ReadBuf[ 11 ]<< 0 );  // lsb
 #   if defined( _DEBUG )
     ( void )printf( "dig_P6=%d ", dig_P6 );
 #   endif
 
-    dig_P7 =( signed short )( spiReadBuf[ 14 ]<< 8 )+  // msb   typical=15500
-            ( signed short )( spiReadBuf[ 13 ]<< 0 );  // lsb
+    dig_P7 =( signed short )( bmp280ReadBuf[ 14 ]<< 8 )+  // msb   typical=15500
+            ( signed short )( bmp280ReadBuf[ 13 ]<< 0 );  // lsb
 #   if defined( _DEBUG )
     ( void )printf( "dig_P7=%d ", dig_P7 );
 #   endif
 
-    dig_P8 =( signed short )( spiReadBuf[ 16 ]<< 8 )+  // msb   typical=-14600
-            ( signed short )( spiReadBuf[ 15 ]<< 0 );  // lsb
+    dig_P8 =( signed short )( bmp280ReadBuf[ 16 ]<< 8 )+  // msb   typical=-14600
+            ( signed short )( bmp280ReadBuf[ 15 ]<< 0 );  // lsb
 #   if defined( _DEBUG )
     ( void )printf( "dig_P8=%d ", dig_P8 );
 #   endif
 
-    dig_P9 =( signed short )( spiReadBuf[ 18 ]<< 8 )+  // msb   typical=6000
-            ( signed short )( spiReadBuf[ 17 ]<< 0 );  // lsb
+    dig_P9 =( signed short )( bmp280ReadBuf[ 18 ]<< 8 )+  // msb   typical=6000
+            ( signed short )( bmp280ReadBuf[ 17 ]<< 0 );  // lsb
 #   if defined( _DEBUG )
     ( void )printf( "dig_P9=%d\r\n", dig_P9 );
 #   endif
 }
+#endif /*( 1 == configUSE_DRV_SPI )*/
 
 
+#if( 1 == configUSE_DRV_I2C )
+/* Read compensation calibration data from device ROM, refer to 
+   BMP280-DS001-26, section 3.11.3 Table 17, and section 3.12 for 
+   typical values */
+static void bmp280i2cGetCalibrationData( void )
+{        
+    //unsigned char const readCompDataTCmd[ ]=
+    //    { 0x88, 0x89, 0x8A, 0x8B, 0x8C, 0x8D };
+    //unsigned char const readCompDataPCmd[ ]=
+    //    { 0x8E, 0x8F, 0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 
+    //      0x96, 0x97, 0x98, 0x99, 0x9A, 0x9B, 0x9C, 0x9D,
+    //      0x9E, 0x9F };
+    I2C_MSG m;
+    POSIX_ERRNO res;
+
+    /* read temperature compensation data */
+    m.slaveAddr.byte[ 0 ]= 0x76;
+    m.registerAddr = 0x88;
+    m.buf = bmp280ReadBuf;
+    res = i2c_readm( &m, 6, NULL, NULL );  // read registers readCompDataTCmd
+
+    dig_T1 =( unsigned short )( bmp280ReadBuf[ 1 ]<< 8 )+  // msb  typical=27504
+            ( unsigned short )( bmp280ReadBuf[ 0 ]<< 0 );  // lsb
+#   if defined( _DEBUG )
+    ( void )printf( "dig_T1=%d ", dig_T1 );
+#   endif
+
+    dig_T2 =( signed short )( bmp280ReadBuf[ 3 ]<< 8 )+  // msb    typical=26435
+            ( signed short )( bmp280ReadBuf[ 2 ]<< 0 );  // lsb
+#   if defined( _DEBUG )
+    ( void )printf( "dig_T2=%d ", dig_T2 );
+#   endif
+
+    dig_T3 =( signed short )( bmp280ReadBuf[ 5 ]<< 8 )+  // msb    typical=-1000
+            ( signed short )( bmp280ReadBuf[ 4 ]<< 0 );  // lsb
+#   if defined( _DEBUG )
+    ( void )printf( "dig_T3=%d\r\n", dig_T3 );
+#   endif
+
+    /* read pressure compensation data */
+    m.slaveAddr.byte[ 0 ]= 0x76;
+    m.registerAddr = 0x8E;
+    m.buf = bmp280ReadBuf;
+    res = i2c_readm( &m, 18, NULL, NULL );  // read registers readCompDataPCmd
+
+    dig_P1 =( unsigned short )( bmp280ReadBuf[ 1 ]<< 8 )+  // msb  typical=36477
+            ( unsigned short )( bmp280ReadBuf[ 0 ]<< 0 );  // lsb
+#   if defined( _DEBUG )
+    ( void )printf( "dig_P1=%d ", dig_P1 );
+#   endif
+
+    dig_P2 =( signed short )( bmp280ReadBuf[ 3 ]<< 8 )+  // msb    typical=-10685
+            ( signed short )( bmp280ReadBuf[ 2 ]<< 0 );  // lsb
+#   if defined( _DEBUG )
+    ( void )printf( "dig_P2=%d ", dig_P2 );
+#   endif
+
+    dig_P3 =( signed short )( bmp280ReadBuf[ 5 ]<< 8 )+  // msb    typical=3024
+            ( signed short )( bmp280ReadBuf[ 4 ]<< 0 );  // lsb
+#   if defined( _DEBUG )
+    ( void )printf( "dig_P3=%d ", dig_P3 );
+#   endif
+
+    dig_P4 =( signed short )( bmp280ReadBuf[ 7 ]<< 8 )+  // msb    typical=2855
+            ( signed short )( bmp280ReadBuf[ 6 ]<< 0 );  // lsb
+#   if defined( _DEBUG )
+    ( void )printf( "dig_P4=%d ", dig_P4 );
+#   endif
+
+    dig_P5 =( signed short )( bmp280ReadBuf[ 9 ]<< 8 )+  // msb   typical=140
+            ( signed short )( bmp280ReadBuf[ 8 ]<< 0 );  // lsb
+#   if defined( _DEBUG )
+    ( void )printf( "dig_P5=%d ", dig_P5 );
+#   endif
+
+    dig_P6 =( signed short )( bmp280ReadBuf[ 11 ]<< 8 )+  // msb   typical=-7
+            ( signed short )( bmp280ReadBuf[ 10 ]<< 0 );  // lsb
+#   if defined( _DEBUG )
+    ( void )printf( "dig_P6=%d ", dig_P6 );
+#   endif
+
+    dig_P7 =( signed short )( bmp280ReadBuf[ 13 ]<< 8 )+  // msb   typical=15500
+            ( signed short )( bmp280ReadBuf[ 12 ]<< 0 );  // lsb
+#   if defined( _DEBUG )
+    ( void )printf( "dig_P7=%d ", dig_P7 );
+#   endif
+
+    dig_P8 =( signed short )( bmp280ReadBuf[ 15 ]<< 8 )+  // msb   typical=-14600
+            ( signed short )( bmp280ReadBuf[ 14 ]<< 0 );  // lsb
+#   if defined( _DEBUG )
+    ( void )printf( "dig_P8=%d ", dig_P8 );
+#   endif
+
+    dig_P9 =( signed short )( bmp280ReadBuf[ 17 ]<< 8 )+  // msb   typical=6000
+            ( signed short )( bmp280ReadBuf[ 16 ]<< 0 );  // lsb
+#   if defined( _DEBUG )
+    ( void )printf( "dig_P9=%d\r\n", dig_P9 );
+#   endif
+}
+#endif /*( 1 == configUSE_DRV_I2C )*/
+
+
+#if(( 1 == configUSE_DRV_SPI )||( 1 == configUSE_DRV_I2C ))
 /* Refer to Bosch BMP280-DS001-26. 
    We use section 8 appendix 1 integer 32-bit code, rather than the 64-bit code
    in section 3.11.3 */
@@ -1169,7 +1282,7 @@ static unsigned long bmp280AdcCalibratedPressure( signed long adc_P )
     
     return( P );
 }
-#endif /*( 1 == configUSE_DRV_SPI )*/
+#endif /*(( 1 == configUSE_DRV_SPI )||( 1 == configUSE_DRV_I2C ))*/
 
 
 /* doSPIBMP280Test
@@ -1188,7 +1301,7 @@ static unsigned long bmp280AdcCalibratedPressure( signed long adc_P )
  *       data for commanded address n will arrive at n+1; 
  *       the last address N is a dummy address, to acquire the N-1 read data
  *     For writing, commands consist of an array of <address,data> pairs,
- *       with the top address bit set to 0=write.
+ *       with the top address bit cleared to 0=write.
 */
 static void doSPIBMP280Test( void )
 {
@@ -1209,8 +1322,8 @@ static void doSPIBMP280Test( void )
     ( void )printf( "\r\n\r\nRunning SPI BMP280 test\r\n" );
 
     ( void )printf( "Wire BMP280 SPI module\r\n"
-                    "\tSCLK<--pin 31, MOSI<--pin 32, MISO-->pin 27 " );
-    ( void )printf( "VDD<--pin 34, GND<--pin 33 "
+                    "\tSCLK/scl<--pin 31, MOSI/sda<--pin 32, MISO/sdo-->pin 27 " );
+    ( void )printf( "VDD<--pin 34, GND<--pin 33\r\n"
                     "\tCSB<-- GPIO pin 14\r\n" );
 
     ( void )printf( "Wire Agon GPIO pin 13 (task activity) "
@@ -1228,7 +1341,7 @@ static void doSPIBMP280Test( void )
     res = spi_open( GPIO_14, DEV_MODE_SPI_DEFAULT, &sparms );
     ( void )printf( "spi_open( ) returns : %d\r\n", res );
 
-    for( j=0; sizeof( spiReadBuf )> j; j++ ) spiReadBuf[ j ]= 0x55;
+    for( j=0; sizeof( bmp280ReadBuf )> j; j++ ) bmp280ReadBuf[ j ]= 0x55;
     
 #if 0
     /* BMP280-DS001-26 section 5.1, pulling CSB low fixes the BMP280 in SPI 
@@ -1252,13 +1365,13 @@ static void doSPIBMP280Test( void )
         /* Sanity Check, read the device ID register */
         unsigned char const readIdCmd[ ]={ 0xD0, 0xFF };
 
-        res = spi_read( GPIO_14, readIdCmd, spiReadBuf, 2 );
-        /* We expect spiReadBuf[ 0 ] to be garbage, spiReadBuf[ 1 ]==0x58 */
-        //for( j=0; 2 > j; j++ )( void )printf( "0x%x ", spiReadBuf[ j ]);
-        ( void )printf( "Device Id : 0x%x\r\n", spiReadBuf[ 1 ]);
+        res = spi_read( GPIO_14, readIdCmd, bmp280ReadBuf, 2 );
+        /* We expect bmp280ReadBuf[ 0 ] to be garbage, bmp280ReadBuf[ 1 ]==0x58 */
+        //for( j=0; 2 > j; j++ )( void )printf( "0x%x ", bmp280ReadBuf[ j ]);
+        ( void )printf( "Device Id : 0x%x\r\n", bmp280ReadBuf[ 1 ]);
     }
 
-    bmp280GetCalibrationData( );
+    bmp280spiGetCalibrationData( );
 
     {
         /* Configure the BMP280 measurement params, refer to BMP280-DS001-26, 
@@ -1267,13 +1380,13 @@ static void doSPIBMP280Test( void )
              table 4: osrs_p[2:0]=011 (18bit/0.66Pa/over sampling=1)
              table 5: osrs_t[2:0]=001 (16bit/0.005degC/over sampling=1)
              table 6: IIR=off (1 samples=75% step response)
-             table 10: mode[1:0]=01 (Forced mode, one measurement period)
+             table 10: mode[1:0]=00 (Sleep mode)
         */
-        unsigned char const writeConfigCmd[ ]= // Table 20, 21, 22
-                  // osrs_t[7:5] +  osrs_p[4:2] +  mode[1:0]
-            { 0x74,( 0x001 << 5 )+( 0x011 << 2 )+( 0x0 << 0 )};
+        unsigned char const writeCtrlMeas[ ]= // Table 20, 21, 22
+                  // osrs_t[7:5] +  osrs_p[4:2] +  mode[1:0]=sleep
+            { 0x74,( 0x001 << 5 )+( 0x011 << 2 )+( 0x00 << 0 )};
 
-        res = spi_write( GPIO_14, writeConfigCmd, 2 );
+        res = spi_write( GPIO_14, writeCtrlMeas, 2 );
     }
 
     // main test loop
@@ -1286,7 +1399,8 @@ static void doSPIBMP280Test( void )
         {
             /* 2.1 send Forced mode command */
             unsigned char const writeMeasureCmd[ ]=
-                      // osrs_t[7:5] +  osrs_p[4:2] +  mode[1:0]
+                      // table 10: mode[1:0]=01 (Forced mode, one measurement cycle)
+                      // osrs_t[7:5] +  osrs_p[4:2] +  mode[1:0]=forced
                 { 0x74,( 0x001 << 5 )+( 0x011 << 2 )+( 0x01 << 0 )};
 
             res = spi_write( GPIO_14, writeMeasureCmd, 2 );
@@ -1303,17 +1417,17 @@ static void doSPIBMP280Test( void )
                n addressed data value is returned in the n+1 buffer position */
             unsigned char const readDataCmd[ ]=
                 { 0xF7, 0xF8, 0xF9, 0xFA, 0xFB, 0xFC, 0xFF };
-            //    xxxx, psmb, plsb, pxsb, tmsb, tlsb, txsb   spiReadBuf
+            //    xxxx, psmb, plsb, pxsb, tmsb, tlsb, txsb   bmp280ReadBuf
 
-            res = spi_read( GPIO_14, readDataCmd, spiReadBuf, 7 );
+            res = spi_read( GPIO_14, readDataCmd, bmp280ReadBuf, 7 );
 
-            adc_P =(( spiReadBuf[ 3 ]& 0xf0 )>> 4 )+ /* P xlsb[3:0]  up[3:0]   */
-                    ( spiReadBuf[ 2 ]<< 4 )+         /* P  lsb[7:0]  up[11:4]  */
-                    ( spiReadBuf[ 1 ]<< 12 );        /* P  msb[7:0]  up[19:12] */
+            adc_P =(( bmp280ReadBuf[ 3 ]& 0xf0 )>> 4 )+ /* P xlsb[3:0]  up[3:0]   */
+                    ( bmp280ReadBuf[ 2 ]<< 4 )+         /* P  lsb[7:0]  up[11:4]  */
+                    ( bmp280ReadBuf[ 1 ]<< 12 );        /* P  msb[7:0]  up[19:12] */
 
-            adc_T =(( spiReadBuf[ 6 ]& 0xf0 )>> 4 )+ /* T xlsb[3:0]  ut[3:0]   */
-                    ( spiReadBuf[ 5 ]<< 4 )+         /* T  lsb[7:0]  ut[11:4]  */
-                    ( spiReadBuf[ 4 ]<< 12 );        /* T  msb[7:0]  ut[19:12] */
+            adc_T =(( bmp280ReadBuf[ 6 ]& 0xf0 )>> 4 )+ /* T xlsb[3:0]  ut[3:0]   */
+                    ( bmp280ReadBuf[ 5 ]<< 4 )+         /* T  lsb[7:0]  ut[11:4]  */
+                    ( bmp280ReadBuf[ 4 ]<< 12 );        /* T  msb[7:0]  ut[19:12] */
         }
 
         /* 3. Compute the measurement values from the read adc data and the
@@ -1373,7 +1487,7 @@ static void doSPIBMP280Test( void )
  *       data for commanded address n will arrive at n+1;
  *       the last address N is a dummy address, to acquire the N-1 read data;
  *     For writing, commands consist of an array of <address,data> pairs,
- *       with the top address bit set to 0=write.
+ *       with the top address bit cleared to 0=write.
 */
 static void doSPIMFRC522Test( void )
 {
@@ -1392,7 +1506,7 @@ static void doSPIMFRC522Test( void )
     ( void )printf( "Wire RFID RC522 module\r\n"
                     "\tSCK<--pin 31, MOSI<--pin 32, MISO-->pin 27 " );
     ( void )printf( "3.3V<--pin 34, GND<--pin 33 "
-                    "\tSDA<-- GPIO pin 14\r\n" );
+                    "\tSDA <-- GPIO pin 14\r\n" );
 
     ( void )printf( "Wire Agon GPIO pin 13 (task activity) "
                     "-> red LED+220ohm resistor -> GND\r\n" );
@@ -1409,7 +1523,7 @@ static void doSPIMFRC522Test( void )
     res = spi_open( GPIO_14, DEV_MODE_SPI_DEFAULT, &sparms );
     ( void )printf( "spi_open( ) returns : %d\r\n", res );
 
-    for( j=0; sizeof( spiReadBuf )> j; j++ ) spiReadBuf[ j ]= 0x55;
+    for( j=0; sizeof( bmp280ReadBuf )> j; j++ ) bmp280ReadBuf[ j ]= 0x55;
     
     {
         int j;
@@ -1418,10 +1532,10 @@ static void doSPIMFRC522Test( void )
         // address 0x37 => 0x80 (read) + 0x37<<1 + 0 = 0xEE = 1110 1110
         unsigned char const readIdCmd[ ]={ 0xEE, 0xFF };
 
-        res = spi_read( GPIO_14, readIdCmd, spiReadBuf, 2 );
-        /* We expect spiReadBuf[ 0 ] to be garbage, spiReadBuf[ 1 ]==0x92 */
-        for( j=0; 2 > j; j++ )( void )printf( "0x%x ", spiReadBuf[ j ]);
-        ( void )printf( "\r\nDevice Id : 0x%x\r\n", spiReadBuf[ 1 ]);
+        res = spi_read( GPIO_14, readIdCmd, bmp280ReadBuf, 2 );
+        /* We expect bmp280ReadBuf[ 0 ] to be garbage, bmp280ReadBuf[ 1 ]==0x92 */
+        for( j=0; 2 > j; j++ )( void )printf( "0x%x ", bmp280ReadBuf[ j ]);
+        ( void )printf( "\r\nDevice Id : 0x%x\r\n", bmp280ReadBuf[ 1 ]);
     }
 
     ( void )printf( "spi_close\r\n" );
@@ -1430,6 +1544,187 @@ static void doSPIMFRC522Test( void )
     gpio_close( GPIO_13 );
 
 #endif /*( 1 == configUSE_DRV_SPI )*/
+}
+
+
+/*-------- I2C Tests --------------------------------------------------------*/
+/* doI2CBMP280Test
+ *   Try out DEV I2C Master Role to a BMP280 Barometer (7-bit address)
+ *   Read temperature and pressure data from a BMP280 I2C module; refer to 
+ *     Bosch BMP280-DS001-26.
+ *   Section 5.2, the device address, with SDO wired to GND, is 0x76 (with SDO 
+ *    wired to VCC it is 0x77). CSB must be connected to VDD to select the I2C 
+ *    interface.
+ *   Also refer to Zilog PS015317, I2C section. 
+ *   An I2C transaction is started by writing the target 7-bit slave address 
+ *     byte in bits 6:0 (DEV I2C left shifts and sets the read/write bit 
+ *     depending on whether i2c_writem or i2c_readm is called). 
+ *   Initialisation requires application-specific programming; we will use 
+ *     Forced Mode (BMP280-DS001-26 section 3.6.2) such that the application 
+ *     controls measurement timing.
+ *   BMP280 commands (refer to BMP280-DS001-26 section 5.2.1 Figure 7):
+ *     For writing, commands following the device address+W byte consist of an
+ *       array of 8-bit <register address,data> pairs.
+ *     For reading data, commands consist of two steps (refer to BMP280-DS001-26 
+ *     section 5.2.2 Figure 8):
+ *       First a write command to the addressed slave is issued, with the 
+ *        required (starting) <register address> as a data byte
+ *       Second a read command to the same addressed slave is issued, such that
+ *        data for <register address> (and subsequent register addresses) will 
+ *        be retreived in n+1 (, n+2, ...)
+*/
+static void doI2CBMP280Test( void )
+{
+#if( 1 == configUSE_DRV_I2C )
+
+    int const escbyte =((( 113 - 1 )& 0xF8 )>> 3 );
+    int const escbit =  (( 113 - 1 )& 0x07 );
+    KEYMAP * const kbmap = mos_getkbmap( );  // only need do this once at startup
+    I2C_MSG m;
+    POSIX_ERRNO res;
+    signed long adc_P, adc_T;
+    unsigned long Pressure;
+    signed long Temperature, TemperatureDec, TemperatureFrac;
+    int i;
+
+    ( void )printf( "\r\n\r\nRunning I2C BMP280 test\r\n" );
+
+    ( void )printf( "Wire BMP280 I2C module:\r\n"
+                    "SDO<--GND, CSB<--VDD, SDA<-->pin 29, SCL<--pin 30, "
+                    "GND<--pin 33, VDD<--pin 34\r\n" );
+
+    ( void )printf( "Wire Agon GPIO pin 13 (task activity) "
+                    "-> red LED+220ohm resistor -> GND\r\n" );
+    ( void )printf( "Wire Agon GPIO pin 26 (idle activity) "
+                    "-> green LED+150ohm resistor -> GND\r\n" );
+
+    ( void )printf( "Press 'ESC' key to exit test\r\n" );
+
+    // open GPIO:13 as an output, initial value 0
+    res = gpio_open( GPIO_13, DEV_MODE_GPIO_OUT, 0 );
+    ( void )printf( "gpio_open(13) output returns : %d\r\n", res );
+
+    /* BMP280-DS001-26 section 5.1, pulling CSB high fixes the BMP280 in I2C 
+       mode */
+    res = i2c_open( DEV_MODE_I2C_SINGLE_MASTER, NULL );
+    ( void )printf( "i2c_open( ) returns : %d\r\n", res );
+
+    /* BMP280-DS001-26 section 3.6.1, in sleep mode ChipID and calibration
+       data can be read */
+    {
+         //int j;
+        /* Sanity Check, read the device ID register */
+        m.slaveAddr.byte[ 0 ]= 0x76;
+        m.registerAddr = 0xD0;
+        m.buf = bmp280ReadBuf;
+        res = i2c_readm( &m, 1, NULL, NULL );
+
+        ( void )printf( "i2c_readm = 0x%x\r\n", res );
+        /* We expect m.buf[ 0 ]==0x58 */
+        ( void )printf( "Device Id : 0x%x\r\n", bmp280ReadBuf[ 0 ]);
+    }
+
+    bmp280i2cGetCalibrationData( );
+
+    {
+        /* Configure the BMP280 measurement params, refer to BMP280-DS001-26, 
+           section 3.3 Table 7: like "Weather monitoring" (Forced mode) with 
+           Standard Resolution
+             table 4: osrs_p[2:0]=011 (18bit/0.66Pa/over sampling=1)
+             table 5: osrs_t[2:0]=001 (16bit/0.005degC/over sampling=1)
+             table 6: IIR=off (1 samples=75% step response)
+             table 10: mode[1:0]=01 (Forced mode, one measurement period)
+        */
+        unsigned char const ctrlMeas[ ]= // Table 20, 21, 22
+                  // osrs_t[7:5] +  osrs_p[4:2] +  mode[1:0]=sleep
+            { 0xF4,( 0x001 << 5 )+( 0x011 << 2 )+( 0x00 << 0 )};
+        
+        m.slaveAddr.byte[ 0 ]= 0x76;
+        m.buf = ctrlMeas;
+        res = i2c_writem( &m, 2, NULL, NULL );
+        ( void )printf( "i2c_writem = 0x%x\r\n", res );
+    }
+
+    // main test loop
+    for( i = 1; ; i = 1 - i )
+    {
+        /* 1. toggle activity LED */
+        ( void )gpio_write( GPIO_13, i );  // toggle pin 13 (LED)
+
+        /* 2. Read the BMP280 (see section 3.6.2, Figure 3 timing diagram) */
+        {
+            unsigned char const ctrlMeas[ ]= // Table 20, 21, 22
+                      // osrs_t[7:5] +  osrs_p[4:2] +  mode[1:0]=forced
+                { 0xF4,( 0x001 << 5 )+( 0x011 << 2 )+( 0x01 << 0 )};
+
+            /* 2.1 send Forced mode command */
+            m.slaveAddr.byte[ 0 ]= 0x76;
+            m.buf = ctrlMeas;
+            res = i2c_writem( &m, 2, NULL, NULL );
+            ( void )printf( "i2c_writem = 0x%x\r\n", res );
+        }
+
+           /* 2.2 wait for (at least) the measurement period, table 13
+              Standard Resolution takes max 13.3mS */
+        vTaskDelay( configTICK_RATE_HZ );  // double-up as the task rate
+        
+        {
+            /* 2.3 get the BMP280 ADC data readout
+               The eZ80 requires data writes in order to activate the SPI;
+               write control words containing the BMP280 addresses to be read.
+               n addressed data value is returned in the n+1 buffer position */
+            m.slaveAddr.byte[ 0 ]= 0x76;
+            m.registerAddr = 0xF7;
+            /*  { 0xF7, 0xF8, 0xF9, 0xFA, 0xFB, 0xFC };
+                  psmb, plsb, pxsb, tmsb, tlsb, txsb */
+            m.buf = bmp280ReadBuf;
+            res = i2c_readm( &m, 6, NULL, NULL );
+            ( void )printf( "i2c_readm = 0x%x\r\n", res );
+
+            adc_P =(( bmp280ReadBuf[ 2 ]& 0xf0 )>> 4 )+ /* P xlsb[3:0]  up[3:0]   */
+                    ( bmp280ReadBuf[ 1 ]<< 4 )+         /* P  lsb[7:0]  up[11:4]  */
+                    ( bmp280ReadBuf[ 0 ]<< 12 );        /* P  msb[7:0]  up[19:12] */
+
+            adc_T =(( bmp280ReadBuf[ 5 ]& 0xf0 )>> 4 )+ /* T xlsb[3:0]  ut[3:0]   */
+                    ( bmp280ReadBuf[ 4 ]<< 4 )+         /* T  lsb[7:0]  ut[11:4]  */
+                    ( bmp280ReadBuf[ 3 ]<< 12 );        /* T  msb[7:0]  ut[19:12] */
+        }
+
+        /* 3. Compute the measurement values from the read adc data and the
+              device calibration data; refer to BMP280 section 3.11.3. 
+              Get the temperature first as it sets global T_fine ahead of its 
+              use in Pressure. 
+              As Math library functions are used, need to guard against task 
+              re-entrancy. */
+        portENTER_CRITICAL( );
+        {
+            // all Zilog math functions need to be guarded against re-entrancy
+            Temperature = bmp280AdcCalibratedTemp( adc_T );
+            TemperatureDec = Temperature / 100;
+            TemperatureFrac = Temperature -( TemperatureDec * 100 );
+
+            Pressure = bmp280AdcCalibratedPressure( adc_P );
+            Pressure /= 100;
+        }
+        portEXIT_CRITICAL( );
+
+        /* 4. Report the Barometric measurements */
+        ( void )printf( "Pressure = %ld Pa, Temperature = %ld.%ld degC\r\n", 
+                        Pressure, TemperatureDec, TemperatureFrac );
+
+        /* 5. scan keyboard for ESC */
+        if((( char* )kbmap )[ escbyte ]&( 1 << escbit ))
+        {
+            break;
+        }
+    }
+
+    ( void )printf( "i2c_close\r\n" );
+    i2c_close( );
+    ( void )printf( "gpio_close\r\n" );
+    gpio_close( GPIO_13 );
+
+#endif /*( 1 == configUSE_DRV_I2C )*/
 }
 
 

@@ -231,13 +231,13 @@ static POSIX_ERRNO pins_alloc(
 
         case DEV_NUM_I2C:
         {
-            if(( PIN_STATE_FREE == pinstate[ SPI_SS - I2C_SDA ])&&
-               ( PIN_STATE_FREE == pinstate[ SPI_MOSI - I2C_SCL ]))
+            if(( PIN_STATE_FREE == pinstate[ I2C_SDA - PIN_NUM_START ])&&
+               ( PIN_STATE_FREE == pinstate[ I2C_SCL - PIN_NUM_START ]))
             {
-                pinstate[ SPI_SS - I2C_SDA ]= PIN_STATE_INUSE;
-                pinmode[ SPI_SS - I2C_SDA ]= mode;
-                pinstate[ SPI_MISO - I2C_SCL ]= PIN_STATE_INUSE;
-                pinmode[ SPI_MISO - I2C_SCL ]= mode;
+                pinstate[ I2C_SDA - PIN_NUM_START ]= PIN_STATE_INUSE;
+                pinmode[ I2C_SDA - PIN_NUM_START  ]= mode;
+                pinstate[ I2C_SCL - PIN_NUM_START]= PIN_STATE_INUSE;
+                pinmode[ I2C_SCL - PIN_NUM_START ]= mode;
             }
             else
             {
@@ -367,13 +367,13 @@ static POSIX_ERRNO pins_free(
 
         case DEV_NUM_I2C:
         {
-            if(( PIN_STATE_INUSE == pinstate[ SPI_SS - I2C_SDA ])&&
-               ( PIN_STATE_INUSE == pinstate[ SPI_MOSI - I2C_SCL ]))
+            if(( PIN_STATE_INUSE == pinstate[ I2C_SDA - PIN_NUM_START ])&&
+               ( PIN_STATE_INUSE == pinstate[ I2C_SCL - PIN_NUM_START ]))
             {
-                pinstate[ SPI_SS - I2C_SDA ]= PIN_STATE_FREE;
-                pinmode[ SPI_SS - I2C_SDA ]= DEV_MODE_UNBUFFERED;
-                pinstate[ SPI_MISO - I2C_SCL ]= PIN_STATE_FREE;
-                pinmode[ SPI_MISO - I2C_SCL ]= DEV_MODE_UNBUFFERED;
+                pinstate[ I2C_SDA - PIN_NUM_START ]= PIN_STATE_FREE;
+                pinmode[ I2C_SDA - PIN_NUM_START ]= DEV_MODE_UNBUFFERED;
+                pinstate[ I2C_SCL - PIN_NUM_START ]= PIN_STATE_FREE;
+                pinmode[ I2C_SCL - PIN_NUM_START ]= DEV_MODE_UNBUFFERED;
             }
             else
             {
@@ -1272,7 +1272,7 @@ POSIX_ERRNO i2c_open(
 
     switch( mode )
     {
-        case DEV_MODE_I2C_MASTER_SLAVE:
+        case DEV_MODE_I2C_MULTI_MASTER :
         {
             void * i2cHandler;
 
@@ -1297,7 +1297,7 @@ POSIX_ERRNO i2c_open(
         }
         break;
 
-        case DEV_MODE_I2C_MASTER :
+        case DEV_MODE_I2C_SINGLE_MASTER :
         {
             va_end( args );
 
@@ -1345,9 +1345,13 @@ POSIX_ERRNO i2c_close(
 }
 
 
-    /* DEV_API: i2c_readm (Master Receive)
-       Inititate a Read from a target slave, through previously opened I2C.
-       The target slave address is embedded in the I2C_MSG parameter */
+/* DEV_API: i2c_readm (Master Receive)
+   Inititate a Read from a target slave, through previously opened I2C.
+   The target slave address and target register address are embedded in the 
+   I2C_MSG parameter.
+   The slave address can be a 7-bit [1 byte] or a 10-bit [2 byte] value.
+   All non-zero register addresses are valid; register address zero is ignored.
+*/
 POSIX_ERRNO i2c_readm(
                 I2C_MSG const * message,
                 size_t const msgLen,
@@ -1374,9 +1378,9 @@ POSIX_ERRNO i2c_readm(
 }
 
 
-    /* DEV_API: i2c_writem (Master Transmit)
-       Initiate a Write to a target slave through previously opened I2C
-       The target slave address is embedded in the I2C_MSG parameter */
+/* DEV_API: i2c_writem (Master Transmit)
+   Initiate a Write to a target slave through previously opened I2C
+   The target slave address is embedded in the I2C_MSG parameter */
 POSIX_ERRNO i2c_writem(
                 I2C_MSG const * const message,
                 size_t const msgLen,
@@ -1403,9 +1407,9 @@ POSIX_ERRNO i2c_writem(
 }
 
 
-    /* DEV_API: i2c_reads (Slave Receive)
-       Application calls i2c_reads to collect data received from a remote 
-       master Slave Receive messages. */
+/* DEV_API: i2c_reads (Slave Receive)
+   Application calls i2c_reads to collect data received from a remote 
+   master Slave Receive messages. */
 POSIX_ERRNO i2c_reads(
                 unsigned char const * buffer,
                 size_t const num_bytes_to_read,
@@ -1433,10 +1437,10 @@ POSIX_ERRNO i2c_reads(
 }
 
 
-    /* DEV_API: i2c_writes (Slave Transmit)
-       ISR Handler Task (i2cHandler) calls i2c_writes to respond to a Slave
-       Transmit request from a remote bus-master.
-       This function would not normally be invoked from other tasks. */
+/* DEV_API: i2c_writes (Slave Transmit)
+   ISR Handler Task (i2cHandler) calls i2c_writes to respond to a Slave
+   Transmit request from a remote bus-master.
+   This function would not normally be invoked from other tasks. */
 POSIX_ERRNO i2c_writes(
                 unsigned char const * const buffer,
                 size_t const num_bytes_to_write,
