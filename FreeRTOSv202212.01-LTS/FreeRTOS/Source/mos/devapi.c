@@ -529,13 +529,15 @@ static POSIX_ERRNO dev_open(
 
             case DEV_NUM_I2C:
             {
+                void * slaveAddr;
                 void * i2cHandler;  // 24-bit int-sized argument (including pointers)
+                slaveAddr = va_arg( args, void* );
                 i2cHandler = va_arg( args, void * );
                 va_end( args );
 
 #               if( 1 == configUSE_DRV_I2C )
                 {
-                    ret = i2c_dev_open( mode, i2cHandler );
+                    ret = i2c_dev_open( mode, slaveAddr, i2cHandler );
                 }
 #               endif /*( 1 == configUSE_DRV_I2C )*/
             }
@@ -1274,24 +1276,27 @@ POSIX_ERRNO i2c_open(
     {
         case DEV_MODE_I2C_MULTI_MASTER :
         {
+            I2C_ADDR * slaveAddr;
             void * i2cHandler;
 
+            slaveAddr = va_arg( args, void* );
             i2cHandler = va_arg( args, void* );  // may be NULL
             va_end( args );
 
 #           if defined( _DEBUG )&& 0
             {
-                ( void )printf( "%s : %d : handler = %p\r\n", 
-                                "devapi.c", __LINE__, i2cHandler );    
+                ( void )printf( "%s : %d : slaveAddr = %p : handler = %p\r\n", 
+                                "devapi.c", __LINE__, slaveAddr, i2cHandler );    
             }
 #           endif
 #           if( 1 == configUSE_DEV_SAFEGUARDS )
             {
-                res = dev_open( DEV_NUM_I2C, I2C_MINOR_SLAVE, mode, i2cHandler );
+                res = dev_open( DEV_NUM_I2C, I2C_MINOR_SLAVE, 
+                                mode, slaveAddr, i2cHandler );
             }
 #           else
             {
-                res = i2c_dev_open( mode, i2cHandler );
+                res = i2c_dev_open( mode, slaveAddr, i2cHandler );
             }
 #           endif
         }
@@ -1303,11 +1308,12 @@ POSIX_ERRNO i2c_open(
 
 #           if( 1 == configUSE_DEV_SAFEGUARDS )
             {
-                res = dev_open( DEV_NUM_I2C, I2C_MINOR_MASTER, mode, NULL );
+                res = dev_open( DEV_NUM_I2C, I2C_MINOR_MASTER, 
+                                mode, NULL, NULL );
             }
 #           else
             {
-                res = i2c_dev_open( mode, NULL );
+                res = i2c_dev_open( mode, NULL, NULL );
             }
 #           endif
         }

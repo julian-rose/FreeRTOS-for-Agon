@@ -72,6 +72,17 @@
 #define configUSE_DRV_GPIO               1
 
 
+/* Tracing
+ *   configTRACE             N = any value enables runtime debug tracing.
+ *                               if defined( _DEBUG )&&( 1 ) to enable
+ *                                this will result in compiler warnings.
+ *                               if defined( _DEBUG )&&( 0 ) to disable
+*/
+#if defined( _DEBUG )&&( 1 )
+#   define configTRACE 1
+#endif
+
+
 /* Safeguarding
      configUSE_DEV_SAFEGUARDS  1 = check the pin number range 
                                    check alloction of pins does not overlap

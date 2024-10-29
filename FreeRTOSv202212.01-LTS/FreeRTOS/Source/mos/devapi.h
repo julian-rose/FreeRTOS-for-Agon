@@ -363,16 +363,21 @@ typedef enum _i2c_scl_frequency
 typedef enum _i2c_event
 {
     I2C_EVENT_NONE              = 0x0,
-    I2C_EVENT_RX_READY          = 0x1,
-    I2C_EVENT_RX_FULL           = 0x2, // slave receive configDRV_I2C_BUFFER_NUM too small
-    I2C_EVENT_RX_OVERFLOW       = 0x3, // slave receive configDRV_I2C_BUFFER_SZ too small
-    I2C_EVENT_RX_ERROR          = 0x4,
-    I2C_EVENT_RX_INTRPT         = 0x5,
-    I2C_EVENT_TX_DONE           = 0x6,
-    I2C_EVENT_TX_ERROR          = 0x7,
-    I2C_EVENT_TX_INTRPT         = 0x8,
-    I2C_EVENT_TX_STRANS_DONE    = 0x9, // successful response to a Slave Transmit
-    I2C_EVENT_TX_STRANS_INTRPT  = 0xA  // interrupted response to a Slave Transmit
+
+    I2C_EVENT_SYS_ERROR         = 0x1, // unexpected status code, or bus error
+    I2C_EVENT_SYS_CLK_SPEED     = 0x2, // set default clock speed = 57,600bps
+    I2C_EVENT_DRV_ERROR         = 0x3, // DEV I2C software fault
+
+    I2C_EVENT_RX_READY          = 0x3,
+    I2C_EVENT_RX_FULL           = 0x4, // slave receive configDRV_I2C_BUFFER_NUM too small
+    I2C_EVENT_RX_OVERFLOW       = 0x5, // slave receive configDRV_I2C_BUFFER_SZ too small
+    I2C_EVENT_RX_ERROR          = 0x6,
+    I2C_EVENT_RX_INTRPT         = 0x7,
+    I2C_EVENT_TX_DONE           = 0x8,
+    I2C_EVENT_TX_ERROR          = 0x9,
+    I2C_EVENT_TX_INTRPT         = 0xA,
+    I2C_EVENT_TX_STRANS_DONE    = 0xB, // successful response to a Slave Transmit
+    I2C_EVENT_TX_STRANS_INTRPT  = 0xC  // interrupted response to a Slave Transmit
 
 } I2C_EVENT;
 
@@ -430,18 +435,19 @@ typedef struct _spi_params         // SPI descriptor
 } SPI_PARAMS;
 
 
-/* The I2C Address is either a 7-bit item or a 10-bit item.
-   Bitmask for the 7-bit address is byte[0]=0xXnnn nnnn 
-    such that the bottom 7 bits are the required address in range 8..119
-    Addresses in the range 0..7 and 120.127 are reserved.
+/* The I2C Address is either a 7-bit value or a 10-bit value.
+   Refer to NXP UM10204 section 3.1.11 and 3.1.12
+   Bitmask for the 7-bit address is byte[0]=0xXnnn nnnn (for X don't care)
+    such that the bottom 7 bits form the required address 
+    Assignable 7-bit address values are in the range 8..119
+    While values in the ranges 0..7 and 120..127 are reserved
+    For example, to initialise a 7-bit address 0x34 (52) in your application:
+     I2C_ADDR mySlave ={ 0x34 };
    Bitmasks for the 10-bit address are byte[0]=0xX111 10nn byte[1]=0xnnnn nnnn 
-    such that the bottom 2 bits of byte[0] are the MSBs and the 8-bits of 
-    byte[1] are the LSBs of the 10-bit address. 
-   Refer to NXP UM10204 section 3.1.12 Table 4.
-   For example, to initialise a 7-bit address 0x34 in your application:
-    I2C_ADDR mySlave ={ 0x34 };
-   And to initialise a 10-bit address 0x34 in your application:
-    I2C_ADDR mySlave ={ I2C_10BIT_ADDR_MASK, 0x34 };   */
+    such that the bottom 2 bits of byte[0] are the address MSBs and all 8-bits 
+    of byte[1] are the LSBs of the whole 10-bit address. 
+    To initialise a 10-bit address (values from 0x0..0x3ff) in your application: 
+      I2C_ADDR mySlave ={ I2C_10BIT_ADDR_MASK | 0x0..0x3, 0x0..0xff }; */
 #define I2C_10BIT_ADDR_MASK  ( 0x78 )
 
 typedef struct _i2c_addr
@@ -453,11 +459,11 @@ typedef struct _i2c_addr
 
   /* I2C_MSG is used with Master Transmit i2c_writem and Master Receive 
      i2c_readm. The common DEV API read/write functions take buffer and size 
-     parameters. So we pack the destination slave address (and optional
+     parameters. So we pack the destination target slave address (and optional
      register address) into a message structure. */
 typedef struct _i2c_msg
 {
-    I2C_ADDR slaveAddr;
+    I2C_ADDR targetAddr;
     unsigned char registerAddr;    // any non-0 value valid
     unsigned char *buf;
 

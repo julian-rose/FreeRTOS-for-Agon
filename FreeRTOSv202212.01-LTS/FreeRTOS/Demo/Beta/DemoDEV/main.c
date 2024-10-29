@@ -103,6 +103,7 @@ static void doUARTloopbackTest( void ); /* DEV_MODE_UART_LOOPBACK */
 static void doSPIBMP280Test( void );
 static void doSPIMFRC522Test( void );
 static void doI2CBMP280Test( void );
+static void doI2C10bitTest( void );
 
 
 /*----- Function Definitions ------------------------------------------------*/
@@ -165,6 +166,7 @@ static void * menu( void )
         { '9', "Test DEV SPI BMP280 Barometer", doSPIBMP280Test },
         { 'a', "Test DEV SPI MFRC522 RFID", doSPIMFRC522Test },
         { 'b', "Test DEV I2C BMP280 Barometer", doI2CBMP280Test },
+        { 'c', "Test DEV I2C 10-bit Addressing", doI2C10bitTest },
         { 'q', "End tests", NULL }
     };
     int const escbyte =((( 113 - 1 )& 0xF8 )>> 3 );
@@ -1133,7 +1135,7 @@ static void bmp280i2cGetCalibrationData( void )
     POSIX_ERRNO res;
 
     /* read temperature compensation data */
-    m.slaveAddr.byte[ 0 ]= 0x76;
+    m.targetAddr.byte[ 0 ]= 0x76;
     m.registerAddr = 0x88;
     m.buf = bmp280ReadBuf;
     res = i2c_readm( &m, 6, NULL, NULL );  // read registers readCompDataTCmd
@@ -1157,7 +1159,7 @@ static void bmp280i2cGetCalibrationData( void )
 #   endif
 
     /* read pressure compensation data */
-    m.slaveAddr.byte[ 0 ]= 0x76;
+    m.targetAddr.byte[ 0 ]= 0x76;
     m.registerAddr = 0x8E;
     m.buf = bmp280ReadBuf;
     res = i2c_readm( &m, 18, NULL, NULL );  // read registers readCompDataPCmd
@@ -1569,9 +1571,9 @@ static void doSPIMFRC522Test( void )
  *     section 5.2.2 Figure 8):
  *       First a write command to the addressed slave is issued, with the 
  *        required (starting) <register address> as a data byte
- *       Second a read command to the same addressed slave is issued, such that
- *        data for <register address> (and subsequent register addresses) will 
- *        be retreived in n+1 (, n+2, ...)
+ *       Second, after a Restart, a read command to the same addressed slave is 
+ *        issued, such that data for <register address> (and subsequent register 
+ *        addresses) will be retreived
 */
 static void doI2CBMP280Test( void )
 {
@@ -1606,7 +1608,7 @@ static void doI2CBMP280Test( void )
 
     /* BMP280-DS001-26 section 5.1, pulling CSB high fixes the BMP280 in I2C 
        mode */
-    res = i2c_open( DEV_MODE_I2C_SINGLE_MASTER, NULL );
+    res = i2c_open( DEV_MODE_I2C_SINGLE_MASTER );
     ( void )printf( "i2c_open( ) returns : %d\r\n", res );
 
     /* BMP280-DS001-26 section 3.6.1, in sleep mode ChipID and calibration
@@ -1614,7 +1616,7 @@ static void doI2CBMP280Test( void )
     {
          //int j;
         /* Sanity Check, read the device ID register */
-        m.slaveAddr.byte[ 0 ]= 0x76;
+        m.targetAddr.byte[ 0 ]= 0x76;
         m.registerAddr = 0xD0;
         m.buf = bmp280ReadBuf;
         res = i2c_readm( &m, 1, NULL, NULL );
@@ -1639,7 +1641,7 @@ static void doI2CBMP280Test( void )
                   // osrs_t[7:5] +  osrs_p[4:2] +  mode[1:0]=sleep
             { 0xF4,( 0x001 << 5 )+( 0x011 << 2 )+( 0x00 << 0 )};
         
-        m.slaveAddr.byte[ 0 ]= 0x76;
+        m.targetAddr.byte[ 0 ]= 0x76;
         m.buf = ctrlMeas;
         res = i2c_writem( &m, 2, NULL, NULL );
         ( void )printf( "i2c_writem = 0x%x\r\n", res );
@@ -1658,7 +1660,7 @@ static void doI2CBMP280Test( void )
                 { 0xF4,( 0x001 << 5 )+( 0x011 << 2 )+( 0x01 << 0 )};
 
             /* 2.1 send Forced mode command */
-            m.slaveAddr.byte[ 0 ]= 0x76;
+            m.targetAddr.byte[ 0 ]= 0x76;
             m.buf = ctrlMeas;
             res = i2c_writem( &m, 2, NULL, NULL );
             ( void )printf( "i2c_writem = 0x%x\r\n", res );
@@ -1673,7 +1675,7 @@ static void doI2CBMP280Test( void )
                The eZ80 requires data writes in order to activate the SPI;
                write control words containing the BMP280 addresses to be read.
                n addressed data value is returned in the n+1 buffer position */
-            m.slaveAddr.byte[ 0 ]= 0x76;
+            m.targetAddr.byte[ 0 ]= 0x76;
             m.registerAddr = 0xF7;
             /*  { 0xF7, 0xF8, 0xF9, 0xFA, 0xFB, 0xFC };
                   psmb, plsb, pxsb, tmsb, tlsb, txsb */
@@ -1725,6 +1727,132 @@ static void doI2CBMP280Test( void )
     gpio_close( GPIO_13 );
 
 #endif /*( 1 == configUSE_DRV_I2C )*/
+}
+
+
+/* doI2C10bitTest
+ *   Refer to Zilog PS015317, I2C section. 
+ *   We will wire two Agons I2C through a common rail (or directly).
+ *    Their dual 2,2K pull-ups on each of SDA and SCL will be in parallel,
+ *    resulting in a system pull-up of 1.1K. This is the minimum specification.
+ *   Master Role Agon#1 to address Slave Role Agon#2 with a 10-bit address
+ *   Refer to NXP UM10204 section 3.1.12 Table 4.
+ *   A 10-bit address is distinguished on the I2C-bus with bits 7:4=0x1111 in 
+ *    the first address byte.
+ *   The bitmasks for the 10-bit bytes are [0]=0xX11110nn [1]=0xnnnnnnnn 
+ *    such that the bottom 2 bits of byte [0] are the MSBs 
+ *    and all 8-bits of byte [1] are the LSBs of the 10-bit address. 
+ *   For example, to initialise a 10-bit address 0x34 in your application:
+ *    I2C_ADDR mySlave ={ I2C_10BIT_ADDR_MASK, 0x34 }. 
+ *    Then call i2c_ioctl( DEV_IOCTL_I2C_SET_SLAVE_ADDRESS, mySlave );
+ *   Start an I2C transaction by writing the target 10-bit slave address,
+ *    and issue a i2c_readm command. We expect the automatic reply from the 
+ *    Slave Agon DEV I2C (or you can try using the callback to customise the 
+ *    response).
+*/
+static void doI2C10bitTest( void )
+{
+    I2C_MSG m;
+//    I2C_ADDR slaveAddr ={ I2C_10BIT_ADDR_MASK, 0x2 };   // 10-bit address
+    I2C_ADDR slaveAddr ={ 0x34 };  // 7-bit address
+    POSIX_ERRNO res;
+    unsigned char ch;
+    int i;
+
+    ( void )printf( "\r\n\r\nRunning I2C 10-bit Address test\r\n" );
+
+    ( void )printf( "Wire both Master and Slave Agon I2C:\r\n"
+                    "SDA rail<-->pin 29, SCL rail<--pin 30\r\n" );
+
+    ( void )printf( "Wire Master Agon GPIO pin 16 (role) "
+                    "-> VCC=Master role\r\n" );
+    ( void )printf( "Wire Slave Agon GPIO pin 16 (role) "
+                    "-> GND=Slave role\r\n" );
+
+    ( void )printf( "Wire Slave Agon GPIO pin 13 (task activity) "
+                    "-> red LED+220ohm resistor -> GND\r\n" );
+    ( void )printf( "Wire each Master and Slave Agon GPIO pin 26 (idle activity) "
+                    "-> green LED+150ohm resistor -> GND\r\n" );
+
+    ( void )printf( "Run the Slave first so that the task activity LED blinks." );
+    ( void )printf( "Before running the Master\r\n" );
+
+
+    // open GPIO:13 as an output, initial value 0
+    res = gpio_open( GPIO_13, DEV_MODE_GPIO_OUT, 0 );
+    ( void )printf( "gpio_open(13) output returns : %d\r\n", res );
+
+    // open GPIO:16 as an input, determine which acting role
+    res = gpio_open( GPIO_16, DEV_MODE_GPIO_IN );
+    ( void )printf( "gpio_open(16) returns : %d\r\n", res );
+    res = gpio_read( GPIO_16, &ch );
+    gpio_close( GPIO_16 );
+
+    if( 0 == ch )  // with GPIO16 tied to GND, we are the slave
+    {
+        // Slave role
+        int const escbyte =((( 113 - 1 )& 0xF8 )>> 3 );
+        int const escbit =  (( 113 - 1 )& 0x07 );
+        KEYMAP * const kbmap = mos_getkbmap( );  // only need do this once at startup
+
+        ( void )printf( "Slave role\r\n" );
+        
+        res = i2c_open( DEV_MODE_I2C_MULTI_MASTER, &slaveAddr, NULL );
+        ( void )printf( "i2c_open( ) returns : %d\r\n", res );
+
+        ///res = i2c_ioctl( DEV_IOCTL_I2C_ENABLE_GENERAL_CALL_ADDRESS, NULL );
+        ///( void )printf( "i2c_ioctl( ) returns : %d\r\n", res );
+        
+        for( i = 1; ; i = 1 - i )
+        {
+            /* 1. toggle activity LED */
+            ( void )gpio_write( GPIO_13, i );  // toggle pin 13 (LED)
+
+            vTaskDelay( configTICK_RATE_HZ );  // task rate
+        
+            /* 3. scan keyboard for ESC */
+            if((( char* )kbmap )[ escbyte ]&( 1 << escbit ))
+            {
+                break;
+            }
+        }
+    }
+    else   // with GPIO16 tied to VCC we are the master
+    {
+        // Master role
+        unsigned char buf[ 20 ];
+        size_t cnt;
+        POSIX_ERRNO rres;
+
+        ( void )printf( "Master role\r\n" );
+
+        res = i2c_open( DEV_MODE_I2C_MULTI_MASTER, NULL, NULL );
+        ( void )printf( "i2c_open( ) returns : %d\r\n", res );
+
+        /* Try to read data from the Slave Agon */
+        m.targetAddr = slaveAddr;
+        m.registerAddr = 0x0;
+        m.buf = buf;
+        res = i2c_readm( &m, sizeof( buf ), &cnt, &rres );
+
+        ( void )printf( "i2c_readm = 0x%x : cnt = %d : rres = 0x%x\r\n", 
+                        res, cnt, rres );
+        if(( 1 << I2C_EVENT_RX_READY )& res )
+        {
+            /* We expect m.buf[ ]=='Agon'+Addr */
+            ( void )printf( "buf = " );
+            for( i = 0; i < sizeof( buf ); i++ )
+            {
+                ( void )printf( "<0x%x> ", buf[ i ]);
+            }
+            ( void )printf( "\r\n" );
+        }
+    }
+
+    ( void )printf( "i2c_close\r\n" );
+    i2c_close( );
+    ( void )printf( "gpio_close\r\n" );
+    gpio_close( GPIO_13 );
 }
 
 

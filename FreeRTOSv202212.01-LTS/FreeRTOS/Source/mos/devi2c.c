@@ -38,7 +38,7 @@
  *           ZDSII in ADL mode
  *
  * The definitions in this file support the DEV API (I2C low-level)
- * for Agon Light (and comptaibles)
+ * for Agon Light (and compatibles)
  * Created 20.Jun.2024 by Julian Rose for Agon Light port, shell
  * Modified from 13.August.2024 J. Rose, along the lines of devuart
  *
@@ -66,90 +66,121 @@
  * NOTE 0: I2C bus wiring
  *  
  * Refer to NXP UM10204, section 3.1.1 and Figure 3.
- * Both SDA and SCL are bidirectional lines, connected to the positive supply 
- *  voltage (Vdd) via a pull-up resistor (Rp). Such that when the bus is free, 
- *  both lines are HIGH. This establishes the quiescent state of the I2C bus, 
- *  necessary prior to Controller signalling and the START condition. 
+ *  With Agon use the 3.3V output (pin 34) for Vdd (and Vddio), and one of the 
+ *  GND outputs (pins 33, 5, 3) for Vss.
  *
- * For Agon, use the 3.3V output (pin 34) for Vdd (including Vddio), and one of 
- *  the GND outputs (pins 33, 5, 3) for Vss.
+ * A single I2C device can be connected one-to-one with Agon, or a small number 
+ *  of I2C devices can be connected in parallel. SDA (pin 29) and SCL (pin 30) 
+ *  can be taken to separate rails on a breadboard; similarly Vdd (pin 34) and 
+ *  Vss (GND) can be taken to separate rails (that's 4 rails in all) to form a 
+ *  parallel bus. Breadboards with 4 or 8 rails are commonly available. Best to
+ *  use non-adjacent rails for SDA & SCL to avoid cross-induction.
  *
- * For development, Agon applications might use a breadboard, onto which SDA 
- *  and SCL are each taken to a separate rail, along with Vdd and Vss (GND) on 
- *  separate rails (that's 4 rails in all - you can find single breadboards 
- *  with four independent rails). As per UM101204 section 3.1.1, both of the 
- *  SDA and SCL rails will need to be connected to Vdd through a resistor, 
- *  Rpsda and Rpscl respectively. 
  *
- *  The Olimex 2 board gives SDA and CSL pull-up resistors of 2.2Kohm, R39 and
- *   R40 adjacent to the Access Bus header. In cases with a single sensor or
- *   actuator, this is sufficient. In other cases you might want to provide 
- *   additional pull-ups. If you add additional pull-ups, recall the total
- *   resistance across each of SDA and SCL is measured in-parallel (with R39 
- *   and R40).
+ * Note 0.1: Breadboard pull-ups
  *
- *  Refer to NXP UM10204, section 7.1 for pullup sizing, minimum and maximum
- *   values. 
- *   The maximum value for Rp (figure 42) is affected by the total capacitance 
- *   of the number of devices to be attached, and by the desired bus speed; 
- *   both of which may vary. In the general case, at standard speed (100kbs) 
- *   with Vdd=3.3v, the maximum value will be in the order of 10 to 20Kohm. 
- *   The minimum value (figure 43) is affected by Vdd and by the desired bus 
+ * As per UM101204 section 3.1.1, both SDA and SCL are bidirectional lines, 
+ *  each connected to the positive supply voltage (Vdd) via a pull-up resistor 
+ *  (Rp). Such that when the bus is idle, both lines are HIGH. This establishes 
+ *  the quiescent state of the I2C bus, necessary prior to Controller signalling 
+ *  the START condition. 
+ *
+ *  The Olimex Light2 board embeds pull-up resistors of 2.2Kohm, R39 for SDA and 
+ *   R40 for SCL, adjacent to the Access Bus header. In general, for a small 
+ *   number of sensors or actuators this is sufficient. 2K2 values were perhaps 
+ *   chosen to be the same as other Olimex boards, known to work with UEXT1.
+ *   Rather than the more usual 4K7s of Light.
+ *
+ *  However, if you would add additional pull-ups on a breadboard, Rpsda and 
+ *   Rpscl, the total resistance across each of SDA and SCL is measured in-
+ *   parallel with R39 and R40 respectively. 
+ *
+ *   Refer to NXP UM10204, section 7.1 pull-up sizing, for calculating minimum 
+ *   and maximum resistor values. The maximum value for Rp (figure 42) is 
+ *   affected by the total capacitance of the number of devices to be attached, 
+ *   and by the desired bus speed. In the general case, at standard bus-speed 
+ *   (up to 100kbs) with Vdd=3.3v, the maximum value will be in the order of 10 
+ *   to 20Kohm. The minimum value (figure 43) is affected by Vdd and by the bus 
  *   speed. The minimum value at standard speed with Vdd=3.3v is in the order 
  *   of 1.1Kohm (basically ohm's law, with a bus sink current of 3mA). 
  *
- *   In particular with Agon operating under standard I2C clock speed of 
- *   57600bps, we suggest suitable values for both Rpsda and Rpcsl lie between 
- *   1.5K to 10K ohms, with 3.3Kohms as a good initial candidate. Such that the 
- *   total resistance "in parallel" - meaning the overall resistance will be 
- *   1/R = 1/2.2K + 1/3.3K -> R= 1.3K
+ *   With Agon running a standard clock speed of 57600bps, suitable values for 
+ *   both Rpsda and Rpcsl lie between 1.5K to 10K ohms, with 3.3Kohms as a good 
+ *   initial candidate. Such that the total resistance "in parallel" with R39 
+ *   and R40 will be 1/R = 1/2.2K + 1/3.3K -> R= 1.3K
  *
  *-----------------------------------------------------------------------------
  * NOTE 1: Use Cases
  *  
  *  DEV I2C broadly recognises two Use Cases:
  *
- *  1/ Master-controller is like the SPI use case. In this, a sole controller 
+ *  1/ Master-Controller is like the SPI use case. In this, a sole controller 
  *     accesses a number of slave devices (sensors and/or actuators) on the 
  *     I2C-bus. (MOS implements a subset of this Use Case: 7-bit addressing, 
- *     no restart.)
+ *     and no restart - sufficient for most typical uses.)
  *
  *  2/ Multi-Master is a network pattern, in which a number of controllers 
- *     inter-connect via the I2C bus. An Agon Cluster is such an arrangement. 
- *     There may also be slave devices on the I2C bus. 
+ *     inter-connect via the I2C bus. An Agon Cluster is such an arrangement
+ *     (see note 2.1). There may also be slave devices on this I2C bus, such
+ *     that Master-Controller is a subset of Multi-Master, with one Master. 
  *
  *-----------------------------------------------------------------------------
  * NOTE 2: Why not just use MOS I2C?
  *
  * MOS I2C supports two of the possible four roles: Master Transmit and Master 
- *  Receive. (MOS omits 10-bit addressing and Restarts.) These Single-Master 
+ *  Receive. (MOS omits 10-bit addressing and Restart.) These Single-Master 
  *  roles are sufficient for controlling many sensors and actuators attached to 
  *  the I2C bus (similar to SPI use-cases). Applications may open DEV I2C in 
  *  DEV_MODE_I2C_SINGLE_MASTER mode for this purpose. Or they may continue to 
- *  use MOS I2C (and disable DEV I2C to save RAM footprint). 
+ *  use MOS I2C (and disable DEV I2C to save RAM footprint) if multi-tasking is
+ *  not used. In applications with multi-tasking, DEV I2C is necessary. 
  *
  * DEV API shall support I2C-bus Multi-Mastering, adding the other two roles, 
  *  Slave Transmit and Slave Receive, allowing other devices to act as bus
  *  Master. This supports networking multiple intelligent devices on the bus. 
  *  Applications shall open DEV I2C in DEV_MODE_I2C_MULTI_MASTER mode for this 
- *  purpose. Applications may opt to supply a callback parameter for serving 
- *  Slave Tranmsit requests from remote Master receivers. 
+ *  purpose; an optional callback parameter allows the application to respond
+ *  to Slave Tranmsit requests from remote Master receivers. 
  *
- * Moreover, I2C uses reserved addresses (for example General Call Addressing)
- *  and a Device ID protocol which can be used to determine the type of each 
- *  bus-connected Device. DEV I2C shall support this, such that multiple Agon 
- *  devices can find each other on the bus. To this end DEV I2C serves as the 
- *  physical- and datalink-layer protocols for networking Agon Clusters. 
- *  Higher-layer application-specific protocols could be developed for writing 
- *  distributed multi-tasking FreeRTOS applications, using DEV I2C as a carrier.
  *
- * The other Agon physical interfaces, UART, SPI and GPIO are not well-suited 
- *  to cluster networking. I2C targets intra-board connectivity, but is widely 
- *  used to inter-connect devices with up to 2m of wire requiring no further 
- *  technology. For longer distance I2C connectivity we can use NXP P82B96 
- *  buffers, to reach about 200m. (To inter-connect Agon over even longer 
- *  distances, we would need to use DEV UART with Modems or Bridges or Wifi, 
- *  with an increase in cost and complexity.)
+ * Note 2.1 - Agon Clusters
+ *
+ * I2C specifies General Call Addressing and the Device ID protocol which 
+ *  can be used to determine the type of each bus-connected Device. DEV I2C 
+ *  shall support this, in order that multiple Agon devices can find each other. 
+ *
+ * While none of the other interfaces (UART, GPIO, SPI) lend themselves well to 
+ *  local networking, in connecting a number of Agons using I2C we observe: 
+ *
+ *  i/ Olimex Light2 embeds 2K2 pull-up resistors on each of SCL & SDA (see 
+ *  note 0). Connecting Agons together combines their I2C pull-ups in-parallel. 
+ *  When powered up the resulting 1/R sum for N=2 Light2 gives 1K1, the minimum 
+ *  for an operational I2C-bus. This might work for N=2 Light2 [it doesn't], 
+ *  but will sum to be out of specification for N>2. (By comparison Agon Light 
+ *  embeds 4K7s, such that for N=2 1/R sums to 2K3; and Zilog eZ80AcclaimPlus! 
+ *  Development Board embeds 5K pullups, such that for N=2 1/R sums to 2K5; 
+ *  both boards well within specification.) Moreover, if any I2C-connected Agon 
+ *  is powered-down, its SDA & SCL resistors effectively create a circuit to 
+ *  GND from any powered-up Agon. This pulls the SDA & SCL lines out of 
+ *  specification, such that any powered Agon in the circuit will be unable to 
+ *  access the bus successfully. 
+ *
+ *  ii/ In general, to create an N>1 Agon network, N P82B96 buffer ICs should 
+ *  be wired in parallel, such that: the Tx/Rx pins of all P82B96s are wired to
+ *  form a single common signalling backplane; and the Sx/Sy pins of each 
+ *  P82B96 are wired to bridge separate local I2C busses to which a single Agon
+ *  is attached. Each Agon will power its own local I2C bus, and the devices
+ *  attached to it. Slave devices attached to any of the local I2C busses will 
+ *  be visible to all Agon Masters across the backplane. This arrangement will 
+ *  function successfully for any powered Agon; un-powered local I2C busses and 
+ *  devices will not be visible, while the backplane will continue to function. 
+ *
+ *  iii/ I2C was designed for intra-board connectivity, but is widely used to 
+ *  inter-connect devices with up to 2m of wire requiring no further hardware. 
+ *  For longer distance connectivity, P82B96 buffers can be used, to reach up 
+ *  to 200m. To inter-connect Agon over even longer distances, we might use 
+ *  DEV UART with Modems or Bridges or Wifi, with an increase in cost and 
+ *  complexity and energy consumption. 
  *
  *-----------------------------------------------------------------------------
  * NOTE 3: To transact (like DEV UART) or not (like DEV SPI)
@@ -160,22 +191,22 @@
  *  work. Hence, for the UART (DEV_MODE_BUFFERED) non-blocking transactions are 
  *  useful. 
  *
- * Whereas, the eZ80 I2C device (like its SPI device) does not have a FIFO;
+ *  Whereas, the eZ80 I2C device (like the SPI device) does not have a FIFO;
  *  such that each transceived byte will be reported to the CPU by an interrupt,
  *  causing a  context switch from the current task to the ISR each time. This 
  *  interrupt frequency leaves less useful time for a concurrent task to run. 
  *
- * Moreover, unlike DEV UART in which reading and writing are asynchronous and 
+ *  Moreover, unlike DEV UART in which reading and writing are asynchronous and 
  *  can be full duplex with concurrent tasks (using DEV UART), access to the 
  *  I2C-bus is limited to one active transaction at any time.
  *
  * However, transactions are a useful way to implement ISR-driven state 
- *  transitions - with the added benefit of minimal user-application involvement
- *  - especially in support of I2C bus multi-mastering (Slave Receive and Slave 
- *  Transmit roles). Therefore, DEV I2C shall use Blocking Transactions, such 
- *  that DEV I2C-invoking tasks will block for the duration of each call; while 
- *  Non-blocking transactions shall be omitted. All transactions will execute 
- *  in the context of i2cisr using transaction buffers, similar to UART.
+ *  transitions, with minimal user-application involvement. (In particular, for
+ *  I2C bus multi-mastering Slave Receive and Slave Transmit roles). Therefore, 
+ *  DEV I2C shall use Blocking Transactions, such that DEV I2C-invoking tasks 
+ *  will block for the duration of each call, including Restarts. While Non-
+ *  blocking transactions shall be omitted. All transactions will execute in 
+ *  the context of i2cisr using transaction buffers, similar to UART.
  *
  *-----------------------------------------------------------------------------
  * NOTE 4: Master Transmit and Receive role handling
@@ -200,44 +231,43 @@
  *
  * Slave Receive role is the activity of receiving data from a remote Master. 
  *  DEV I2C shall manage Slave Receive (including GCA) automatically by using 
- *  local buffers. The application shall subsequently retrieve Slave Receive 
- *  data by calling i2c_reads, and needs to do so in a timeframe that avoids 
- *  local buffer overrun if too slow. The rate of Slave Receive data arrival 
- *  is application-specific.
+ *  (configurable sized) private buffers. The application shall subsequently 
+ *  retrieve Slave Receive data by calling i2c_reads, and needs to do so in a 
+ *  timeframe that avoids private buffer overrun. The rate of Slave Receive 
+ *  data arrival is application-specific.
  *
- *  DEV I2C supports the Global Call Address, but it is not enabled by default.
+ *  DEV I2C supports the Global Call Address, which is not enabled by default.
  *  To enable GCA the application shall call i2c_ioctl with command paramater
  *  DEV_IOCTL_I2C_ENABLE_GENERAL_CALL_ADDRESS. The format of the General Call 
  *  Structure is defined in NXP UM10204, section 3.1.13. 
  *
- * Buffered messages do not capture the originating remote master transmitter 
+ * I2C messages do not capture the originating remote master transmitter 
  *  address. So, while each message is loaded into and self-contained within an 
  *  individual buffer, the sum of messages from all remote master transmitters 
- *  will share the available buffer array. The number of buffers to allocate in
- *  the array is given by devConfig configDRV_I2C_BUFFER_NUM; and the size of
- *  each individual buffer by configDRV_I2C_BUFFER_SZ. 
+ *  will share the available private buffer array. The number of buffers to 
+ *  allocate in the array is given by devConfig configDRV_I2C_BUFFER_NUM; and 
+ *  the size of each individual buffer by configDRV_I2C_BUFFER_SZ. 
  *
  *-----------------------------------------------------------------------------
  * NOTE 6: Slave Transmit role handling
  * 
  * Calling i2c_open with parameter DEV_MODE_I2C_MULTI_MASTER will access DEV
- *  I2C with both Master and Slave roles.
+ *  I2C for both Master and Slave roles.
  *
  * Slave Transmit role is the i2c activity of sending data to a remote Master
- *  receiver on-demand. If i2c_open is not given an application callback 
- *  parameter, DEV I2C shall send an automatic 'who am i' reply consisting of 
- *  device address (set previously through i2c_ioctl) and type ('Agon'); or 
- *  given a callback parameter, here named i2cHandler, DEV I2C will invoke it 
- *  instead. 
+ *  Receiver on-demand. If i2c_open is not given an application callback 
+ *  parameter, DEV I2C shall respond with an automatic 'who am i' consisting of 
+ *  device address (set previously through i2c_ioctl) and type ('Agon'). Or, if
+ *  i2c_open is given a callback parameter, here named i2cHandler, DEV I2C will 
+ *  invoke it instead. 
  *
- *  i2cHandler shall run in the context of a top-priority ISR Handler Task 
- *  (see Note 6 interrupt handling below). This shall execute while the I2C-bus 
- *  is idled (by clock stretching), so i2cHandler SHALL be prompt (meaning data
- *  should be readied in advance, for various cases), in order to minimise the 
- *  time it holds-up the bus. i2cHandler SHALL respond to the remote Master by 
- *  calling i2c_writes. 
+ *  i2cHandler shall run in the context of i2cisr (see Note 7 interrupt handling
+ *  below). This shall execute while the I2C-bus is idled (by clock stretching), 
+ *  so i2cHandler SHALL be prompt (meaning data should be readied in advance, 
+ *  for various cases), in order to minimise the time it holds-up the bus. 
+ *  i2cHandler SHALL respond to the remote Master by calling i2c_writes. 
  *
- *  Data sent via i2c_writes can be application-specific. 
+ *  Data sent via i2c_writes is application-specific. 
  *
  *  Slave Transmit identifies neither the remote master address nor its type. 
  *  Any handshake or protocol needs to be established by application-specific 
@@ -250,12 +280,11 @@
  * NOTE 7: Interrupt handling
  *
  * Design of the ISR Handler Task would be based on that initially foreseen for 
- *  DEV UART (note 2), given in the remainder of this note. This would allow
- *  interrupt handling to be passed to a highest priority task, and would 
- *  enable concurrent interrupts from other devices. BUT as with the UART, the 
- *  eZ80 I2C interrupt hardware also needs the event cleared down before 
- *  exiting the ISR, otherwise an infinite trigger results. Such that the 
- *  entire handling must be run within the ISR context. Sigh.
+ *  DEV UART. This would allow interrupt handling to be passed to a highest 
+ *  priority task, and would enable concurrent interrupts from other devices. 
+ *  BUT as with the UART, the eZ80 I2C interrupt hardware also needs the event 
+ *  cleared down before exiting the ISR, otherwise an infinite trigger results. 
+ *  Such that the entire handling must be run within the ISR context. Sigh.
  *
  * #if( 1 == configUSE_PREEMPTION )
  *   static TaskHandle_t I2CIsrHandlerTaskHandle = NULL;
@@ -345,6 +374,20 @@
  *   I2C Control register.
 */
 
+
+/*----- Macro Definitions ---------------------------------------------------*/
+#define _putchfc( c )\
+{\
+    int temp;\
+    temp =( c & 0xF0 )>> 4;\
+    temp =( 9 < temp )?( temp - 10 )+ 'A': temp + '0';\
+    _putchf( temp );\
+    temp =( c & 0x0F );\
+    temp =( 9 < temp )?( temp - 10 )+ 'A': temp + '0';\
+    _putchf( temp );\
+}
+
+
 /*---- Constants ------------------------------------------------------------*/
 /* Sequences of transactions are supported primarily for register-addressable 
    devices with Master Receive, in which the register address is first 
@@ -356,7 +399,7 @@
 #define configDRV_I2C_TRANSACT_MAX        2
 
 
-/* The permissable frequencies divided down from 18,432Mhz
+/* The permissable frequencies divided down from Agon's 18,432Mhz clock
 */
 static unsigned short int const scl[ NUM_I2C_SCL_FREQ ]=
 {           // Constants for CCR divisor computed at compile time
@@ -528,7 +571,7 @@ typedef struct _i2c_buffer
    i2c_writes; and is similarly blocked until completion. */
 typedef struct _i2c_transaction
 {
-    I2C_ADDR *slaveAddr;      // Target Slave Address                      IN
+    I2C_ADDR *targetAddr;     // Target Slave Address                      IN
     unsigned char *buf;       // Dest or Src buffer                    IN/OUT
     size_t len;               // number of bytes to read/write             IN
     size_t lenTRx;            // local tracker of bytes transceived      TEMP
@@ -756,7 +799,9 @@ static void i2cSetClockSpeed( I2C_SCL_FREQ const freq )
                 ( void )printf( "i2cSetClockSpeed defaulting to 57600\r\n" );
             }
 #           endif
+
             I2C_CCR = scl[ I2C_SCL_FREQ_57600 ];
+            i2cEvent |=( 1 << I2C_EVENT_SYS_CLK_SPEED );
         }
         break;
 
@@ -771,33 +816,46 @@ static void i2cSetClockSpeed( I2C_SCL_FREQ const freq )
 }
 
 
-/* Power-up the I2C
+/* i2cInit
+   Power-up the I2C
    Refer to Zilog ps015317, resetting the I2C registers p:153
    Refer to Note 8 above.
    Compare to MOS i2c.c:init_I2C() */
 static void i2cInit( void )
 {
-#   if defined( _DEBUG )
+#   if defined( configTRACE )
         _putchf( 'L' );
 #   endif
 
-    // power down I2C peripheral clock before enabling it (note 8)
-///    CLK_PPD1 |= PERIPHERAL_CLK_REG_I2C_OFF; 
+    i2cInterruptDisable( );
+
+    i2cDisable( );
+
+    // power down I2C peripheral clock before enabling I2C (note 8)
+    CLK_PPD1 |= PERIPHERAL_CLK_REG_I2C_OFF; 
     {
         /* Refer to Zilog PS015317, Clock Peripheral Power-Down Registers p:36
            When powered down, the peripheral control registers are not 
            accessible for Read or Write access.*/
+        // something to insert a delay between CLK_PPD1 OFF and back ON
+        i2cSetClockSpeed( I2C_SCL_FREQ_57600 );
     }
+    CLK_PPD1 &=( 0xFF - PERIPHERAL_CLK_REG_I2C_OFF );
     // power up the i2c peripheral clock
-///    CLK_PPD1 &=( 0xFF - PERIPHERAL_CLK_REG_I2C_OFF );
 
-    /// Had runs when only an electrical power cycle exits i2c lockup
+    /// Still have runs when only an electrical power cycle exits i2c lockup
+    /// Lock-up not resolved yet
+    /// Could be Light2 pullups borderline out of specification
+
+    // Software reset the I2C device (clr STA, STP, IFLG) and to Idle
+    i2cReset( );
 
     i2cSetClockSpeed( I2C_SCL_FREQ_57600 );  // default standard clock speed
 
-    // Software reset of the I2C device (clr STA, STP, IFLG) and to Idle
-    i2cReset( );
     i2cEnable( );  // enable I2C bus (SCL/SDA) events
+
+    /* Set Interrupt Enable Register */
+    i2cInterruptEnable( );
 }
 
 
@@ -810,25 +868,32 @@ static void i2cInit( void )
 
 
 /* storeSlaveAddress
-   Save our own slave address within DEV I2C. Used to test whether a remote 
-    master addresses us.
+   Save our I2C slave address. Used to test when we are addressed.
    DEV I2C supports bus multi-mastering. This enables other devices on the I2C 
    bus to the Master role. Those devices can address us using our application-
    selected Slave Address. 
-   The I2C Address is either a 7-bit item or a 10-bit item.
-   A 10-bit address is distinguished on the I2C-bus with bits 7:4=0x1111 in the
-   first address byte.
-   The bitmask for the 7-bit byte is [0]=0xXnnnnnnn 
-    such that the bottom 7 bits are the required address in range 8..119
-    Addresses in the range 0..7 and 120.127 are reserved.
-   The bitmasks for the 10-bit bytes are [0]=0xX11110nn [1]=0xnnnnnnnn 
-    such that the bottom 2 bits of byte [0] are the MSBs 
-    and all 8-bits of byte [1] are the LSBs of the 10-bit address. 
-   Refer to NXP UM10204 section 3.1.12 Table 4.
-   For example, to initialise a 7-bit address 0x34 in your application:
-    I2C_ADDR mySlave ={ 0x34 }; and to initialise a 10-bit address 0x34 in 
-    your application: I2C_ADDR mySlave ={ I2C_10BIT_ADDR_MASK, 0x34 }. Then 
-    call i2c_ioctl( DEV_IOCTL_I2C_SET_SLAVE_ADDRESS, mySlave );   */
+   The I2C Address is either a 7-bit value or a 10-bit value
+   Refer to NXP UM10204 section 3.1.11 and 3.1.12
+   Bitmask for the 7-bit address byte is [0]=0xXnnnnnnn 
+    such that the bits 6:0 form the required address 
+    Assignable 7-bit address values are in the range 8..119
+    While values in the ranges 0..7 and 120..127 are reserved:
+     Refer to NXP UM10204 section 3.1.12 Table 4.
+    For example, to initialise a 7-bit address 0x34 (52) in an application:
+     I2C_ADDR mySlave ={ 0x34 };
+   Bitmasks for the 10-bit address are bytes [0]=0xX11110nn [1]=0xnnnnnnnn 
+    such that the bottom 2 bits of byte [0] are the MSBs and all 8-bits of 
+    byte [1] are the LSBs of the 10-bit address. 
+    Valid values for byte[0] bits are in the range 120..123; refer to NXP 
+     UM10204 section 3.1.12 Table 4.
+     The value of the byte[0] is left-shifted when stored in I2C_SAR, so
+      I2C_10BIT_ADDR_MASK corresponds to 0xFX (0x78<<1).
+      Valid 10-bit address first byte values are in the range 0xF0 (0x78<<1), 
+      0xF2 (0x79<<1), 0xF4 (0x7A<<1) or 0xF6 (0x7B<<1).
+      I2C_10BIT_ADDR_MASK doesn't distinguish that 0xF8..0xFF are invalid.
+    To initialise a 10-bit address (values from 0x0..0x3ff) in an application: 
+      I2C_ADDR mySlave ={ I2C_10BIT_ADDR_MASK | 0x0..0x3, 0x0..0xff };
+   */
 static void storeSlaveAddress( I2C_ADDR const * const addr )
 {
     unsigned char const gca =( I2C_SAR & 0x1 );
@@ -837,7 +902,21 @@ static void storeSlaveAddress( I2C_ADDR const * const addr )
             ? true
             : false;
 
-    slaveAddr = *addr;
+    //Refer to ...\ZDSII_eZ80Acclaim!_5.3.5\ZTP2.5.1\RZK\eZ80_BSP\I2C\I2C.c
+    //This sets I2C_SAR before enabling interrupt I2C_CTL | 0x80
+    //Is this necessary for the eZ80 I2C device to recognise its Slave address?
+    //Duplicating this sequence had no effect by experiment.
+    //_Bool const isIntrEnabled = 
+    //    ( i2cEnableTest( ))
+    //        ? true
+    //        : false;
+
+    slaveAddr = *addr;  // save our I2C slave address in the global variable
+
+    //if( true == isIntrEnabled )  // see Note on Zilog RZK code
+    //{
+    //    i2cDisable( );
+    //}
 
     if( true == is10bit )
     {  // 10-bit address
@@ -845,16 +924,22 @@ static void storeSlaveAddress( I2C_ADDR const * const addr )
         I2C_XSAR = addr->byte[ 1 ];
     }
     else
-    {  // 7-bit address
+    {   // PS015317 p:153 I2C_SAR[7:1]= sla[6:0] 
+        // the 7-bit address of the I2C when in 7-bit SLAVE mode
         I2C_SAR =(( addr->byte[ 0 ]<< 1 )| gca );
         I2C_XSAR = 0;
     }
+    
+    //if( true == isIntrEnabled )  // see Note on Zilog RZK code
+    //{
+    //    i2cEnable( );
+    //}
 }
 
 
 /*------ Transaction functions ----------------------------------------------*/
-#define CREATE_I2C_TRANSACTION( _slAddr, _buf, _bufSz, _numTransacted, _bufResult )\
-    i2cTransact->slaveAddr =( _slAddr ), \
+#define CREATE_I2C_TRANSACTION( _tAddr, _buf, _bufSz, _numTransacted, _bufResult )\
+    i2cTransact->targetAddr =( _tAddr ), \
     i2cTransact->buf =( _buf ), \
     i2cTransact->len =( _bufSz ), \
     i2cTransact->bufTRx =( _numTransacted ), \
@@ -863,7 +948,7 @@ static void storeSlaveAddress( I2C_ADDR const * const addr )
 
 
 #define CLEAR_I2C_TRANSACTION( ) \
-    i2cTransact->slaveAddr = NULL, \
+    i2cTransact->targetAddr = NULL, \
     i2cTransact->buf = NULL, \
     i2cTransact->len = 0, \
     i2cTransact->bufTRx = NULL, \
@@ -876,7 +961,7 @@ static void storeSlaveAddress( I2C_ADDR const * const addr )
 # define PRINT_I2C_TRANSACTION( )\
     ( void )printf( "i2cTransact: addr = 0x%p; buf=0x%p; " \
                     "len=%d; bufTRx=%p; bufRes=0x%p; lenTRX=%d\r\n", \
-                    i2cTransact->slaveAddr, \
+                    i2cTransact->targetAddr, \
                     i2cTransact->buf, \
                     i2cTransact->len, \
                     i2cTransact->bufTRx, \
@@ -922,6 +1007,11 @@ static void resetState( )
         }
 #       endif /*( 1 == configUSE_PREEMPTION )*/
     }
+    else
+    if( I2C_ROLE_SRX == i2cRole )
+    {
+        i2cState &=( I2C_STATE )( ~( I2C_STATE_LOCK | I2C_STATE_RUN ));
+    }
 
     i2cRole = I2C_ROLE_IDLE;
 
@@ -930,7 +1020,7 @@ static void resetState( )
 }
 
 
-/* writeTargetSlaveAddress
+/* writeTargetAddress
    For Master Transmit role:
     - 7-bit target slave address is sent as one byte (I2C_MTRANS_STATE_ADDR_1) 
     - 10-bit address is sent as two bytes (I2C_MTRANS_STATE_ADDR_1 then 
@@ -941,21 +1031,28 @@ static void resetState( )
     - 10-bit address is first sent as two bytes with the Write R/W_ bit (0<<0) 
       as per Master Transmit, followed by a Restart with the first address byte 
       repeated (I2C_MTRANS_STATE_ADDR_3) plus the Read R/W_ bit (1<<0) set. */
-static POSIX_ERRNO writeTargetSlaveAddress( I2C_BUS_DATA_DIRECTION const dir )
+static POSIX_ERRNO writeTargetAddress( I2C_BUS_DATA_DIRECTION const dir )
 {
     POSIX_ERRNO ret = POSIX_ERRNO_ENONE;
     unsigned char dr = 0;
     
-    if( i2cTransact->slaveAddr )
+#   if defined( configTRACE )
+        _putchf( 'Z' );
+#   endif
+
+    if( i2cTransact->targetAddr )
     {
         switch( masterTransitionState )
         {
             case I2C_MTRANS_STATE_ADDR_1 :  // 7-bit or 10-bit first byte address
             case I2C_MTRANS_STATE_ADDR_3 :  // 10-bit first byte for Receive restart
             {
+#   if defined( configTRACE )
+        _putchf( '1' );
+#   endif
                 /* a 7-bit address range  6:3=0b0001..0b1110 (8 through 112)
                    a 10-bit address range 6:2=0b11110 (120, 0x78) */
-                dr = i2cTransact->slaveAddr->byte[ 0 ];
+                dr = i2cTransact->targetAddr->byte[ 0 ];
                 
                 /* lsb of an I2C address is R/W_, so shift address bits left */
                 dr <<= 1;  
@@ -970,7 +1067,10 @@ static POSIX_ERRNO writeTargetSlaveAddress( I2C_BUS_DATA_DIRECTION const dir )
         
             case I2C_MTRANS_STATE_ADDR_2 :  // 10-bit second byte address
             {
-                dr = i2cTransact->slaveAddr->byte[ 1 ];
+#   if defined( configTRACE )
+        _putchf( '2' );
+#   endif
+                dr = i2cTransact->targetAddr->byte[ 1 ];
 
                 // all 8 bits are address, no R/W_ dir bit
             }
@@ -978,13 +1078,11 @@ static POSIX_ERRNO writeTargetSlaveAddress( I2C_BUS_DATA_DIRECTION const dir )
             
             default :
             {
-#               if defined( _DEBUG )
-                {
-                    ( void )printf( "Illegal masterTransitionState\r\n" );
-                }
-#               endif
-
+#   if defined( configTRACE )
+        _putchf( '3' );
+#   endif
                 i2cStop( );
+                i2cEvent |=( 1 << I2C_EVENT_DRV_ERROR );
                 ret = POSIX_ERRNO_EFAULT;
             }
             break;
@@ -995,6 +1093,9 @@ static POSIX_ERRNO writeTargetSlaveAddress( I2C_BUS_DATA_DIRECTION const dir )
     }
     else
     {
+#   if defined( configTRACE )
+        _putchf( '4' );
+#   endif
         i2cStop( );
         ret = POSIX_ERRNO_EFAULT;
     }
@@ -1009,9 +1110,8 @@ static POSIX_ERRNO writeTargetSlaveAddress( I2C_BUS_DATA_DIRECTION const dir )
    Enter MASTER TRANSMIT mode by setting the STA bit in the I2C_CTL register
    to 1. The I2C then tests the I2C bus and transmits a START condition when 
    the bus is free.*/
-///#define startMasterTransmit( )   i2cRole = I2C_ROLE_MTX; i2cStart( )
-#define startMasterTransmit( )   i2cRole = I2C_ROLE_MTX;\
-                                 I2C_CTL |= I2C_CTL_REG_STA_ON
+#define startMasterTransmit( )  i2cRole = I2C_ROLE_MTX;\
+                                I2C_CTL |= I2C_CTL_REG_STA_ON
 
 /* Refer to Zilog PS0153, Operating Modes, Master Receive
    In MASTER RECEIVE mode, the I2C receives a number of bytes from a slave 
@@ -1019,7 +1119,6 @@ static POSIX_ERRNO writeTargetSlaveAddress( I2C_BUS_DATA_DIRECTION const dir )
    Enter MASTER RECEIVE mode by setting the STA bit in the I2C_CTL register
    to 1. The I2C then tests the I2C bus and transmits a START condition when 
    the bus is free.*/
-///#define startMasterReceive( )    i2cRole = I2C_ROLE_MRX; i2cStart( )
 #define startMasterReceive( )   i2cRole = I2C_ROLE_MRX;\
                                 I2C_CTL |= I2C_CTL_REG_STA_ON
 
@@ -1030,13 +1129,13 @@ static void masterTransmitNextByte( void )
        The [next] data byte to be transmitted is loaded into the I2C_DR 
        register (and the IFLG bit cleared - done in i2cisr_1). */
     configASSERT( I2C_MTRANS_STATE_DATA == masterTransitionState );
-#   if defined( _DEBUG )
+#   if defined( configTRACE )
         _putchf( 'X' );
 #   endif
 
     if( i2cTransact->len > i2cTransact->lenTRx )
     {
-#       if defined( _DEBUG )
+#       if defined( configTRACE )
             _putchf( '1' );
 #       endif
 
@@ -1050,7 +1149,7 @@ static void masterTransmitNextByte( void )
             /* perform next consecutive transaction after a RESTART
                Currently hard-coded for Master Receive with register-addressed 
                devices */
-#           if defined( _DEBUG )
+#           if defined( configTRACE )
                 _putchf( '2' );
 #           endif
 
@@ -1066,7 +1165,7 @@ static void masterTransmitNextByte( void )
                in the I2C_CTL register. The I2C then transmits a STOP condition, 
                clears the STP bit and returns to the idle state. */
 
-#           if defined( _DEBUG )
+#           if defined( configTRACE )
                 _putchf( '3' );
 #           endif
             i2cStop( );
@@ -1086,7 +1185,7 @@ static void masterReceiveNextByte( void )
        STP bit in the I2C_CTL register. The I2C then transmits a STOP 
        condition, clears the STP bit and returns to the idle state. */
     configASSERT( I2C_MTRANS_STATE_DATA == masterTransitionState );
-#   if defined( _DEBUG )
+#   if defined( configTRACE )
         _putchf( 'Y' );
 #   endif
 
@@ -1109,13 +1208,15 @@ static void startSlaveTransmit( void )
     else
     {
         /* Customised use of GCA
-           DEV I2C 'who am i' string format */
-        unsigned char id[ ]=  // default string: '@' 2-byte address, '='type '\0'
+           DEV I2C 'who am i' string format;
+           Id made static to persist after startSlaveTransmit returns. */
+        static unsigned char Id[ ]=  
+            // default string: '@' 2-byte address, '='type '\0'
             { '@', 0, 0,
               '=', 'A', 'g', 'o', 'n', '\0' };
-        id[ 1 ]= slaveAddr.byte[ 0 ];
-        id[ 2 ]= slaveAddr.byte[ 1 ];
-        i2c_dev_writes( id, 9, NULL, NULL );  // respond with a default string
+        Id[ 1 ]= slaveAddr.byte[ 0 ];
+        Id[ 2 ]= slaveAddr.byte[ 1 ];
+        i2c_dev_writes( Id, 9, NULL, NULL );  // respond with a default string
     }
 }
 
@@ -1128,8 +1229,9 @@ static void slaveTransmitNextByte( void )
        When the final byte to be transmitted is loaded into the I2C_DR 
        register, the AAK bit shall be cleared before the IFLG is cleared. 
     */
-    I2C_DR = i2cTransact->buf[( i2cTransact->lenTRx )++ ];
+    I2C_DR = i2cTransact->buf[ i2cTransact->lenTRx ];
 
+    i2cTransact->lenTRx ++;
     if( i2cTransact->len > i2cTransact->lenTRx )
     {
         i2cAck( );
@@ -1152,7 +1254,7 @@ static void slaveReceiveNextByte( void )
 {
     currentSlaveReceiveBuf->_data[ currentSlaveReceiveBuf->Index ]= I2C_DR;
 
-    currentSlaveReceiveBuf->Index++;
+    currentSlaveReceiveBuf->Index ++;
     if( configDRV_I2C_BUFFER_SZ > currentSlaveReceiveBuf->Index )
     {
         i2cAck( );
@@ -1211,12 +1313,16 @@ static void finalisei2cTransaction( POSIX_ERRNO const ret )
 /*====== I2C interrupt handler ==============================================*/
 /* i2cisr_idle
    Interrupt Handler - Idle role
-   Idle role is the default I2C condition, while not transceiving.
-   We will be in idle mode when we are addressed as a slave by a remote master
+   Idle role is the default I2C condition, while we have neither Mastered the 
+     bus nor been addressed by a remote Master. 
+     Contention may result between concurrent remote and local Mastering bids.
+     We might have begun Mastering and set I2C_STATE_LOCK, then be interrupted 
+     by a remote Master start prior to starting our bus transaction. So we must 
+     test and set I2C_STATE_LOCK before transitioning to a Slave role.
 */
 static void i2cisr_idle( unsigned char const sr )
 {
-#   if defined( _DEBUG )
+#   if defined( configTRACE )
         _putchf( 'I' );
 #   endif
 
@@ -1233,19 +1339,16 @@ static void i2cisr_idle( unsigned char const sr )
                that DEV I2C signalled or sequenced incorrectly; or if you were
                doing a Slave transaction, then DEV I2C may have got something 
                wrong, or a remote Master got something wrong.  */
-#           if defined( _DEBUG )
+#           if defined( configTRACE )
                 _putchf( '1' );
 #           endif
 
-            //i2cStop( );
-            i2cReset( );  // MOS does a software reset, not sure why
+            // attempt to recover from bus error
+            i2cInit( );
 
-#           if defined( _DEBUG )
-            {
-                ( void )printf( "Role %d : I2C_STATUS_CODE_BUS_ERROR\r\n",
-                                i2cRole );
-            }
-#           endif
+            // terminate the current transaction
+            i2cEvent |=( 1 << I2C_EVENT_SYS_ERROR );
+            resetState( );            
         }
         break;
 
@@ -1256,7 +1359,7 @@ static void i2cisr_idle( unsigned char const sr )
             /* we expect I2C_STATUS_CODE_SLAVE_ADDR_READ_ACK, 
                          I2C_STATUS_CODE_SLAVE_ADDR_WRITE_ACK
                          I2C_STATUS_CODE_GCA_ACK */
-#           if defined( _DEBUG )
+#           if defined( configTRACE )
                 _putchf( '2' );
 #           endif
         }
@@ -1266,8 +1369,8 @@ static void i2cisr_idle( unsigned char const sr )
         {
             /* When bus arbitration is lost, the IFLG bit is 1 and the status 
                code in the I2C_SR register is 38h. This will happen when another
-               master addresses another slave. */
-#           if defined( _DEBUG )
+               master gains arbitration over our in-progress transaction. */
+#           if defined( configTRACE )
                 _putchf( '3' );
 #           endif
         }
@@ -1281,15 +1384,26 @@ static void i2cisr_idle( unsigned char const sr )
                I2C transmits an acknowledge bit and sets the IFLG bit in the 
                I2C_CTL register and the I2C_SR register contains the status 
                code 60h. */
-#           if defined( _DEBUG )
+#           if defined( configTRACE )
                 _putchf( '4' );
 #           endif
 
-            slaveReceiveClear( );
+            if( I2C_STATE_LOCK & i2cState )
+            {
+#               if defined( configTRACE )
+                    _putchf( '-' );
+#               endif
+
+                i2cNack( );
+            }
+            else
+            {
+                slaveReceiveClear( );
             
-            i2cRole = I2C_ROLE_SRX;
-            i2cState |= I2C_STATE_RUN;
-            i2cAck( );
+                i2cRole = I2C_ROLE_SRX;
+                i2cState |=( I2C_STATE )( I2C_STATE_RUN | I2C_STATE_LOCK );
+                i2cAck( );
+            }
         }
         break;
         
@@ -1302,15 +1416,26 @@ static void i2cisr_idle( unsigned char const sr )
                To enable GCA the application must call i2c_ioctl with command
                DEV_IOCTL_I2C_ENABLE_GENERAL_CALL_ADDRESS; it is not enabled by
                default. */
-#           if defined( _DEBUG )
+#           if defined( configTRACE )
                 _putchf( '5' );
 #           endif
 
-            slaveReceiveClear( );
+            if( I2C_STATE_LOCK & i2cState )
+            {
+#               if defined( configTRACE )
+                    _putchf( '-' );
+#               endif
+
+                i2cNack( );
+            }
+            else
+            {
+                slaveReceiveClear( );
             
-            i2cRole = I2C_ROLE_GCA;
-            i2cState |= I2C_STATE_RUN;
-            i2cAck( );
+                i2cRole = I2C_ROLE_GCA;
+                i2cState |=( I2C_STATE )( I2C_STATE_RUN | I2C_STATE_LOCK );
+                i2cAck( );
+            }
         }
         break;
         
@@ -1322,20 +1447,35 @@ static void i2cisr_idle( unsigned char const sr )
                The I2C then transmits an acknowledge bit (if the AAK bit is set
                to 1) and sets the IFLG bit in the I2C_CTL register and the 
                I2C_SR register contains the status code A8h. */
-#           if defined( _DEBUG )
+#           if defined( configTRACE )
                 _putchf( '6' );
 #           endif
 
-            i2cRole = I2C_ROLE_STX;
-            i2cState |= I2C_STATE_RUN;
-            startSlaveTransmit( );
-            i2cAck( );
+            if( I2C_STATE_LOCK & i2cState )
+            {
+#               if defined( configTRACE )
+                    _putchf( '-' );
+#               endif
+
+                i2cNack( );
+            }
+            else
+            {
+#               if defined( configTRACE )
+                    _putchf( '+' );
+#               endif
+
+                i2cRole = I2C_ROLE_STX;
+                i2cState |=( I2C_STATE )( I2C_STATE_RUN | I2C_STATE_LOCK );
+                startSlaveTransmit( );
+                i2cAck( );
+            }
         }
         break;
 
         case I2C_STATUS_CODE_NULL: // 0xF8
         {
-#           if defined( _DEBUG )
+#           if defined( configTRACE )
                 _putchf( '7' );
 #           endif
         }
@@ -1343,17 +1483,15 @@ static void i2cisr_idle( unsigned char const sr )
 
         default :
         {
-#           if defined( _DEBUG )
+#           if defined( configTRACE )
                 _putchf( '8' );
+                _putchfc( sr );
 #           endif
 
-#           if defined( _DEBUG )
-            {
-                ( void )printf( "Role %d : received unexpected status code: 0x%x\r\n",
-                                i2cRole, sr );
-                for( ;; ) ;
-            }
-#           endif
+            i2cInit( );
+
+            i2cEvent |=( 1 << I2C_EVENT_SYS_ERROR );
+            resetState( );
         }
         break;
     }
@@ -1362,11 +1500,11 @@ static void i2cisr_idle( unsigned char const sr )
 
 /* i2cisr_slave_transmit
    Interrupt Handler - Slave Transmit role
-   Refer to Zilog PS015317 Operatin Modes, Slave Transmit
+   Refer to Zilog PS015317 Operating Modes, Slave Transmit
 */
 static void i2cisr_slave_transmit( unsigned char const sr )
 {
-#   if defined( _DEBUG )
+#   if defined( configTRACE )
         _putchf( 'S' );
 #   endif
 
@@ -1382,22 +1520,15 @@ static void i2cisr_slave_transmit( unsigned char const sr )
                A bus error signifies, in a Slave transaction, then DEV I2C may 
                have signalled incorrectly, or a remote Master got something 
                wrong. */
-#           if defined( _DEBUG )
+#           if defined( configTRACE )
                 _putchf( '1' );
 #           endif
 
-            //i2cStop( );
-            i2cReset( );  // MOS does a software reset??
+            i2cInit( );
 
             i2cEvent |=( 1 << I2C_EVENT_TX_STRANS_INTRPT );
+            i2cEvent |=( 1 << I2C_EVENT_SYS_ERROR );
             resetState( );
-
-#           if defined( _DEBUG )
-            {
-                ( void )printf( "Role %d : I2C_STATUS_CODE_BUS_ERROR\r\n",
-                                i2cRole );
-            }
-#           endif
         }
         break;
 
@@ -1405,14 +1536,60 @@ static void i2cisr_slave_transmit( unsigned char const sr )
         {
             /* When bus arbitration is lost, the IFLG bit is 1 and the status 
                code in the I2C_SR register is 38h. This will happen when another
-               master addresses another slave. */
-            /* Clear the IFLG bit to halt the transfer. */
-#           if defined( _DEBUG )
-                _putchf( '2' );
+               master gains arbitration over our in-progress transaction. */
+#           if defined( configTRACE )
+                _putchf( '3' );
 #           endif
 
             i2cEvent |=( 1 << I2C_EVENT_TX_STRANS_INTRPT );
             resetState( );
+        }
+        break;
+
+        case I2C_STATUS_CODE_SLAVE_STOP : // 0xA0
+        {
+            /* Refer to Zilog PS0153 Operating Modes, Slave Transmit:
+               If a STOP condition or a repeated START condition is detected 
+               after the acknowledge bit, the IFLG bit is set and the I2C_SR 
+               register contains status code A0h. */
+#           if defined( configTRACE )
+                _putchf( '4' );
+#           endif
+
+            if( NULL == i2cTransact->buf )
+            {
+#               if defined( configTRACE )
+                    _putchf( '-' );
+#               endif
+                /* On entering I2C_ROLE_STX, we would have created a 
+                   transaction; if none exists then the Master has dropped 
+                   our selection, so fall back to Idle */
+                resetState( );
+            }
+            else
+            if( 0 == i2cTransact->lenTRx )//&&( NULL != i2cTransaction->buf ))
+            {
+#               if defined( configTRACE )
+                    _putchf( '+' );
+#               endif
+               /* A STOP will be received after the master has addressed the 
+                  slave, then executes a Repeated Start in order to read the 
+                  data from it. The Slave must remember it has been addressed:
+                  On entering I2C_ROLE_STX, we would have created a non-zero
+                  length transaction, but nothing would yet have be sent. */
+                asm( "\tnop    ; nothing to do" );
+            }
+            else
+            //if( 0 < i2cTransact->lenTRx )//&&( NULL != i2cTransaction->buf ))
+            {
+#               if defined( configTRACE )
+                    _putchf( '/' );
+#               endif
+                /* The Master has received enough, or lost arbitration; so we
+                   abort the transaction */
+                i2cEvent |=( 1 << I2C_EVENT_TX_STRANS_INTRPT );
+                resetState( );
+            }
         }
         break;
 
@@ -1423,25 +1600,15 @@ static void i2cisr_slave_transmit( unsigned char const sr )
             and the IFLG bit cleared. After the I2C transmits the byte and 
             receives an acknowledge, the IFLG bit is set and the I2C_SR 
             register contains B8h.  */
-#           if defined( _DEBUG )
-                _putchf( '3' );
+#           if defined( configTRACE )
+                _putchf( '6' );
 #           endif
 
-            if( I2C_ROLE_STX == i2cRole )
-            {
-                /* When the final byte to be transmitted is loaded into the 
-                   I2C_DR register, the AAK bit is cleared when the IFLG is 
-                   cleared. After the final byte is transmitted, IFLG is set 
-                   and I2C_SR contains I2C_STATUS_CODE_SLAVE_LAST_DATA_WRITE_ACK */
-                slaveTransmitNextByte( );
-            }
-            else
-            {
-                i2cStop( );
-
-                i2cEvent |=( 1 << I2C_EVENT_TX_STRANS_INTRPT );
-                resetState( );
-            }
+            /* When the final byte to be transmitted is loaded into the 
+               I2C_DR register, the AAK bit is cleared when the IFLG is 
+               cleared. After the final byte is transmitted, IFLG is set 
+               and I2C_SR contains I2C_STATUS_CODE_SLAVE_LAST_DATA_WRITE_ACK */
+            slaveTransmitNextByte( );
         }
         break;
 
@@ -1451,8 +1618,8 @@ static void i2cisr_slave_transmit( unsigned char const sr )
             If no acknowledge is received after transmitting a byte, the IFLG 
             is set and the I2C_SR register contains C0h. The I2C then returns 
             to the idle state. */
-#           if defined( _DEBUG )
-                _putchf( '4' );
+#           if defined( configTRACE )
+                _putchf( '7' );
 #           endif
 
             i2cEvent |=( 1 << I2C_EVENT_TX_STRANS_INTRPT );
@@ -1465,8 +1632,8 @@ static void i2cisr_slave_transmit( unsigned char const sr )
             /* Refer to Zilog PS0153 Operating Modes, Slave Transmit:
             After the final byte is transmitted, the IFLG is set and the I2C_SR 
             register contains C8h and the I2C returns to the idle state. */
-#           if defined( _DEBUG )
-                _putchf( '5' );
+#           if defined( configTRACE )
+                _putchf( '8' );
 #           endif
 
             i2cEvent |=( 1 << I2C_EVENT_TX_STRANS_DONE );
@@ -1476,23 +1643,23 @@ static void i2cisr_slave_transmit( unsigned char const sr )
         
         case I2C_STATUS_CODE_NULL: // 0xF8
         {
-#           if defined( _DEBUG )
-                _putchf( '6' );
+#           if defined( configTRACE )
+                _putchf( '9' );
 #           endif
         }
         break;
 
         default :
         {
-#           if defined( _DEBUG )
-                _putchf( '7' );
+#           if defined( configTRACE )
+                _putchf( 'A' );
+                _putchfc( sr )
 #           endif
 
-            ( void )printf( "Role %d : received unexpected status code: 0x%x\r\n",
-                            i2cRole, sr );
-            i2cStop( );
+            i2cInit( );
 
             i2cEvent |=( 1 << I2C_EVENT_TX_STRANS_INTRPT );
+            i2cEvent |=( 1 << I2C_EVENT_SYS_ERROR );
             resetState( );
         }
         break;
@@ -1511,7 +1678,7 @@ static void i2cisr_slave_receive( unsigned char const sr )
 {
     int i;
     
-#   if defined( _DEBUG )
+#   if defined( configTRACE )
         _putchf( 'R' );
 #   endif
 
@@ -1527,23 +1694,17 @@ static void i2cisr_slave_receive( unsigned char const sr )
                A bus error signifies, in a Slave transaction, then DEV I2C may 
                have signalled incorrectly, or a remote Master got something 
                wrong. */
-#           if defined( _DEBUG )
+#           if defined( configTRACE )
                 _putchf( '1' );
 #           endif
 
-            //i2cStop( );
-            i2cReset( );  // MOS does a software reset??
+            i2cInit( );
 
             slaveReceiveClear( );
 
+            i2cEvent |=( 1 << I2C_EVENT_TX_STRANS_INTRPT );
+            i2cEvent |=( 1 << I2C_EVENT_SYS_ERROR );
             resetState( );
-            
-#           if defined( _DEBUG )
-            {
-                ( void )printf( "Role %d : I2C_STATUS_CODE_BUS_ERROR\r\n",
-                                i2cRole );
-            }
-#           endif
         }
         break;
 
@@ -1551,8 +1712,8 @@ static void i2cisr_slave_receive( unsigned char const sr )
         {
             /* When bus arbitration is lost, the IFLG bit is 1 and the status 
                code in the I2C_SR register is 38h. This will happen when another
-               master addresses another slave. */
-#           if defined( _DEBUG )
+               master gains arbitration over our in-progress transaction. */
+#           if defined( configTRACE )
                 _putchf( '2' );
 #           endif
 
@@ -1569,7 +1730,7 @@ static void i2cisr_slave_receive( unsigned char const sr )
                bit in the I2C_CTL register is set to 1 then an acknowledge bit 
                is transmitted and the IFLG bit is set after each byte is 
                received. The I2C_SR register contains the status code 80h. */
-#           if defined( _DEBUG )
+#           if defined( configTRACE )
                 _putchf( '3' );
 #           endif
 
@@ -1594,7 +1755,7 @@ static void i2cisr_slave_receive( unsigned char const sr )
                the IFLG bit. The I2C_SR register contains the status code 88h.
                The I2C returns to the idle state when the IFLG bit is cleared 
                to 0. */
-#           if defined( _DEBUG )
+#           if defined( configTRACE )
                 _putchf( '4' );
 #           endif
 
@@ -1621,7 +1782,7 @@ static void i2cisr_slave_receive( unsigned char const sr )
                is transmitted and the IFLG bit is set after each byte is 
                received. The I2C_SR register contains the status code 90h if 
                SLAVE RECEIVE mode is entered with the general call address. */
-#           if defined( _DEBUG )
+#           if defined( configTRACE )
                 _putchf( '5' );
 #           endif
 
@@ -1647,7 +1808,7 @@ static void i2cisr_slave_receive( unsigned char const sr )
                if SLAVE RECEIVE mode is entered with the general call address. 
                The I2C returns to the idle state when the IFLG bit is cleared 
                to 0. */
-#           if defined( _DEBUG )
+#           if defined( configTRACE )
                 _putchf( '6' );
 #           endif
 
@@ -1672,7 +1833,7 @@ static void i2cisr_slave_receive( unsigned char const sr )
                If a STOP condition or a repeated START condition is detected 
                after the acknowledge bit, the IFLG bit is set and the I2C_SR 
                register contains status code A0h. */
-#           if defined( _DEBUG )
+#           if defined( configTRACE )
                 _putchf( '7' );
 #           endif
 
@@ -1687,7 +1848,7 @@ static void i2cisr_slave_receive( unsigned char const sr )
 
         case I2C_STATUS_CODE_NULL: // 0xF8
         {
-#           if defined( _DEBUG )
+#           if defined( configTRACE )
                 _putchf( '8' );
 #           endif
         }
@@ -1695,20 +1856,16 @@ static void i2cisr_slave_receive( unsigned char const sr )
 
         default :
         {
-#           if defined( _DEBUG )
+#           if defined( configTRACE )
                 _putchf( '9' );
+                _putchfc( sr );
 #           endif
 
-            i2cStop( );
+            i2cInit( );
 
+            i2cEvent |=( 1 << I2C_EVENT_TX_STRANS_INTRPT );
+            i2cEvent |=( 1 << I2C_EVENT_SYS_ERROR );
             resetState( );
-
-#           if defined( _DEBUG )
-            {
-                ( void )printf( "Role %d : received unexpected status code: 0x%x\r\n",
-                                i2cRole, sr );
-            }
-#           endif
         }
         break;
     }
@@ -1737,7 +1894,7 @@ static void i2cisr_slave_receive( unsigned char const sr )
 */
 static void i2cisr_master_transceive( unsigned char const sr )
 {
-#   if defined( _DEBUG )
+#   if defined( configTRACE )
         _putchf( 'T' );
 #   endif
 
@@ -1753,29 +1910,23 @@ static void i2cisr_master_transceive( unsigned char const sr )
                A bus error signifies, during a Master transaction, that DEV I2C 
                signalled or sequenced incorrectly; or a remote Slave got some
                thing wrong.  */
-#           if defined( _DEBUG )
+#           if defined( configTRACE )
                 _putchf( '1' );
 #           endif
 
-            //i2cStop( );
-            i2cReset( );  // MOS does a software reset??
+            i2cInit( );
 
-            i2cEvent |=( 1 << I2C_EVENT_TX_ERROR );
+            i2cEvent |=( 1 << I2C_EVENT_TX_STRANS_INTRPT );
+            i2cEvent |=( 1 << I2C_EVENT_SYS_ERROR );
             resetState( );
-
-#           if defined( _DEBUG )
-            {
-                ( void )printf( "Role %d : I2C_STATUS_CODE_BUS_ERROR\r\n",
-                                i2cRole );
-            }
-#           endif
         }
         break;
 
         case I2C_STATUS_CODE_REPEATED_START :    //0x10
-#           if defined( _DEBUG )
+#           if defined( configTRACE )
                 _putchf( '>' );
 #           endif
+            /* deliberate fall through */
         case I2C_STATUS_CODE_START_TRANSMITTED : // 0x08
         {
             /* After a START condition is transmitted, the I2C hardware sets 
@@ -1791,39 +1942,39 @@ static void i2cisr_master_transceive( unsigned char const sr )
                   TRANSMIT. */
             _Bool const is10bit =
                 ( I2C_10BIT_ADDR_MASK ==
-                    ( i2cTransact->slaveAddr->byte[ 0 ]& I2C_10BIT_ADDR_MASK ))
+                    ( i2cTransact->targetAddr->byte[ 0 ]& I2C_10BIT_ADDR_MASK ))
                         ? true
                         : false;
 
-#           if defined( _DEBUG )
+#           if defined( configTRACE )
                 _putchf( '2' );
 #           endif
 
             if(( I2C_ROLE_MTX == i2cRole )||
                (( I2C_ROLE_MRX == i2cRole )&&( true == is10bit )))
             {
-#               if defined( _DEBUG )
+#               if defined( configTRACE )
                     _putchf( '-' );
 #               endif
 
                 masterTransitionState = I2C_MTRANS_STATE_ADDR_1;
-                writeTargetSlaveAddress( I2C_BUS_DATA_DIRECTION_TRANSMIT );  // I2C_MTRANS_STATE_ADDR_1 = 1st byte
+                writeTargetAddress( I2C_BUS_DATA_DIRECTION_TRANSMIT );  // I2C_MTRANS_STATE_ADDR_1 = 1st byte
                 // we next expect SR = I2C_STATUS_CODE_ADDR_WRITE_ACK
             }
             else
             if(( I2C_ROLE_MRX == i2cRole )&&( false == is10bit )) // 7-bit address 
             {
-#               if defined( _DEBUG )
+#               if defined( configTRACE )
                     _putchf( '+' );
 #               endif
 
                 masterTransitionState = I2C_MTRANS_STATE_ADDR_1;
-                writeTargetSlaveAddress( I2C_BUS_DATA_DIRECTION_RECEIVE );  // I2C_MTRANS_STATE_ADDR_1 = 1st byte
+                writeTargetAddress( I2C_BUS_DATA_DIRECTION_RECEIVE );  // I2C_MTRANS_STATE_ADDR_1 = 1st byte
                 // we next expect SR = I2C_STATUS_CODE_ADDR_READ_ACK
             }
             else
             {
-#           if defined( _DEBUG )
+#           if defined( configTRACE )
                 _putchf( '*' );
 #           endif
                 i2cStop( );
@@ -1852,36 +2003,36 @@ static void i2cisr_master_transceive( unsigned char const sr )
             now be cleared to 0 to prompt the transfer to continue.*/
             _Bool const is10bit =
                 ( I2C_10BIT_ADDR_MASK ==
-                ( i2cTransact->slaveAddr->byte[ 0 ]& I2C_10BIT_ADDR_MASK ))
+                ( i2cTransact->targetAddr->byte[ 0 ]& I2C_10BIT_ADDR_MASK ))
                     ? true
                     : false;
 
-#           if defined( _DEBUG )
+#           if defined( configTRACE )
                 _putchf( '3' );
 #           endif
 
             if( I2C_MTRANS_STATE_ADDR_1 == masterTransitionState )
             {
-#               if defined( _DEBUG )
+#               if defined( configTRACE )
                     _putchf( '-' );
 #               endif
 
                 if((( I2C_ROLE_MTX == i2cRole )&&( true == is10bit ))||
                    (( I2C_ROLE_MRX == i2cRole )&&( true == is10bit )))
                 {
-#                   if defined( _DEBUG )
+#                   if defined( configTRACE )
                         _putchf( 'a' );
 #                   endif
 
                     // 10-bit address
                     masterTransitionState = I2C_MTRANS_STATE_ADDR_2;
-                    writeTargetSlaveAddress( I2C_BUS_DATA_DIRECTION_TRANSMIT );  // I2C_MTRANS_STATE_ADDR_2 = 2nd byte
+                    writeTargetAddress( I2C_BUS_DATA_DIRECTION_TRANSMIT );  // I2C_MTRANS_STATE_ADDR_2 = 2nd byte
                     // we expect I2C_STATUS_CODE_SECOND_ADDR_WRITE_ACK next
                 }
                 else
                 if( I2C_ROLE_MTX == i2cRole )
                 {
-#                   if defined( _DEBUG )
+#                   if defined( configTRACE )
                         _putchf( 'b' );
 #                   endif
 
@@ -1890,10 +2041,17 @@ static void i2cisr_master_transceive( unsigned char const sr )
                     masterTransmitNextByte( );
                     // we expect I2C_STATUS_CODE_MASTER_DATA_WRITE_ACK next
                 }
+                else
+                if( I2C_ROLE_MRX == i2cRole )
+                {
+#                   if defined( configTRACE )
+                        _putchf( 'c' );
+#                   endif
+                }
             }
             else
             {
-#               if defined( _DEBUG )
+#               if defined( configTRACE )
                     _putchf( '+' );
 #               endif
 
@@ -1918,7 +2076,7 @@ static void i2cisr_master_transceive( unsigned char const sr )
             /* When the 7-bit slave address or the first part of a 10-bit 
                address is not acknowledged, the IFLG bit is 1 and the status code 
                in the I2C_SR register is 20h. */
-#           if defined( _DEBUG )
+#           if defined( configTRACE )
                 _putchf( '4' );
 #           endif
 
@@ -1944,7 +2102,7 @@ static void i2cisr_master_transceive( unsigned char const sr )
                must be loaded with the next data byte, with the lsb cleared to 
                0 to specify TRANSMIT mode. The IFLG bit should now be cleared 
                to 0 to prompt the transfer to continue.*/
-#           if defined( _DEBUG )
+#           if defined( configTRACE )
                 _putchf( '5' );
 #           endif
 
@@ -1967,7 +2125,7 @@ static void i2cisr_master_transceive( unsigned char const sr )
         {
             /* When the data byte is not acknowledged, the IFLG bit is 1 and 
                the status code in the I2C_SR register is 30h. */
-#           if defined( _DEBUG )
+#           if defined( configTRACE )
                 _putchf( '6' );
 #           endif
 
@@ -1982,8 +2140,8 @@ static void i2cisr_master_transceive( unsigned char const sr )
         {
             /* When bus arbitration is lost, the IFLG bit is 1 and the status 
                code in the I2C_SR register is 38h. This will happen when another
-               master addresses another slave. */
-#           if defined( _DEBUG )
+               master gains arbitration over our in-progress transaction. */
+#           if defined( configTRACE )
                 _putchf( '7' );
 #           endif
 
@@ -2017,7 +2175,7 @@ static void i2cisr_master_transceive( unsigned char const sr )
                is acknowledged, the IFLG bit is 1 and the status code in the 
                I2C_SR register is 40h. The IFLG bit should now be cleared to 0 
                to prompt the data transfer to continue. */
-#           if defined( _DEBUG )
+#           if defined( configTRACE )
                 _putchf( '8' );
 #           endif
 
@@ -2025,23 +2183,23 @@ static void i2cisr_master_transceive( unsigned char const sr )
                (( I2C_MTRANS_STATE_ADDR_1 == masterTransitionState )||  // 7-bit address
                 ( I2C_MTRANS_STATE_ADDR_3 == masterTransitionState )))   // 10-bit address 
             {
-#               if defined( _DEBUG )
+#               if defined( configTRACE )
                     _putchf( '+' );
 #               endif
 
                 // Either 7-bit or 10-bit address done, start receiving data
                 masterTransitionState = I2C_MTRANS_STATE_DATA;
                 
-                if( i2cTransact->len <= 1 )
+                if( 1 >= i2cTransact->len )
                 {
-#                   if defined( _DEBUG )
+#                   if defined( configTRACE )
                         _putchf( '-' );
 #                   endif
                     i2cNack( );
                 }
                 else
                 {
-#                   if defined( _DEBUG )
+#                   if defined( configTRACE )
                         _putchf( '+' );
 #                   endif
                     i2cAck( );
@@ -2049,7 +2207,7 @@ static void i2cisr_master_transceive( unsigned char const sr )
             }
             else
             {
-#               if defined( _DEBUG )
+#               if defined( configTRACE )
                     _putchf( '-' );
 #               endif
 
@@ -2066,7 +2224,7 @@ static void i2cisr_master_transceive( unsigned char const sr )
             /* When the 7-bit slave address or the first part of a 10-bit 
                address is not acknowledged, the IFLG bit is 1 and the status code 
                in the I2C_SR register is 48h. */
-#           if defined( _DEBUG )
+#           if defined( configTRACE )
                 _putchf( '9' );
 #           endif
 
@@ -2078,7 +2236,7 @@ static void i2cisr_master_transceive( unsigned char const sr )
                 /* Re-try the address. Set both I2C_CTL STA and STP bit then 
                    clear IFLG to re-start the i2c bus transaction.*/
                 masterTransitionState = I2C_MTRANS_STATE_ADDR_1;
-                writeTargetSlaveAddress( I2C_BUS_DATA_DIRECTION_TRANSMIT );
+                writeTargetAddress( I2C_BUS_DATA_DIRECTION_TRANSMIT );
                 i2cStop( );
                 i2cStart( );
             }
@@ -2101,14 +2259,14 @@ static void i2cisr_master_transceive( unsigned char const sr )
                be received or AAK cleared to 0 to indicate another byte cannot
                be received. The IFLG bit should now be cleared to 0 to prompt 
                the transfer to continue.*/
-#           if defined( _DEBUG )
+#           if defined( configTRACE )
                 _putchf( 'a' );
 #           endif
 
             if(( I2C_ROLE_MRX == i2cRole )&&
                ( I2C_MTRANS_STATE_DATA == masterTransitionState ))
             {
-#               if defined( _DEBUG )
+#               if defined( configTRACE )
                     _putchf( '-' );
 #               endif
 
@@ -2117,7 +2275,7 @@ static void i2cisr_master_transceive( unsigned char const sr )
                 if(( i2cTransact->len - i2cTransact->lenTRx )== 1 )
                 {
                     /* Nack the last byte to be received */
-#                   if defined( _DEBUG )
+#                   if defined( configTRACE )
                         _putchf( '*' );
 #                   endif
                     i2cNack( );
@@ -2128,7 +2286,7 @@ static void i2cisr_master_transceive( unsigned char const sr )
                     /* Halt after the last byte is received 
                        We shouldn't get here; actually be in 
                        I2C_STATUS_CODE_DATA_READ_NACK */
-#                   if defined( _DEBUG )
+#                   if defined( configTRACE )
                         _putchf( '/' );
 #                   endif
 
@@ -2136,14 +2294,14 @@ static void i2cisr_master_transceive( unsigned char const sr )
                     i2cEvent |=( 1 << I2C_EVENT_RX_READY );
                     resetState( );
                 }
-                else /* ACK if more bytes to follow */
+                 else /* ACK if more bytes to follow */
                 {
                     i2cAck( );
                 }
             }
             else
             {
-#               if defined( _DEBUG )
+#               if defined( configTRACE )
                     _putchf( '+' );
 #               endif
 
@@ -2160,14 +2318,14 @@ static void i2cisr_master_transceive( unsigned char const sr )
             /* After the next data byte is NAKed, the IFLG bit is 1 and the 
                 status code in the I2C_SR register is 58h. This ends the
                 master receive bus transaction. */
-#           if defined( _DEBUG )
+#           if defined( configTRACE )
                 _putchf( 'b' );
 #           endif
 
             if(( I2C_ROLE_MRX == i2cRole )&&
                ( I2C_MTRANS_STATE_DATA == masterTransitionState ))
             {
-#               if defined( _DEBUG )
+#               if defined( configTRACE )
                     _putchf( '1' );
 #               endif
 
@@ -2178,7 +2336,7 @@ static void i2cisr_master_transceive( unsigned char const sr )
             }
             else
             {
-#               if defined( _DEBUG )
+#               if defined( configTRACE )
                     _putchf( '2' );
 #               endif
 
@@ -2197,10 +2355,9 @@ static void i2cisr_master_transceive( unsigned char const sr )
                in the I2C_SR register is 68h. We can chose either to enter Slave 
                Receive role with an ACK, or to reject the role with a NACK. 
                Either way, we abandon the Master Transmit. */
-#           if defined( _DEBUG )
+#           if defined( configTRACE )
                 _putchf( 'c' );
 #           endif
-            i2cAck( );
 
             if( I2C_ROLE_MTX == i2cRole )
             {
@@ -2214,7 +2371,8 @@ static void i2cisr_master_transceive( unsigned char const sr )
             resetState( );
 
             i2cRole = I2C_ROLE_SRX;
-            i2cState |= I2C_STATE_RUN;
+            i2cState |=( I2C_STATE )( I2C_STATE_RUN | I2C_STATE_LOCK );
+            i2cAck( );
         }
         break;
 
@@ -2225,7 +2383,7 @@ static void i2cisr_master_transceive( unsigned char const sr )
                in the I2C_SR register is 78h. We can chose either to enter 
                Slave Receive role with an ACK, or to reject the role with a 
                NACK. Either way, we abandon the Master Transmit. */
-#           if defined( _DEBUG )
+#           if defined( configTRACE )
                 _putchf( 'd' );
 #           endif
             i2cAck( );
@@ -2253,10 +2411,9 @@ static void i2cisr_master_transceive( unsigned char const sr )
                is lost during the transmission of an address, and the slave 
                address and Read bit are received. This action is represented by 
                the status code B0h in the I2C_SR register. */
-#           if defined( _DEBUG )
+#           if defined( configTRACE )
                 _putchf( 'e' );
 #           endif
-            i2cAck( );  // set ACK if more than one byte to tranmsit
 
             if( I2C_ROLE_MTX == i2cRole )
             {
@@ -2270,9 +2427,9 @@ static void i2cisr_master_transceive( unsigned char const sr )
             resetState( );
 
             i2cRole = I2C_ROLE_STX;
-            i2cState |= I2C_STATE_RUN;
-
+            i2cState |=( I2C_STATE )( I2C_STATE_RUN | I2C_STATE_LOCK );
             startSlaveTransmit( );
+            i2cAck( );  // set ACK if more than one byte to tranmsit
         }
         break;
 
@@ -2288,7 +2445,7 @@ static void i2cisr_master_transceive( unsigned char const sr )
                by the first part of the 10-bit address again, but with the Read 
                bit set. [Refer to NXP UM10204 Figure 15]. The next expected 
                status code will be either 40h or 48h. */
-#           if defined( _DEBUG )
+#           if defined( configTRACE )
                 _putchf( 'f' );
 #           endif
 
@@ -2304,7 +2461,7 @@ static void i2cisr_master_transceive( unsigned char const sr )
                 if( I2C_ROLE_MRX == i2cRole )
                 {
                     masterTransitionState = I2C_MTRANS_STATE_ADDR_3;
-                    writeTargetSlaveAddress( I2C_BUS_DATA_DIRECTION_RECEIVE );  // I2C_MTRANS_STATE_ADDR_3 = 1st byte
+                    writeTargetAddress( I2C_BUS_DATA_DIRECTION_RECEIVE );  // I2C_MTRANS_STATE_ADDR_3 = 1st byte
                     i2cStop( );
                     i2cStart( );
                     // we expect I2C_STATUS_CODE_ADDR_READ_ACK to follow
@@ -2333,7 +2490,7 @@ static void i2cisr_master_transceive( unsigned char const sr )
             /* When the second part of a 10-bit address is not acknowledged, 
                the IFLG bit is 1 and the status code in the I2C_SR register is 
                D8h. */
-#           if defined( _DEBUG )
+#           if defined( configTRACE )
                 _putchf( 'g' );
 #           endif
 
@@ -2344,7 +2501,7 @@ static void i2cisr_master_transceive( unsigned char const sr )
                    clear IFLG to re-start the i2c bus transaction.
                    We must re-start the address anew after a STOP/START. */
                 masterTransitionState = I2C_MTRANS_STATE_ADDR_1;
-                writeTargetSlaveAddress( I2C_BUS_DATA_DIRECTION_TRANSMIT );  // I2C_MTRANS_STATE_ADDR_1 = 1st byte
+                writeTargetAddress( I2C_BUS_DATA_DIRECTION_TRANSMIT );  // I2C_MTRANS_STATE_ADDR_1 = 1st byte
                 i2cStop( );
                 i2cStart( );
                 // we next expect I2C_STATUS_CODE_ADDR_WRITE_ACK
@@ -2369,7 +2526,7 @@ static void i2cisr_master_transceive( unsigned char const sr )
 
         case I2C_STATUS_CODE_NULL: // 0xF8
         {
-#           if defined( _DEBUG )
+#           if defined( configTRACE )
                 _putchf( 'h' );
 #           endif
         }
@@ -2377,11 +2534,12 @@ static void i2cisr_master_transceive( unsigned char const sr )
 
         default :
         {
-#           if defined( _DEBUG )
+#           if defined( configTRACE )
                 _putchf( 'i' );
+                _putchfc( sr );
 #           endif
 
-            i2cStop( );
+            i2cInit( );
             
             if( I2C_ROLE_MTX == i2cRole )
             {
@@ -2392,14 +2550,9 @@ static void i2cisr_master_transceive( unsigned char const sr )
             {
                 i2cEvent |=( 1 << I2C_EVENT_RX_ERROR );
             }
+            i2cEvent |=( 1 << I2C_EVENT_TX_STRANS_INTRPT );
+            i2cEvent |=( 1 << I2C_EVENT_SYS_ERROR );
             resetState( );
-
-#           if defined( _DEBUG )
-            {
-                ( void )printf( "Role %d : received unexpected status code: 0x%x\r\n",
-                                i2cRole, sr );
-            }
-#           endif
         }
         break;
     }
@@ -2415,21 +2568,21 @@ static void i2cisr_1( void )
 {
     unsigned char sr = I2C_SR;  // I2C_SR is reset (to I2C_STATUS_CODE_NULL) when CTL_IFLAG is cleared
 
-#   if defined( _DEBUG )
+#   if defined( configTRACE )
         _putchf( 'W' );
 #   endif
     if( i2cIflagTest( ))
     {
-        // handle status register condition depending on role
         configASSERT(( I2C_ROLE_IDLE <= i2cRole )&&( I2C_ROLE_GCA >= i2cRole ));
-#   if defined( _DEBUG )
-        _putchf( '1' );
-#   endif
+#       if defined( configTRACE )
+            _putchf( '1' );
+#       endif
+        // handle status register condition depending on role
         i2cisr[ i2cRole ]( sr );            
     }
 
     // by clearing CTL IFLAG bit, with ENAB set, STA/STP/ACK will be executed
-///    i2cIflagClr( );  // the next i2c device transition will follow clearing iFlag
+    ///    i2cIflagClr( );  // the next i2c device transition will follow clearing iFlag
     I2C_CTL = ctl;
     while( i2cStopTest( ));  // wait for STP (if set) to complete
 
@@ -2457,7 +2610,7 @@ static void I2CIsrHandlerTask( void * params )
     for( ;; )
     {
         notification = ulTaskNotifyTake( pdTRUE, portMAX_DELAY );
-#   if defined( _DEBUG )
+#   if defined( configTRACE )
         _putchf( 'V' );
 #   endif
         if( notification )
@@ -2479,7 +2632,7 @@ static void i2cisr_0( void )
     /* The current task context SHALL be saved first on entry to an ISR */
     portSAVE_CONTEXT( );
 
-#   if defined( _DEBUG )
+#   if defined( configTRACE )
         _putchf( 'U' );
 #   endif
 
@@ -2494,7 +2647,7 @@ static void i2cisr_0( void )
        interrupt returns directly to the highest priority task */
     if( pdTRUE == __higherPriorityTaskWokenI2C )
     {
-#       if defined( _DEBUG )
+#       if defined( configTRACE )
             _putchf( '#' );
 #       endif
 
@@ -2503,7 +2656,7 @@ static void i2cisr_0( void )
     }
     else
     {
-#       if defined( _DEBUG )
+#       if defined( configTRACE )
             _putchf( '$' );
 #       endif
 
@@ -2541,7 +2694,7 @@ POSIX_ERRNO i2c_dev_open(
     va_list args;
     int i;
 
-#   if defined( _DEBUG )
+#   if defined( configTRACE )
         _putchf( 'O' );
 #   endif
 
@@ -2551,7 +2704,7 @@ POSIX_ERRNO i2c_dev_open(
         goto i2c_dev_open_end;
     }
 
-#   if defined( _DEBUG )
+#   if defined( configTRACE )
         _putchf( '1' );
 #   endif
     /* 1. Reset the I2C semaphore on each uart_dev_open() */
@@ -2560,7 +2713,7 @@ POSIX_ERRNO i2c_dev_open(
     {
         goto i2c_dev_open_end;
     }
-#   if defined( _DEBUG )
+#   if defined( configTRACE )
         _putchf( '2' );
 #   endif
 
@@ -2596,13 +2749,21 @@ POSIX_ERRNO i2c_dev_open(
         
         case DEV_MODE_I2C_MULTI_MASTER :
         {
+            I2C_ADDR *addr;
+
             va_start( args, mode );
+            addr = va_arg( args, void* );
+            if( addr )
+            {
+                storeSlaveAddress( addr );
+            }
             i2cHandler = va_arg( args, void* );
             va_end( args );
-
 #           if defined( _DEBUG )&& 0
             {
-                ( void )printf( "%s : %d : Slave Receive callback = %p\r\n", 
+                ( void )printf( "%s : %d : I2C_SAR = 0x%x : I2C_XSAR = 0x%x\r\n", 
+                                "devi2c.c", __LINE__, I2C_SAR, I2C_XSAR );
+                ( void )printf( "%s : %d : callback = %p\r\n", 
                                 "devi2c.c", __LINE__, i2cHandler );
             }
 #           endif
@@ -2621,26 +2782,29 @@ POSIX_ERRNO i2c_dev_open(
         break;
     }
 
-#   if defined( _DEBUG )
+#   if defined( configTRACE )
         _putchf( '4' );
 #   endif
+
     /* 7.1 Attach the ISR (disable MOS I2C routines) */
     prevI2cISR =  // remember old vector to restore on i2c_close
         mos_setintvector( I2C_IVECT, i2cisr_0 );
-///printf( "prevI2cISR = 0x%x,  i2cisr_0 = 0x%x\r\n", prevI2cISR, i2cisr_0 );
+#   if defined( _DEBUG )&& 0
+    {
+        ( void )printf( "%s : %d : prevI2cISR = 0x%x,  i2cisr_0 = 0x%x\r\n", 
+                        "devi2c.c", __LINE__, prevI2cISR, i2cisr_0 );
+    }
+#   endif
 
-    /* 7.2. Initialise the I2C controller */
+    /* 7.2. Initialise the I2C controller (including enable interrupts) */
     i2cInit( );
     
     // 7.3 set the CTL register ACK bit to 1, to enable Slave bus transaction ack
     //  refer to Zilog PS015317 I2C Operating Modes, Slave Transmit
     i2cAck( );
 
-    /* 7.4 Set Interrupt Enable Register */
-    i2cInterruptEnable( );
-
 i2c_dev_open_end:
-#   if defined( _DEBUG )
+#   if defined( configTRACE )
         _putchf( '5' );
 #   endif
     return( ret );
@@ -2657,7 +2821,6 @@ void i2c_dev_close(
 {
     /* Clear Interrupt Enable Register */
     i2cInterruptDisable( );
-
     portENTER_CRITICAL( );
     {
         // 1. Detach any interrupt handler
@@ -2674,13 +2837,13 @@ void i2c_dev_close(
     }
     portEXIT_CRITICAL( );
 
+    i2cDisable( );
+
     // Software reset of the I2C device (clr STA, STP, IFLG) and to Idle
     i2cReset( );
 
-    // power down I2C peripheral clock
+    // power down I2C peripheral clock?
 ///    CLK_PPD1 |= PERIPHERAL_CLK_REG_I2C_OFF; 
-    
-    i2cDisable( );
 }
 
 
@@ -2708,7 +2871,7 @@ POSIX_ERRNO i2c_dev_readm(
     POSIX_ERRNO ret = POSIX_ERRNO_ENONE;
     int i;
 
-#   if defined( _DEBUG )
+#   if defined( configTRACE )
         _putchf( 'M' );
 #   endif
 
@@ -2728,19 +2891,19 @@ POSIX_ERRNO i2c_dev_readm(
 
     if( POSIX_ERRNO_ENONE == ret )
     {
-#       if defined( _DEBUG )
+#       if defined( configTRACE )
             _putchf( '1' );
 #       endif
 
         if( 0 == message->registerAddr )
         {
-#           if defined( _DEBUG )
+#           if defined( configTRACE )
                 _putchf( '2' );
 #           endif
 
             // read from a monotonic device (without registers)
             CREATE_I2C_TRANSACTION( 
-                &( message->slaveAddr ), 
+                &( message->targetAddr ), 
                 message->buf, num_bytes_to_read, 
                 num_bytes_read, res );
 
@@ -2749,7 +2912,7 @@ POSIX_ERRNO i2c_dev_readm(
         }
         else
         {
-#           if defined( _DEBUG )
+#           if defined( configTRACE )
                 _putchf( '3' );
 #           endif
 
@@ -2757,19 +2920,19 @@ POSIX_ERRNO i2c_dev_readm(
                 1. write the 1-byte register address to the slave
                 2. read data from the slave */
             CREATE_I2C_TRANSACTION( 
-                &( message->slaveAddr ), 
+                &( message->targetAddr ), 
                 &( message->registerAddr ), sizeof( unsigned char ), 
                 num_bytes_read, res );   // results pointers in [0]
 
             i2cTransact = &transactBuf[ 1 ];
             CREATE_I2C_TRANSACTION( 
-                &( message->slaveAddr ), 
+                &( message->targetAddr ), 
                 message->buf, num_bytes_to_read, 
                 NULL, NULL );
 
             // kick off the master transmit transaction, to write register address
             i2cTransact = &transactBuf[ 0 ];
-            startMasterTransmit( );
+            startMasterTransmit( );      // results pointers in [0]
         }
 
         /* The calling task is suspended until the I2C master read completes or 
@@ -2779,7 +2942,7 @@ POSIX_ERRNO i2c_dev_readm(
                           i2cRunSemaphore, 
                           configDRV_I2C_MAX_DELAY ))
         {
-#           if defined( _DEBUG )
+#           if defined( configTRACE )
                 _putchf( '4' );
 #           endif
             
@@ -2788,7 +2951,7 @@ POSIX_ERRNO i2c_dev_readm(
         }
         else
         {
-#           if defined( _DEBUG )
+#           if defined( configTRACE )
                 _putchf( '5' );
 #           endif
 
@@ -2808,7 +2971,6 @@ POSIX_ERRNO i2c_dev_readm(
                 CLEAR_I2C_TRANSACTION( );
                 i2cTransact++;
             }
-
             i2cTransact = &transactBuf[ 0 ];
             
             /* i2cisr will clear I2C_STATE_RUN before giving the semaphore. 
@@ -2837,7 +2999,7 @@ POSIX_ERRNO i2c_dev_writem(
     POSIX_ERRNO ret = POSIX_ERRNO_ENONE;
     int i;
 
-#   if defined( _DEBUG )
+#   if defined( configTRACE )
         _putchf( 'N' );
 #   endif
 
@@ -2857,11 +3019,11 @@ POSIX_ERRNO i2c_dev_writem(
 
     if( POSIX_ERRNO_ENONE == ret )
     {
-#       if defined( _DEBUG )
+#       if defined( configTRACE )
             _putchf( '1' );
 #       endif
         CREATE_I2C_TRANSACTION( 
-            &( message->slaveAddr ), 
+            &( message->targetAddr ), 
             message->buf, num_bytes_to_write, 
             num_bytes_sent, res );
 #       if defined( _DEBUG )&& 0
@@ -2871,7 +3033,7 @@ POSIX_ERRNO i2c_dev_writem(
         // kick off the master transmit transaction
         startMasterTransmit( );
 
-#       if defined( _DEBUG )
+#       if defined( configTRACE )
             _putchf( '2' );
 #       endif
         /* The calling task is suspended until the I2C master read completes or 
@@ -2881,7 +3043,7 @@ POSIX_ERRNO i2c_dev_writem(
                           i2cRunSemaphore, 
                           configDRV_I2C_MAX_DELAY ))
         {
-#       if defined( _DEBUG )
+#       if defined( configTRACE )
             _putchf( '3' );
 #       endif
             // calling task should check callback result
@@ -2890,7 +3052,7 @@ POSIX_ERRNO i2c_dev_writem(
         else
         {
             // calling task should check callback result
-#       if defined( _DEBUG )
+#       if defined( configTRACE )
             _putchf( '4' );
 #       endif
             ret = POSIX_ERRNO_ETIMEDOUT;
@@ -2908,7 +3070,6 @@ POSIX_ERRNO i2c_dev_writem(
                 CLEAR_I2C_TRANSACTION( );
                 i2cTransact++;
             }
-
             i2cTransact = &transactBuf[ 0 ];
             
             /* i2cisr will clear I2C_STATE_RUN before giving the semaphore. 
@@ -3144,7 +3305,11 @@ POSIX_ERRNO i2c_dev_ioctl(
                 {
                     I2C_ADDR const * const addr =( I2C_ADDR* )param;
 
-                    storeSlaveAddress( addr );
+                    if( addr )
+                    {
+                        storeSlaveAddress( addr );
+                    }
+printf( "I2C_SAR = 0x%x : I2C_XSAR = 0x%x\r\n", I2C_SAR, I2C_XSAR );
                 }
                 break;
 

@@ -758,11 +758,17 @@ static void DTRready( void )
         ( UART_MCTL_LOOP | UART_MCTL_OUT1 | UART_MCTL_OUT2 );
     unsigned char v;
 
-//_putchf( 'h' );
+#   if defined( configTRACE )
+        _putchf( 'h' );
+#   endif
+
     if(( DEV_MODE_UART_FULL_MODEM & wiring )||  // FULL or FULL_NULL MODEM
        ( DEV_MODE_UART_LOOPBACK == wiring ))
     {
-//_putchf( '1' );
+#       if defined( configTRACE )
+            _putchf( '1' );
+#       endif
+
         v = UART1_MCTL &( mlo | UART_MCTL_RTS );   // leave /RTS intact
         UART1_MCTL =( v | UART_MCTL_DTR );         // set /DTR
         MODEM_DTR_ON( );
@@ -781,11 +787,17 @@ static void DTRnotReady( void )
         ( UART_MCTL_LOOP | UART_MCTL_OUT1 | UART_MCTL_OUT2 );
     unsigned char v;
 
-//_putchf( 'i' );
+#   if defined( configTRACE )
+        _putchf( 'i' );
+#   endif
+
     if(( DEV_MODE_UART_FULL_MODEM & wiring )||  // FULL or FULL_NULL MODEM
        ( DEV_MODE_UART_LOOPBACK == wiring ))
     {
-//_putchf( '1' );
+#       if defined( configTRACE )
+            _putchf( '1' );
+#       endif
+
         v = UART1_MCTL &( mlo | UART_MCTL_RTS );   // leave /RTS intact
         UART1_MCTL = v;                            // clear /DTR
         MODEM_DTR_OFF( );
@@ -807,12 +819,18 @@ static POSIX_ERRNO waitDSR( void )
     if(( DEV_MODE_UART_FULL_MODEM & wiring )||  // FULL or FULL_NULL MODEM
        ( DEV_MODE_UART_LOOPBACK == wiring ))
     {
-//_putchf( 'n' );
+#       if defined( configTRACE )
+            _putchf( 'n' );
+#       endif
+
         if( 0 == testDSR( ))
         {
             TickType_t const ms100 = configTICK_RATE_HZ / 10;
 
-//_putchf( '1' );
+#           if defined( configTRACE )
+                _putchf( '1' );
+#           endif
+
             /* The logic here is we are prepared to wait a short period for CTS
                to be asserted following our RTS assertion. We chose 100mS
                arbitarily - perhaps we could have a devConfig setting? It would
@@ -821,7 +839,10 @@ static POSIX_ERRNO waitDSR( void )
             vTaskDelay( ms100 );       // wait 100mS for /DSR to be asserted
             if( 0 == testDSR( ))
             {
-//_putchf( '2' );
+#               if defined( configTRACE )
+                    _putchf( '2' );
+#               endif
+
                 ret = POSIX_ERRNO_EPROTO;  // no /CTS from the remote end
             }
         }
@@ -850,14 +871,20 @@ static void RTSforSend( void )
     unsigned char v;
 
     // check if we're using software or hardware flow control
-//_putchf( 'j' );
+#   if defined( configTRACE )
+        _putchf( 'j' );
+#   endif
+
     if( 0 ==(( DEV_MODE_UART_NO_FLOWCONTROL | DEV_MODE_UART_SW_FLOWCONTROL )&
               wiring ))
     {
         if(( DEV_MODE_UART_HALF_MODEM == wiring )||
            ( DEV_MODE_UART_FULL_MODEM == wiring ))
         {                                 // straight-through wiring
-//_putchf( '1' );
+#           if defined( configTRACE )
+                _putchf( '1' );
+#           endif
+
             v = UART1_MCTL &( mlo | UART_MCTL_DTR );   // leave /DTR intact
             UART1_MCTL =( v | UART_MCTL_RTS );         // set /RTS
             MODEM_RTS_ON( );
@@ -866,7 +893,10 @@ static void RTSforSend( void )
         if(( DEV_MODE_UART_HALF_NULL_MODEM == wiring )||
            ( DEV_MODE_UART_FULL_NULL_MODEM == wiring ))
         {                                 // crossover wiring
-//_putchf( '2' );
+#           if defined( configTRACE )
+                _putchf( '2' );
+#           endif
+
             v = UART1_MCTL &( mlo | UART_MCTL_DTR );   // leave /DTR intact
             UART1_MCTL = v;                            // clear /RTS
             MODEM_RTS_OFF( );
@@ -892,11 +922,17 @@ static void RTSforReceive( void )
     if( 0 ==(( DEV_MODE_UART_NO_FLOWCONTROL | DEV_MODE_UART_SW_FLOWCONTROL )&
               wiring ))
     {
-//_putchf( 'k' );
+#       if defined( configTRACE )
+            _putchf( 'k' );
+#       endif
+
         if(( DEV_MODE_UART_HALF_MODEM == wiring )||
            ( DEV_MODE_UART_FULL_MODEM == wiring ))
         {                               // straight-through wiring
-//_putchf( '1' );
+#           if defined( configTRACE )
+                _putchf( '1' );
+#           endif
+
             v = UART1_MCTL &( mlo | UART_MCTL_DTR );   // leave /DTR intact
             UART1_MCTL = v;                            // clear /RTS
             MODEM_RTS_OFF( );
@@ -905,7 +941,10 @@ static void RTSforReceive( void )
         if(( DEV_MODE_UART_HALF_NULL_MODEM == wiring )||
            ( DEV_MODE_UART_FULL_NULL_MODEM == wiring ))
         {                               // crossover wiring
-//_putchf( '2' );
+#           if defined( configTRACE )
+                _putchf( '2' );
+#           endif
+
             v = UART1_MCTL &( mlo | UART_MCTL_DTR );   // leave /DTR intact
             UART1_MCTL =( v | UART_MCTL_RTS );         // set /RTS 
             MODEM_RTS_ON( );
@@ -928,12 +967,18 @@ static POSIX_ERRNO waitCTS( void )
     if( 0 ==(( DEV_MODE_UART_NO_FLOWCONTROL | DEV_MODE_UART_SW_FLOWCONTROL )&
               wiring ))
     {
-//_putchf( 'l' );
+#       if defined( configTRACE )
+            _putchf( 'l' );
+#       endif
+
         if( 0 == testCTS( ))
         {
             TickType_t const ms100 = configTICK_RATE_HZ / 10;
 
-//_putchf( '1' );
+#           if defined( configTRACE )
+                _putchf( 'l' );
+#           endif
+
             /* The logic here is we are prepared to wait a short period for CTS
                to be asserted following our RTS assertion. We chose 100mS
                arbitarily - perhaps we could have a devConfig setting? It would
@@ -942,7 +987,10 @@ static POSIX_ERRNO waitCTS( void )
             vTaskDelay( ms100 );       // wait 100mS for /CTS to be asserted
             if( 0 == testCTS( ))
             {
-//_putchf( '2' );
+#               if defined( configTRACE )
+                    _putchf( '2' );
+#               endif
+
                 ret = POSIX_ERRNO_EPROTO;  // no /CTS from the remote end
             }
         }
@@ -968,10 +1016,16 @@ static void DCDloopReady( void )
 
     /* check if we're using full modem (null or straight-through) hardware flow 
        control */
-//_putchf( 'l' );
+#   if defined( configTRACE )
+        _putchf( 'l' );
+#   endif
+
     if( DEV_MODE_UART_LOOPBACK & wiring )
     {
-//_putchf( '1' );
+#       if defined( configTRACE )
+            _putchf( '1' );
+#       endif
+
         v = UART1_MCTL &( mlo | UART_MCTL_RTS | UART_MCTL_DTR );
         UART1_MCTL =( v | UART_MCTL_OUT2 );   // set /DCD via OUT2 in loopback
         MODEM_DCD_ON( );
@@ -990,10 +1044,16 @@ static void DCDloopNotReady( void )
 
     /* check if we're using full modem (null or straight-through) hardware flow 
        control */
-//_putchf( 'i' );
+#   if defined( configTRACE )
+        _putchf( 'i' );
+#   endif
+
     if( DEV_MODE_UART_LOOPBACK & wiring )  // FULL or FULL_NULL
     {
-//_putchf( '1' );
+#       if defined( configTRACE )
+            _putchf( '1' );
+#       endif
+
         v = UART1_MCTL &( mlo | UART_MCTL_RTS | UART_MCTL_DTR );
         UART1_MCTL = v;                      // clear /DCD through out2 in loopback
         MODEM_DCD_OFF( );
@@ -1016,12 +1076,18 @@ static POSIX_ERRNO waitDCD( void )
     if(( DEV_MODE_UART_FULL_MODEM & wiring )||  // FULL or FULL_NULL MODEM
        ( DEV_MODE_UART_LOOPBACK == wiring ))
     {
-//_putchf( 'm' );
+#       if defined( configTRACE )
+            _putchf( 'm' );
+#       endif
+
         if( 0 == testDCD( ))
         {
             TickType_t const ms100 = configTICK_RATE_HZ / 10;
 
-//_putchf( '1' );
+#           if defined( configTRACE )
+                _putchf( '1' );
+#           endif
+
             /* The logic here is we are prepared to wait a short period for CTS
                to be asserted following our RTS assertion. We chose 100mS
                arbitarily - perhaps we could have a devConfig setting? It would
@@ -1030,7 +1096,10 @@ static POSIX_ERRNO waitDCD( void )
             vTaskDelay( ms100 );       // wait 100mS for /DCD to be asserted
             if( 0 == testDCD( ))
             {
-//_putchf( '2' );
+#               if defined( configTRACE )
+                    _putchf( '2' );
+#               endif
+
                 ret = POSIX_ERRNO_EPROTO;  // no /CTS from the remote end
             }
         }
@@ -1056,10 +1125,16 @@ static void RIloopRing( void )
 
     /* check if we're using full modem (null or straight-through) hardware flow 
        control */
-//_putchf( 'l' );
+#   if defined( configTRACE )
+        _putchf( 'l' );
+#   endif
+
     if( DEV_MODE_UART_LOOPBACK & wiring )
     {
-//_putchf( '3' );
+#       if defined( configTRACE )
+            _putchf( '3' );
+#       endif
+
         v = UART1_MCTL &( mlo | UART_MCTL_RTS | UART_MCTL_DTR );
         UART1_MCTL =( v | UART_MCTL_OUT1 );   // set /RI via OUT1 in loopback
         MODEM_RI_ON( );
@@ -1078,10 +1153,16 @@ static void RIloopSilent( void )
 
     /* check if we're using full modem (null or straight-through) hardware flow 
        control */
-//_putchf( 'l' );
+#   if defined( configTRACE )
+        _putchf( 'l' );
+#   endif
+
     if( DEV_MODE_UART_LOOPBACK & wiring )  // FULL or FULL_NULL
     {
-//_putchf( '4' );
+#       if defined( configTRACE )
+            _putchf( '4' );
+#       endif
+
         v = UART1_MCTL &( mlo | UART_MCTL_RTS | UART_MCTL_DTR );
         UART1_MCTL = v;                      // clear /RI through out1 in loopback
         MODEM_RI_OFF( );
@@ -1408,7 +1489,10 @@ static UART_ERRNO receiveNextBlock( unsigned char * numRxBytes )
     _Bool copyByte;
 
 
-//_putchf( 'g' );
+#   if defined( configTRACE )
+        _putchf( 'g' );
+#   endif
+
     RX_CIRCULAR_BUFFER_NUM_FREE( numB );
     numB =( RHR_FIFO_MAX < numB )
         ? RHR_FIFO_MAX
@@ -1427,7 +1511,10 @@ static UART_ERRNO receiveNextBlock( unsigned char * numRxBytes )
             {
                 if( UART_SW_FLOWCTRL_XON == rbr )
                 {    // remote end buffer space available
-//_putchf( '1' );
+#                   if defined( configTRACE )
+                        _putchf( '1' );
+#                   endif
+
                     copyByte = false;
                     uartState &=( UART_STATE )( ~UART_STATE_PAUSE );
                     if( true == txPending )
@@ -1441,7 +1528,10 @@ static UART_ERRNO receiveNextBlock( unsigned char * numRxBytes )
                 else
                 if( UART_SW_FLOWCTRL_XOFF == rbr )
                 {    // remote end buffer space full
-//_putchf( '2' );
+#                   if defined( configTRACE )
+                        _putchf( '2' );
+#                   endif
+
                     copyByte = false;
                     uartState |= UART_STATE_PAUSE;
                 }
@@ -1471,7 +1561,10 @@ static UART_ERRNO receiveNextBlock( unsigned char * numRxBytes )
     {
         res = UART_ERRNO_RECEIVEFIFOFULL;
         
-//_putchf( '3' );
+#       if defined( configTRACE )
+            _putchf( '3' );
+#       endif
+
         // Flush the RxFIFO??
         uartResetFIFO( UART_FCTL_CLRRxF, UART_FIFO_ENABLE );
     }
@@ -1482,13 +1575,19 @@ static UART_ERRNO receiveNextBlock( unsigned char * numRxBytes )
     if(( 0 == *numRxBytes )     // we received nothing
        /*( false == swFlowCtrl )*/) // except a sole Xon / Xoff control byte
     {
-//_putchf( '9' );
+#       if defined( configTRACE )
+            _putchf( '9' );
+#       endif
+
         // TRIGGER LEVEL interrupt fired with nothing to read
         //   Reset the RxFIFO then enable the FIFOs
         uartResetFIFO( UART_FCTL_CLRRxF, UART_FIFO_ENABLE );
     }
 
-//_putchf( '0' );
+#   if defined( configTRACE )
+        _putchf( '0' );
+#   endif
+
     return( res );
 }
 
@@ -1521,7 +1620,10 @@ static void uart_rxFlowControl( void )
             /* If rxPrivBuf is nearly full, pause remote end transmission */
             if(( RX_CIRCULAR_BUFFER_NEARLY_FULL > numB )&&( false == rxPaused ))
             {
-//_putchf( 'q' );
+#               if defined( configTRACE )
+                    _putchf( 'q' );
+#               endif
+
                 if( true == swFlowCtrl )
                 {
                     ( void )transmitChar(( unsigned char )UART_SW_FLOWCTRL_XOFF );
@@ -1536,7 +1638,10 @@ static void uart_rxFlowControl( void )
             /* If rxPrivBuf is nearly empty, resume remote end transmission */
             if(( RX_CIRCULAR_BUFFER_NEARLY_EMPTY < numB )&&( true == rxPaused ))
             {
-//_putchf( 'r' );
+#               if defined( configTRACE )
+                    _putchf( 'r' );
+#               endif
+
                 if( true == swFlowCtrl )
                 {
                     ( void )transmitChar(( unsigned char )UART_SW_FLOWCTRL_XON );
@@ -1743,7 +1848,10 @@ static void uartisr_1( void )
         if( UART_IIR_LINESTATUS == irrm )
         {
             _uart_errno = clearDownLineStatus( );
-//_putchf('a');
+#           if defined( configTRACE )
+                _putchf( 'a' );
+#           endif
+
             if(( UART_ERRNO_RX_DATA_READY == _uart_errno )||
                ( UART_ERRNO_BREAKINDICATIONERR == _uart_errno ))
             {
@@ -1755,7 +1863,10 @@ static void uartisr_1( void )
             else
             if( UART_ERRNO_NONE != _uart_errno )
             {
-//_putchf('1');
+#               if defined( configTRACE )
+                    _putchf( '1' );
+#               endif
+
                 /* error conditions are one of UART_LSR_FRAMINGERR,
                    UART_LSR_PARITYERR, UART_LSR_OVERRRUNERR. 
                    clearDownLineStatus will have called uartResetFIFO on
@@ -1807,20 +1918,29 @@ static void uartisr_1( void )
         if(( UART_IIR_DATAREADY_TRIGLVL == irrm )||
            ( UART_IIR_CHARTIMEOUT == irrm ))
         {
-//_putchf('b');
+#           if defined( configTRACE )
+                _putchf( 'b' );
+#           endif
+
 //if( UART_IIR_DATAREADY_TRIGLVL == irrm ) _putchf('1');
 //if( UART_IIR_CHARTIMEOUT == irrm ) _putchf('2');
             _uart_errno = receiveNextBlock( &numTRxBytes );
 
             if( UART_ERRNO_RECEIVEFIFOFULL == _uart_errno )
             {
-//_putchf('3');
+#               if defined( configTRACE )
+                    _putchf( '3' );
+#               endif
+
                 uartRxEvent |=( 1 << UART_EVENT_RX_FULL );
             }
 
             if( UART_STATE_READ & uartState )
             {
-//_putchf('4');
+#               if defined( configTRACE )
+                    _putchf( '4' );
+#               endif
+
                 rxTransact.lenTRx += numTRxBytes;
                 if( rxTransact.lenTRx >= rxTransact.len )
                 {
@@ -1834,7 +1954,10 @@ static void uartisr_1( void )
 
                     if( DEV_MODE_UNBUFFERED == rxTransact.mode )
                     {
-//_putchf('5');
+#                       if defined( configTRACE )
+                            _putchf( '5' );
+#                       endif
+
                         /* Clear UART_STATE_READ here because another interrupt 
                            may follow immediately, before the user task is able 
                            to take uartRxSemaphore. Semantics of UART_STATE_READ 
@@ -1845,7 +1968,10 @@ static void uartisr_1( void )
                     }
                     else
                     {
-//_putchf('6');
+#                       if defined( configTRACE )
+                            _putchf( '6' );
+#                       endif
+
                         storeRxBuffer( );
                         finaliseRxTransaction( _uart_errno | uartRxEvent );
                         CLEAR_UART_TRANSACTION( rxTransact );
@@ -1860,7 +1986,10 @@ static void uartisr_1( void )
             else
             if( UART_STATE_READY & uartState )
             {
-//_putchf('7');
+#               if defined( configTRACE )
+                    _putchf( '7' );
+#               endif
+
                 uartRxEvent |=( 1 << UART_EVENT_RX_READY );
             }
         }
@@ -1871,28 +2000,43 @@ static void uartisr_1( void )
             // the serial device Transmit Shift Register and the Transmit Hold 
             // Register are empty. Continuously - need to disable the interrupt.
             // This should signify we have no more data to send
-//_putchf('c');
+#           if defined( configTRACE )
+                _putchf( 'c' );
+#           endif
+
             if( UART_STATE_WRITE & uartState )
             {
-//_putchf('1');
+#               if defined( configTRACE )
+                    _putchf( '1' );
+#               endif
+
                 uartDisableTxInterrupts( UART_IIR_TRANSCOMPLETE );
                 // reset Tx FIFO and leave Rx Fifo enabled
                 uartResetFIFO( UART_FCTL_CLRTxF, UART_FIFO_ENABLE );
 
                 if( txTransact.lenTRx < rxTransact.len )
                 {
-//_putchf('2');
+#                   if defined( configTRACE )
+                        _putchf( '2' );
+#                   endif
+
                     uartTxEvent |=( 1 << UART_EVENT_TX_ERROR );
                 }
                 else
                 {
-//_putchf('3');
+#                   if defined( configTRACE )
+                        _putchf( '3' );
+#                   endif
+
                     uartTxEvent |=( 1 << UART_EVENT_TX_DONE );
                 }
 
                 if( DEV_MODE_BUFFERED == txTransact.mode )
                 {
-//_putchf('4');
+#                   if defined( configTRACE )
+                        _putchf( '4' );
+#                   endif
+
                     finaliseTxTransaction( POSIX_ERRNO_ENONE | uartTxEvent );
                     CLEAR_UART_TRANSACTION( txTransact );
                         
@@ -1903,7 +2047,10 @@ static void uartisr_1( void )
                 }
                 else
                 {
-//_putchf('5');
+#                   if defined( configTRACE )
+                        _putchf( '5' );
+#                   endif
+
                     /* Clear UART_STATE_WRITE here because another interrupt 
                        may follow immediately, before the user task is able 
                        to take uartTxSemaphore. Semantics of UART_STATE_WRITE 
@@ -1917,7 +2064,10 @@ static void uartisr_1( void )
             else
             if( UART_STATE_READY & uartState )
             {
-//_putchf('6');
+#               if defined( configTRACE )
+                    _putchf( '6' );
+#               endif
+
                 uartTxEvent |=( 1 << UART_EVENT_TX_UNEXPECTED );
                 uartDisableTxInterrupts( UART_IIR_TRANSCOMPLETE );
                 // reset Tx FIFO and leave Rx Fifo enabled
@@ -1929,16 +2079,25 @@ static void uartisr_1( void )
         {
             // Transmit Buffer Empty (TCIE) is generated when the Transmit Hold
             // Register is empty.
-//_putchf('d');
+#           if defined( configTRACE )
+                _putchf( 'd' );
+#           endif
+
             if( UART_STATE_WRITE & uartState )
             {
-//_putchf('1');
+#               if defined( configTRACE )
+                    _putchf( '1' );
+#               endif
+
                 transmitNextBlock( &numTRxBytes );
                 txTransact.lenTRx += numTRxBytes;
                 // if there's nothing more to send, disable UART_IIR_TRANSBUFFEREMPTY
                 if( 0 == numTRxBytes )
                 {
-//_putchf('2');
+#                   if defined( configTRACE )
+                        _putchf( '2' );
+#                   endif
+
                     // wait for UART_IIR_TRANSCOMPLETE after last byte shifted out
                     uartDisableTxInterrupts( UART_IIR_TRANSBUFFEREMPTY );
                 }
@@ -1946,7 +2105,10 @@ static void uartisr_1( void )
             else
             if( UART_STATE_READY & uartState )
             {
-//_putchf('3');
+#               if defined( configTRACE )
+                    _putchf( '3' );
+#               endif
+
                 uartTxEvent |=( 1 << UART_EVENT_TX_UNEXPECTED );
                 uartDisableTxInterrupts( UART_IIR_TRANSCOMPLETE );
                 // reset Tx FIFO and leave Rx Fifo enabled
@@ -1957,7 +2119,10 @@ static void uartisr_1( void )
         if( UART_IIR_MODEMSTAT == irrm )
         {
             _uart_errno = clearDownModemStatus( );
-//_putchf('e');
+#           if defined( configTRACE )
+                _putchf( 'e' );
+#           endif
+
             if(( UART_ERRNO_DSR_LOST == _uart_errno )||  // remote end gone away
                ( UART_ERRNO_DCD_LOST == _uart_errno ))   // remote end signal lost
             {
@@ -2030,7 +2195,9 @@ static void uartisr_1( void )
         }
     }
 
-//_putchf('f');
+#   if defined( configTRACE )
+        _putchf( 'f' );
+#   endif
 }
 
 
@@ -2041,7 +2208,7 @@ static void uartisr_0( void )
     /* The current task context SHALL be saved first on entry to an ISR */
     portSAVE_CONTEXT( );
 
-#   if defined( _DEBUG )&& 0
+#   if defined( configTRACE )&& 0
         _putchf( 'U' );
 #   endif
 
@@ -2056,7 +2223,7 @@ static void uartisr_0( void )
        interrupt returns directly to the highest priority task */
     if( pdTRUE == __higherPriorityTaskWokenUART )
     {
-#       if defined( _DEBUG )&& 0
+#       if defined( configTRACE )&& 0
             _putchf( 'V' );
 #       endif
 
@@ -2066,7 +2233,7 @@ static void uartisr_0( void )
     else
     {
         asm( "\t                            ; reti from here" );
-#       if defined( _DEBUG )&& 0
+#       if defined( configTRACE )&& 0
             _putchf( 'W' );
 #       endif
 

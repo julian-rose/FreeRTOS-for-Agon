@@ -4,40 +4,42 @@
 <h2>Description</h2>
 FreeRTOS port for the Zilog eZ80-based Agon Light (and compatibles) running 
 MOS. The concept is very much FreeRTOS over MOS, reflected in the project name. 
-MOS provides system services and APIs, which FreeRTOS builds on with multi-
-tasking communication and concurrency, real-time, and extended hardware APIs. 
+MOS provides system services and APIs, which FreeRTOS expands on with multi-
+tasking, real-time, and extended hardware APIs. 
 <p>
 
 This Agon Light port integrates FreeRTOS version 20221201-LTS (10.5.1) with 
 the Zilog ZDSII eZ80Acclaim! version 5.3.5 (Build 23020901) C language toolset. 
 The LTS choice prioritises stability over latest and greatest. For a detailed 
-description of the Agon port, refer to the README in 
+description of this Agon port, refer to the README in 
 ./FreeRTOSv202212.01-LTS/FreeRTOS/Source/portable/Community-Supported-Ports/ZDSII/eZ80AgonLight/
 
 <h3>What is FreeRTOS?</h3>
-FreeRTOS is a real-time, multi-tasking software development library. It is a 
-fully open-source application development framework that allows a C language 
-application to be arranged into a number of concurrent tasks. The core of 
-FreeRTOS (and indeed any RTOS) is its multi-tasking kernel; refer to the 
-overview at https://www.freertos.org/RTOS.html. 
+FreeRTOS is a software development framework for embedded real-time systems. 
+It is a fully Open Source application development framework that allows a C 
+language application to be arranged into a number of concurrent tasks. The core 
+of FreeRTOS (and indeed any RTOS) is its kernel; refer to the overview at 
+https://www.freertos.org/RTOS.html. 
 And to https://www.freertos.org/features.html for the developer overview;
 and to https://www.freertos.org/a00106.html for the programmers API reference.
-<p>
 
-We use FreeRTOS in targetting Agon as a Micro-controller. FreeRTOS is neither a 
-standalone nor installable operating system in the sense of MOS or CP/M. Those 
-O/S provide command console interpreter (CCP), long-term storage (BDOS) and a 
-basic I/O system (BIOS) services. Rather, FreeRTOS applications run on MOS to 
-access its services. No re-Flashing is required - you just build and link your 
-C language application together with the FreeRTOS software into a MOS 
-executable. 
+<h4>Why use FreeRTOS?</h4>
+We will typically use FreeRTOS in targetting Agon as a Micro-controller, that 
+interfaces with external hardware. We can also use it to develop threaded 
+software applications, such as an interactive shell or browser. FreeRTOS 
+provides an operating system framework, with a scheduler, concurrent task, 
+inter-task communication, and real-time functions, that is at the core of our 
+application designs. 
+Refer to the overview at https://www.freertos.org/Documentation/00-Overview.
 
-<h4>Why do we care about concurrency and time?</h4>
-In a nutshell, because they are in the real world; and a micro-controller 
-interacts with the real world, through sensors and actuators, networked
-devices and co-processors. So we need to embrace time and event ordering 
-(concurrency) into our software for it to function well. We are also
-interested in efficiency and response time to real-world inputs and outputs.
+<h4>Do we need to Flash FreeRTOS instead of MOS?</h4>
+No re-Flashing is required. The FreeRTOS/MOS use case is distinguished from the 
+general use case in that we build MOS executables rather than bootable images 
+to be Flashed. On its own, FreeRTOS is neither a standalone nor installable 
+operating system in the sense of MOS or CP/M. Rather, we just build and link 
+our C language applications together with the FreeRTOS library into a MOS 
+executable (HEX or BIN file). Those executables are then loaded and run on 
+MOS in the usual ways. 
 
 <h3>What is Agon?</h3>
 Agon Light™ is a fully open-source 8-bit microcomputer and microcontroller in 
@@ -49,8 +51,8 @@ processor, which primarily performs I/O and graphics functions.
 
 Agon is well-suited to the role of micro-controller through the hardware 
 Extensions Interface, providing UART, SPI, I2C and GPIO connectivity. Moreover, 
-with its integrated VDP, applications can include a GUI to visualise the 
-system under control, or to graph I/O in real-time. 
+with its integrated VDP, applications can include a GUI; to visualise the 
+system under control, or to graph I/O in real-time, for example. 
 
 <h3>What is MOS?</h3>
 MOS is the Machine Operating System for Agon Light and compatibles. It runs on 
@@ -62,8 +64,8 @@ through SD-cards. Refer to https://agonconsole8.github.io/agon-docs/MOS/.
 <h4>MOS versions</h4>
 FreeRTOS for Agon is built to Quark MOS version 1.04. Version 1.03 may work, 
 but has not been tested. FreeRTOS will work with Console8 2.x versions of MOS, 
-but has not been tested. Console8-specific MOS and VDP functions are not yet 
-supported. 
+but has not been tested. Console8-specific MOS and VDP functions are targetted 
+for inclusion in the delta capability.
 
 <h2>Project</h2>
 FreeRTOS / MOS for Agon Light is a highly configurable, multi-capability 
@@ -109,7 +111,7 @@ Alpha capabilities are configured in the usual FreeRTOS way, through the
 header file FreeRTOSConfig.h, customised for each user application.
 
 <h4>Beta</h4>
-The "Beta" capability is currently being developed, with the sources located in 
+The "Beta" capability sources are located in 
 ./FreeRTOSv202212.01-LTS/FreeRTOS/Source/mos/. 
 This capability adds support for most of the MOS API defined in
 https://agonconsole8.github.io/agon-docs/MOS-API/#the-mos-api (including the
@@ -131,13 +133,25 @@ In addition to the MOS API, Beta capabilties include a new DEV API. This
 extends the Beta capability with access to the Agon Extensions Interface 
 directly. It provides a safeguarded API for SPI, UART, I2C and GPIO; and 
 through them to connected devices. The DEV API enhances the Uart and I2C 
-capability of MOS, using concurrency to provide asynchronous full duplicity 
-and multi-mastering (slave) roles respectively, and provides APIs for GPIO 
-and SPI that are absent in the MOS API. 
+capability of MOS, using concurrency to provide asynchronous full duplicity, 
+and provides APIs for GPIO and SPI that are absent in the MOS API. 
 <p>
 
 Users configure the DEV API through an application-specific devConfig.h file, 
 to select the extended interfaces for linking into the executable. 
+
+<h4>Gamma</h4>
+The "Gamma" capability sources will also be located in 
+./FreeRTOSv202212.01-LTS/FreeRTOS/Source/mos/, alongside the Beta capability. 
+The Gamma capability adds support for a subset of the VDU API defined in 
+https://agonconsole8.github.io/agon-docs/vdp/VDU-Commands/ of VDP 1.04. The 
+exact set of commands yet to be determined, but is likely to include the Main
+VDU commands, Screen Modes, and Plot Commands, with a subset of the VDP 1.04 
+System Commands and Audio Commands. It is unlikely to include any Buffered 
+Commands or Sprite Commands, and will not include any Context Management or 
+Font Management. 
+Work to develop this API is about to begin.
+
 
 <h3>Demos</h3>
 The FreeRTOS / MOS for Agon port provides the source and binaries to 'Demo'
@@ -178,8 +192,10 @@ and MOS devices including the keyboard, UART, and I2C interfaces.
 
 A second Beta demo is found in ./FreeRTOSv202212.01-LTS/FreeRTOS/Demo/Beta/DemoDEV/.
 This demonstrates the DEV API capabilities. Currently that is the full GPIO, 
-UART and SPI APIS, together with the I2C Single-Master role API. DEV I2C Multi-
-Master role remains in development, and requires peer-Agon testing.
+UART and SPI APIS, together with the I2C Single-Master role API. DEV I2C 
+Multi-Master with Slave role is provided for, and test programs exist, 
+but unfortunately isn't working with Agon Light2; see the detailed writeup in 
+./FreeRTOSv202212.01-LTS/FreeRTOS/Docs/DEV API - Extension Interface and MOS analysis.
 
 <h5>Bosch BMP280 barometer bad batch?</h5>
 Note testing DEV SPI revealed a Bosch BMP280 barometer mfg#CFC-KU mounted on 
